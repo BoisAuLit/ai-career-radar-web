@@ -265,13 +265,30 @@ export default function Page() {
 
   return (
     <div className="mx-auto min-h-dvh w-full max-w-3xl px-4 py-8">
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold">AI Career Radar</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Paste or upload your resume + the role you want. Get an evidence-grounded gap
-          report against <strong>443 real AI engineering JDs</strong> from frontier labs,
-          big tech, AI scaleups, and infra companies.
+      <header className="mb-6">
+        <div className="mb-2 inline-block rounded-full border border-zinc-300 bg-zinc-100 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+          For senior engineers pivoting into AI
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight">AI Career Radar</h1>
+        <p className="mt-2 text-base text-zinc-700 dark:text-zinc-300">
+          What AI companies actually hire for — distilled from <strong>443 real JDs</strong>
+          across frontier labs, big tech, AI scaleups, and infra companies.
         </p>
+        <p className="mt-1 text-sm text-zinc-500">
+          Paste resume + describe the role you want. Get a personalized 5-section gap
+          report in ~60s.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+          <span className="rounded-md border border-zinc-300 px-2 py-0.5 dark:border-zinc-700">
+            Quality (V1, LLM-graded): <strong className="text-zinc-700 dark:text-zinc-300">gr 0.93 · sp 0.83 · ac 0.82</strong>
+          </span>
+          <a
+            href="#how-it-works"
+            className="underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-300"
+          >
+            How does this work?
+          </a>
+        </div>
       </header>
 
       <section className="space-y-4">
@@ -504,6 +521,85 @@ export default function Page() {
           <div className="whitespace-pre-wrap break-words font-mono text-xs">{errMsg}</div>
         </section>
       )}
+
+      <section id="how-it-works" className="mt-12 space-y-6 border-t border-zinc-200 pt-8 dark:border-zinc-800">
+        <h2 className="text-xl font-semibold">How this works</h2>
+        <ol className="space-y-3 text-sm text-zinc-700 dark:text-zinc-300">
+          <li className="flex gap-3">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white dark:bg-white dark:text-black">
+              1
+            </span>
+            <span>
+              <strong>Classify your target</strong> into one of <strong>8 AI engineering archetypes</strong>{" "}
+              — <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">applied_ai</code>,{" "}
+              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">forward_deployed</code>,{" "}
+              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">llm_infra</code>,{" "}
+              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">agent_engineering</code>,{" "}
+              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">eval</code>,{" "}
+              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">research_engineer</code>,{" "}
+              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">ml_engineer</code>,{" "}
+              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">other</code>. The
+              classifier is brutal about title-vs-reality: &quot;Applied AI Engineer at
+              Anthropic&quot; is often actually <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">forward_deployed</code>.
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white dark:bg-white dark:text-black">
+              2
+            </span>
+            <span>
+              <strong>Build a real skill profile</strong> for that archetype from the
+              43–102 JDs in the corpus that match it. Top skills with %, top hiring
+              companies, evidence quotes — all derived from real postings, not surveys.
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white dark:bg-white dark:text-black">
+              3
+            </span>
+            <span>
+              <strong>Generate a personalized 5-section report</strong> grounded in
+              that profile + 5 evidence JDs: what you already have · top 5 gaps ranked
+              · what you might be over-prioritizing · single highest-leverage next action.
+              Quantitative claims are clamped to numbers in the supplied profile (no
+              hallucinated stats).
+            </span>
+          </li>
+        </ol>
+
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <h3 className="mb-2 text-base font-semibold">Quality (V1 LLM-graded baseline)</h3>
+          <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
+            Four representative reports were graded by Claude Haiku 4.5 on three
+            metrics. <strong>The eval is reproducible from the repo.</strong>
+          </p>
+          <div className="mb-3 grid grid-cols-3 gap-3">
+            <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 dark:border-emerald-900 dark:bg-emerald-950/40">
+              <div className="text-[10px] uppercase tracking-wide text-zinc-500">Groundedness</div>
+              <div className="text-xl font-bold text-emerald-700 dark:text-emerald-400">0.93</div>
+            </div>
+            <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 dark:border-emerald-900 dark:bg-emerald-950/40">
+              <div className="text-[10px] uppercase tracking-wide text-zinc-500">Specificity</div>
+              <div className="text-xl font-bold text-emerald-700 dark:text-emerald-400">0.83</div>
+            </div>
+            <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 dark:border-emerald-900 dark:bg-emerald-950/40">
+              <div className="text-[10px] uppercase tracking-wide text-zinc-500">Actionability</div>
+              <div className="text-xl font-bold text-emerald-700 dark:text-emerald-400">0.82</div>
+            </div>
+          </div>
+          <p className="text-xs text-zinc-500">
+            Each generated report has a <strong>📊 Eval this report</strong> button so
+            you can grade your own report and see exactly which claims the judge
+            considered ungrounded, vague, or blocking.
+          </p>
+        </div>
+
+        <div className="text-xs text-zinc-500">
+          <strong>Privacy:</strong> Your resume is sent only to Anthropic&apos;s API for
+          generation and is not stored or logged server-side beyond the duration of the
+          request. Each report is generated fresh; nothing is persisted across visits.
+        </div>
+      </section>
 
       <footer className="mt-12 border-t border-zinc-200 pt-4 text-xs text-zinc-500 dark:border-zinc-800">
         Powered by 443 real AI engineering JDs · Claude Sonnet 4.6 · Haiku 4.5 for evals ·
