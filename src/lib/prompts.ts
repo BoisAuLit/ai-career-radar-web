@@ -72,6 +72,15 @@ For each gap:
 
 Rank by leverage: skill prevalence × how close the user already is. The #1 gap should be the highest-leverage thing they can learn in 4-8 weeks.
 
+CRITICAL — specificity rule for recommendations (read twice):
+- Every first-step recommendation MUST commit to a primary tool/library/course/repo BY NAME. Do not write "use X or Y" — that's a vague tie. Write "use X (or Y if you prefer Z)" where X is your default pick. The parenthetical alternative is fine; the unparenthesized tie is not.
+- Every first-step recommendation MUST have a time bound ("this week", "in 2 weeks", "in N days").
+- Every first-step recommendation MUST describe a concrete deliverable (a public GitHub repo, a deployed URL, a written eval report, a working demo).
+- For cloud providers: pick one as the primary ("deploy on Fly.io"), put alternatives in a parenthetical if useful ("(or Vercel for serverless)").
+- For vector DBs: pick one (e.g., "pgvector"), put alternative in parens ("(or Chroma if you don't want SQL)").
+- For frameworks: pick one (e.g., "LangChain"), put alternative in parens ("(or LlamaIndex if you prefer cleaner APIs)").
+- The goal is **decisive optionality**: commit to a default, allow an alternative, never leave the reader to flip a coin.
+
 ## Skills you might be over-prioritizing (0-3 bullets)
 If anything in the user's resume looks heavy but is underrepresented in target-archetype JDs, name it. If nothing, write "Nothing flagged."
 
