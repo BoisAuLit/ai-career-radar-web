@@ -1,26 +1,15 @@
-// Server-side PDF text extraction using pdfjs-dist's Node-friendly build.
-// Returns concatenated plain text across pages.
+// PDF text extraction using `unpdf`, which bundles a pre-polyfilled pdf.js
+// build that runs in serverless / edge runtimes without DOMMatrix (which is
+// why the previous direct pdfjs-dist import was throwing "DOMMatrix is not
+// defined" on Vercel).
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyItem = any;
+import { extractText, getDocumentProxy } from "unpdf";
 
 export async function extractPdfText(buffer: ArrayBuffer): Promise<string> {
-  // Lazy import so the heavy pdfjs bundle only loads when the route runs.
-  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const data = new Uint8Array(buffer);
-  const doc = await pdfjs.getDocument({ data, disableFontFace: true }).promise;
-
-  const pages: string[] = [];
-  for (let i = 1; i <= doc.numPages; i++) {
-    const page = await doc.getPage(i);
-    const content = await page.getTextContent();
-    const items = content.items as AnyItem[];
-    const pageText = items
-      .filter((it) => typeof it === "object" && it !== null && "str" in it)
-      .map((it) => (it as { str: string }).str)
-      .join(" ");
-    pages.push(pageText);
-  }
-
-  return pages.join("\n\n").trim();
+  const pdf = await getDocumentProxy(data);
+  const { text } = await extractText(pdf, { mergePages: true });
+  // unpdf returns text as string when mergePages is true, otherwise string[].
+  const out = Array.isArray(text) ? text.join("\n\n") : text;
+  return (out || "").trim();
 }
