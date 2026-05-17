@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Classification } from "@/lib/types";
@@ -108,6 +108,49 @@ const TARGET_PRESETS: { label: string; text: string }[] = [
 
 type Stage = "idle" | "classifying" | "generating" | "done" | "error";
 
+function buildFeedbackMailto(
+  classification: Classification,
+  evalResult: ReportEvalResult | null,
+  ref: string | null,
+): string {
+  const evalLine = evalResult
+    ? `gr ${evalResult.groundedness.toFixed(2)} · sp ${evalResult.specificity.toFixed(2)} · ac ${evalResult.actionability.toFixed(2)}`
+    : "(I did not run the meta-eval)";
+  const companies =
+    classification.company_preferences?.length > 0
+      ? classification.company_preferences.join(", ")
+      : "(none named)";
+  const subject = `AI Career Radar feedback — ${classification.archetype}`;
+  const body = [
+    "Hi Bohao,",
+    "",
+    "Just ran AI Career Radar. Here's my feedback:",
+    "",
+    "1. ONE specific thing I'll try in the next week because of this report:",
+    "[your answer here]",
+    "",
+    "2. Was that already on my radar before reading?",
+    "[ ] Yes, already planning to do this",
+    "[ ] Sort of — the report sharpened it",
+    "[ ] No, this is genuinely new / non-obvious to me",
+    "",
+    "3. Anything that felt off, surprised me, or suggestions:",
+    "[optional]",
+    "",
+    "---",
+    "Auto-attached context (please don't edit):",
+    `- Target classification: ${classification.archetype}`,
+    `- Level hint: ${classification.level_hint}`,
+    `- Companies I named: ${companies}`,
+    `- Eval scores I saw: ${evalLine}`,
+    `- Referred via: ${ref || "(direct visit)"}`,
+    `- Time: ${new Date().toISOString()}`,
+    "",
+    "Thanks 🙏",
+  ].join("\n");
+  return `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 function scoreBg(s: number): string {
   if (s >= 0.8) return "bg-emerald-50 border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-900";
   if (s >= 0.5) return "bg-amber-50 border-amber-300 dark:bg-amber-950/40 dark:border-amber-900";
@@ -127,6 +170,11 @@ function ScoreCard({ label, score }: { label: string; score: number }) {
     </div>
   );
 }
+
+const FEEDBACK_EMAIL =
+  process.env.NEXT_PUBLIC_FEEDBACK_EMAIL || "arthur130237@hotmail.com";
+
+const REF_STORAGE_KEY = "acr:ref";
 
 export default function Page() {
   const [resume, setResume] = useState("");
@@ -149,6 +197,28 @@ export default function Page() {
 
   // Copy feedback
   const [copied, setCopied] = useState(false);
+
+  // Referrer tracking — captured from ?ref=<name> on first visit, persisted to
+  // localStorage so it survives reloads after a report is generated.
+  const [ref, setRef] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const fromUrl = new URLSearchParams(window.location.search).get("ref");
+      if (fromUrl) {
+        const clean = fromUrl.slice(0, 64).replace(/[^a-zA-Z0-9_\-.]/g, "");
+        if (clean) {
+          window.localStorage.setItem(REF_STORAGE_KEY, clean);
+          setRef(clean);
+          return;
+        }
+      }
+      const stored = window.localStorage.getItem(REF_STORAGE_KEY);
+      if (stored) setRef(stored);
+    } catch {
+      /* ignore — incognito sometimes throws on localStorage */
+    }
+  }, []);
 
   const isBusy = stage === "classifying" || stage === "generating";
 
@@ -510,6 +580,29 @@ export default function Page() {
                   </div>
                 </div>
               </details>
+            </section>
+          )}
+
+          {stage === "done" && classification && (
+            <section className="mt-6 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+              <h3 className="mb-2 text-sm font-semibold">💌 Tell the builder what surprised you</h3>
+              <p className="mb-3 text-xs text-zinc-600 dark:text-zinc-400">
+                One-click email with the classification context auto-attached. Tell the
+                builder whether anything in the report was non-obvious — that single
+                answer is what makes Phase 4 validation real.
+              </p>
+              <a
+                href={buildFeedbackMailto(classification, evalResult, ref)}
+                className="inline-block rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+              >
+                💌 Send feedback to builder
+              </a>
+              {ref && (
+                <p className="mt-2 text-[11px] text-zinc-500">
+                  Referred via <code className="font-mono">?ref={ref}</code> — will be
+                  attached to your email so the builder knows which invite you came from.
+                </p>
+              )}
             </section>
           )}
         </>
