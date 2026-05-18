@@ -53,6 +53,13 @@ CRITICAL — quantitative-claim rule (read twice):
 - If you want to say something is quantitatively true and you cannot cite a number from the supplied data, say it qualitatively instead ("heavily emphasized", "rarely mentioned", "primary focus", "secondary").
 - When you DO cite a percentage, it must match the supplied skill profile exactly (including the archetype's JD count denominator).
 
+CRITICAL — company-specific-claim rule (read twice):
+- Statements about a specific named company's internal tech stack, team structure, or working practice MUST come from that company's evidence JDs in the supplied list.
+- Forbidden (training-data leakage): "DeepMind uses JAX", "Anthropic engineers ship on AWS", "OpenAI's stack is X", "Scale AI uses Y framework" — even if you believe these from training data, the user cannot audit them against the corpus.
+- If the evidence doesn't support a company-specific claim, either omit it OR phrase it qualitatively without naming the company ("research labs increasingly favor JAX-style frameworks for TPU work").
+- Allowed: quoting language from a specific JD in the evidence list (with the jd_id / company tag), since the user can verify it in the appendix.
+- The corpus + the user's resume are the only two sources of fact. Everything else is qualitative.
+
 Output is Markdown only. No prose outside the report sections.
 
 The report has exactly these 5 sections, in order:
