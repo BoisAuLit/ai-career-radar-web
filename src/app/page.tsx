@@ -200,7 +200,11 @@ export default function Page() {
 
   // Phase 5 #3 · Per-company deep dive
   const [eligibleCompanies, setEligibleCompanies] = useState<
-    { name: string; n_jds: number }[]
+    {
+      name: string;
+      n_jds: number;
+      archetype_distribution: Record<string, number>;
+    }[]
   >([]);
   const [companyFilter, setCompanyFilter] = useState<string>("");
   useEffect(() => {
@@ -488,11 +492,27 @@ export default function Page() {
                 </option>
               ))}
             </select>
-            {companyFilter && (
-              <p className="mt-1 text-xs text-zinc-500">
-                Deep-dive mode: the report will contrast {companyFilter} JDs against the industry-wide archetype baseline.
-              </p>
-            )}
+            {companyFilter && (() => {
+              const co = eligibleCompanies.find((c) => c.name === companyFilter);
+              if (!co) return null;
+              const breakdown = Object.entries(co.archetype_distribution)
+                .sort((a, b) => b[1] - a[1])
+                .map(([a, n]) => `${a} (${n})`)
+                .join(", ");
+              return (
+                <div className="mt-1 space-y-1">
+                  <p className="text-xs text-zinc-500">
+                    Deep-dive mode: the report will contrast {companyFilter} JDs against the industry-wide archetype baseline.
+                  </p>
+                  <p className="text-xs text-zinc-500">
+                    {companyFilter}&apos;s {co.n_jds} JDs by archetype: <span className="font-mono">{breakdown}</span>
+                  </p>
+                  <p className="text-xs text-zinc-500">
+                    If your target archetype above has fewer than 3 JDs, the report will lean on industry-wide patterns rather than {companyFilter}-specific signals (and will say so honestly).
+                  </p>
+                </div>
+              );
+            })()}
           </div>
         )}
 

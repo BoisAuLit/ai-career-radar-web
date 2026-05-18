@@ -71,4 +71,5 @@ export interface CompanyProfile {
 export interface DeepDiveEligibleCompany {
   name: string;
   n_jds: number;
+  archetype_distribution: Record<string, number>;
 }

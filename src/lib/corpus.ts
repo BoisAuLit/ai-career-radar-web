@@ -146,14 +146,22 @@ export function getDeepDiveEligibleCompanies(
   minJds = 5,
 ): DeepDiveEligibleCompany[] {
   const counts = new Map<string, number>();
+  const archetypeDistByCompany = new Map<string, Record<string, number>>();
   for (const r of bundle.records) {
     if (!r.company) continue;
     counts.set(r.company, (counts.get(r.company) || 0) + 1);
+    const dist = archetypeDistByCompany.get(r.company) || {};
+    dist[r.archetype] = (dist[r.archetype] || 0) + 1;
+    archetypeDistByCompany.set(r.company, dist);
   }
   return [...counts.entries()]
     .filter(([, n]) => n >= minJds)
     .sort((a, b) => b[1] - a[1])
-    .map(([name, n_jds]) => ({ name, n_jds }));
+    .map(([name, n_jds]) => ({
+      name,
+      n_jds,
+      archetype_distribution: archetypeDistByCompany.get(name) || {},
+    }));
 }
 
 export function pickEvidenceJds(
