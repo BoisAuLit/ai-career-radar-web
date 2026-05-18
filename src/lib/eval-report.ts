@@ -59,7 +59,15 @@ function formatProfile(profile: ArchetypeProfile): string {
       (s) =>
         `  - ${s.skill}: ${s.pct}% of ${profile.n_jds_in_archetype} ${profile.archetype} JDs (${s.n_jds} JDs)`,
     );
-  return `Archetype: ${profile.archetype} (n=${profile.n_jds_in_archetype})\nTop skills:\n${lines.join("\n")}`;
+  const topCompanies = Object.entries(profile.top_companies || {})
+    .sort((a, b) => b[1] - a[1])
+    .map(([c, n]) => `  - ${c}: ${n} JDs`)
+    .join("\n");
+  return (
+    `Archetype: ${profile.archetype} (n=${profile.n_jds_in_archetype})\n` +
+    `Top skills:\n${lines.join("\n")}\n` +
+    `Top companies hiring this archetype (claims like "X has N ${profile.archetype} JDs" are grounded if X+N matches):\n${topCompanies}`
+  );
 }
 
 function formatEvidence(
@@ -81,15 +89,21 @@ async function judge(systemPrompt: string, userMessage: string): Promise<unknown
 
 const GROUNDEDNESS_SYSTEM = `You are an impartial judge evaluating whether the factual claims in a generated career gap report are grounded in the supplied source data.
 
-For each percentage, count, fraction, or specific factual claim in the report, decide if it can be traced back to either:
-1. The supplied skill profile (e.g., "75% of llm_infra JDs require Python" is grounded if the profile says python at 75% of llm_infra JDs)
-2. The supplied evidence JD list (e.g., quoting Microsoft from jd_000173 is grounded if Microsoft / jd_000173 is in the evidence list)
+For each percentage, count, fraction, or specific factual claim in the report, decide if it can be traced back to one of these supplied sources:
+1. The skill profile (e.g., "75% of llm_infra JDs require Python" is grounded if the profile says python at 75% of llm_infra JDs).
+2. The evidence JD list (e.g., quoting Microsoft from jd_000173 is grounded if Microsoft / jd_000173 is in the evidence list).
+3. The \`top_companies\` stats supplied with the archetype profile. Claims of the form "Together AI has 9 llm_infra JDs in corpus" or "NVIDIA is the #2 company in llm_infra with 19 JDs" are GROUNDED if the company + count match the supplied top_companies dict for that archetype.
+4. The company-specific profile (deep-dive mode only). Claims of the form "50% of Anthropic JDs require evaluation frameworks" are GROUNDED if the company profile supports that pct for that company.
+5. The user's resume text (claims about what the user has / lacks are grounded if the resume supports them).
 
 A claim is UNGROUNDED if:
-- It cites a percentage not in the profile
-- It cites a company or JD not in the evidence list
+- It cites a percentage not in any of the above
+- It cites a company or JD not in the evidence list AND not in top_companies AND not in the company profile
 - It invents a number ratio ("60% technical / 40% customer advisory")
 - It references "trend" data we don't have (rising, falling, growing)
+- It cites a third company's internal practice the model couldn't have known from the supplied data (e.g., "DeepMind uses JAX internally")
+
+Do NOT flag generic archetype patterns (e.g., "research labs typically use Python") as ungrounded just because no specific quote backs them up; only flag specific named-company / named-JD / specific-percentage claims that can't be traced.
 
 Return ONE JSON object, no prose:
 {
