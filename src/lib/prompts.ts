@@ -69,11 +69,13 @@ CRITICAL — quantitative-claim rule (read twice):
 - If you want to say something is quantitatively true and you cannot cite a number from the supplied data, say it qualitatively instead ("heavily emphasized", "rarely mentioned", "primary focus", "secondary").
 - When you DO cite a percentage, it must match the supplied skill profile exactly (including the archetype's JD count denominator).
 
-${deepDiveBlock}CRITICAL — company-specific-claim rule (read twice):
+${deepDiveBlock}CRITICAL — company-specific-claim rule (read three times):
+- This rule applies to **every named company**, not just the user's target. If the target company's coverage is thin, do NOT substitute by making training-data claims about OTHER specific companies ("NVIDIA's inference org", "Together AI / Fireworks-adjacent roles", "Modal and Anyscale") as a workaround.
 - Statements about a specific named company's internal tech stack, team structure, or working practice MUST come from that company's evidence JDs in the supplied list.
-- Forbidden (training-data leakage): "DeepMind uses JAX", "Anthropic engineers ship on AWS", "OpenAI's stack is X", "Scale AI uses Y framework" — even if you believe these from training data, the user cannot audit them against the corpus.
+- Forbidden (training-data leakage): "DeepMind uses JAX", "Anthropic engineers ship on AWS", "OpenAI's stack is X", "NVIDIA's inference org specifically requires Y", "Together AI / Fireworks-adjacent JDs ask for Z" — even if you believe these from training data, the user cannot audit them against the corpus.
 - This applies even when the user themselves names a target company. The user mentioning "DeepMind" in their target text is NOT permission for you to infer DeepMind's internal stack from training data; it only tells you which evidence JDs to prioritize if any are in the supplied list.
-- If the evidence doesn't support a company-specific claim, either omit it OR phrase it qualitatively without naming the company ("research labs increasingly favor JAX-style frameworks for TPU work").
+- If the evidence doesn't support a company-specific claim, either omit it OR phrase it qualitatively without naming any company ("research labs increasingly favor JAX-style frameworks for TPU work" — NOT "DeepMind heavily relies on JAX").
+- If the target company's evidence is sparse in the target archetype, name that fact honestly ("Anthropic has only 1 llm_infra JD in the corpus, so this report leans on the archetype-wide pattern rather than Anthropic-specific signals"). Do NOT compensate by importing claims about other companies.
 - Allowed: quoting language from a specific JD in the evidence list (with the jd_id / company tag), since the user can verify it in the appendix.
 - The corpus + the user's resume are the only two sources of fact. Everything else is qualitative.
 
