@@ -198,6 +198,29 @@ export default function Page() {
   // Copy feedback
   const [copied, setCopied] = useState(false);
 
+  // Phase 5 #3 · Per-company deep dive
+  const [eligibleCompanies, setEligibleCompanies] = useState<
+    { name: string; n_jds: number }[]
+  >([]);
+  const [companyFilter, setCompanyFilter] = useState<string>("");
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/companies")
+      .then((r) => (r.ok ? r.json() : { companies: [] }))
+      .then((data) => {
+        if (cancelled) return;
+        if (Array.isArray(data?.companies)) {
+          setEligibleCompanies(data.companies);
+        }
+      })
+      .catch(() => {
+        /* non-fatal: deep-dive is optional */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Referrer tracking — captured from ?ref=<name> on first visit, persisted to
   // localStorage so it survives reloads after a report is generated.
   const [ref, setRef] = useState<string | null>(null);
@@ -267,7 +290,12 @@ export default function Page() {
       const gRes = await fetch("/api/generate-report", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ resume, target, classification: cls }),
+        body: JSON.stringify({
+          resume,
+          target,
+          classification: cls,
+          company_filter: companyFilter || undefined,
+        }),
       });
       if (!gRes.ok || !gRes.body) {
         const err = await gRes.json().catch(() => ({ error: gRes.statusText }));
@@ -440,6 +468,34 @@ export default function Page() {
           />
         </div>
 
+        {/* Phase 5 #3 · Optional per-company deep dive */}
+        {eligibleCompanies.length > 0 && (
+          <div>
+            <label className="mb-1 block text-sm font-medium" htmlFor="company">
+              Focus on a specific company? <span className="font-normal text-zinc-500">(optional — deep-dive mode)</span>
+            </label>
+            <select
+              id="company"
+              value={companyFilter}
+              onChange={(e) => setCompanyFilter(e.target.value)}
+              disabled={isBusy}
+              className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+            >
+              <option value="">No deep dive — use full corpus for the target archetype</option>
+              {eligibleCompanies.map((c) => (
+                <option key={c.name} value={c.name}>
+                  {c.name} ({c.n_jds} JDs in corpus)
+                </option>
+              ))}
+            </select>
+            {companyFilter && (
+              <p className="mt-1 text-xs text-zinc-500">
+                Deep-dive mode: the report will contrast {companyFilter} JDs against the industry-wide archetype baseline.
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -451,6 +507,8 @@ export default function Page() {
               ? "Classifying target..."
               : stage === "generating"
               ? "Streaming report..."
+              : companyFilter
+              ? `Generate ${companyFilter} deep-dive report`
               : "Generate gap report"}
           </button>
           <span className="text-xs text-zinc-500">Two LLM calls. ~$0.05, ~60s.</span>

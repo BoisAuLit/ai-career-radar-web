@@ -4,8 +4,13 @@ import {
   reportSystemPrompt,
   buildReportUserMessage,
 } from "@/lib/prompts";
-import { buildArchetypeProfile, pickEvidenceJds } from "@/lib/corpus";
-import type { Classification, Archetype } from "@/lib/types";
+import {
+  buildArchetypeProfile,
+  buildCompanyProfile,
+  pickCompanyEvidence,
+  pickEvidenceJds,
+} from "@/lib/corpus";
+import type { Classification, Archetype, JdRecord } from "@/lib/types";
 
 export const maxDuration = 60;
 
@@ -27,11 +32,13 @@ export async function POST(req: Request): Promise<Response> {
     resume?: string;
     target?: string;
     classification?: Classification;
+    company_filter?: string;
   } = await req.json();
 
   const resume = (body.resume || "").trim();
   const target = (body.target || "").trim();
   const classification = body.classification;
+  const companyFilter = (body.company_filter || "").trim();
 
   if (!resume || !target || !classification) {
     return Response.json(
@@ -48,11 +55,32 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const profile = buildArchetypeProfile(classification.archetype);
-  const evidence = pickEvidenceJds(
-    classification.archetype,
-    classification.company_preferences || [],
-    5,
-  );
+
+  const companyProfile = companyFilter ? buildCompanyProfile(companyFilter) : null;
+
+  let evidence: JdRecord[];
+  if (companyProfile) {
+    evidence = pickCompanyEvidence(
+      companyProfile.company,
+      classification.archetype,
+      5,
+    );
+    if (evidence.length < 5) {
+      const seenIds = new Set(evidence.map((r) => r.id));
+      const backfill = pickEvidenceJds(
+        classification.archetype,
+        classification.company_preferences || [],
+        5,
+      ).filter((r) => !seenIds.has(r.id));
+      evidence = [...evidence, ...backfill.slice(0, 5 - evidence.length)];
+    }
+  } else {
+    evidence = pickEvidenceJds(
+      classification.archetype,
+      classification.company_preferences || [],
+      5,
+    );
+  }
 
   const userMessage = buildReportUserMessage(
     resume,
@@ -60,11 +88,12 @@ export async function POST(req: Request): Promise<Response> {
     classification,
     profile,
     evidence,
+    companyProfile,
   );
 
   const result = streamText({
     model: anthropic(MODEL),
-    system: reportSystemPrompt(),
+    system: reportSystemPrompt(companyProfile),
     messages: [{ role: "user", content: userMessage }],
   });
 

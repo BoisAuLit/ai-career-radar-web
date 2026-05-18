@@ -58,3 +58,17 @@ export interface ArchetypeProfile {
   seniority_distribution: Record<string, number>;
   top_companies: Record<string, number>;
 }
+
+export interface CompanyProfile {
+  company: string;
+  n_jds: number;
+  top_skills: SkillStat[];
+  archetype_distribution: Record<string, number>;
+  seniority_distribution: Record<string, number>;
+  titles_sample: string[];
+}
+
+export interface DeepDiveEligibleCompany {
+  name: string;
+  n_jds: number;
+}

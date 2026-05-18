@@ -1,4 +1,9 @@
-import type { ArchetypeProfile, JdRecord, Classification } from "./types";
+import type {
+  ArchetypeProfile,
+  JdRecord,
+  Classification,
+  CompanyProfile,
+} from "./types";
 
 const ARCHETYPE_DEFS: Record<string, string> = {
   applied_ai:
@@ -41,7 +46,18 @@ Return ONE JSON object, no prose:
 `;
 }
 
-export function reportSystemPrompt(): string {
+export function reportSystemPrompt(companyProfile?: CompanyProfile | null): string {
+  const deepDiveBlock = companyProfile
+    ? `CRITICAL — per-company deep-dive mode (this report is targeting ONE company):
+- The user named a specific target company. The supplied COMPANY-SPECIFIC PROFILE contains skill frequencies aggregated across all that company's JDs in the corpus.
+- For each gap, where possible, cite BOTH the industry-baseline pct (from the archetype profile) AND the company-specific pct (from the company profile). Phrase contrasts explicitly: e.g., 'Across all research_engineer JDs in our corpus, Python appears in 78%; in ${companyProfile.company}'s JDs specifically, it's 100%.'
+- If a skill is materially over-represented or under-represented at this company vs the industry, name it as a company-distinct signal.
+- The 'over-prioritizing' section should call out skills the resume has that DON'T appear in this company's JDs even if they appear in the industry-wide archetype.
+- Sample titles from the supplied company profile show the actual role shapes this company hires for; reference them by name where useful.
+- Keep the company-specific-claim rule (below) intact: even in deep-dive mode, you cannot assert facts about the company that aren't in the supplied profile or evidence JDs.
+
+`
+    : "";
   return `You are writing a Personal Gap Report for AI Career Radar.
 
 Your job: be direct, evidence-grounded, and willing to say "you don't need to learn X." Treat the user as a peer engineer. No motivational fluff. No "consider learning..." — be specific. Every recommendation must cite which evidence JD or skill-frequency stat backs it up.
@@ -53,7 +69,7 @@ CRITICAL — quantitative-claim rule (read twice):
 - If you want to say something is quantitatively true and you cannot cite a number from the supplied data, say it qualitatively instead ("heavily emphasized", "rarely mentioned", "primary focus", "secondary").
 - When you DO cite a percentage, it must match the supplied skill profile exactly (including the archetype's JD count denominator).
 
-CRITICAL — company-specific-claim rule (read twice):
+${deepDiveBlock}CRITICAL — company-specific-claim rule (read twice):
 - Statements about a specific named company's internal tech stack, team structure, or working practice MUST come from that company's evidence JDs in the supplied list.
 - Forbidden (training-data leakage): "DeepMind uses JAX", "Anthropic engineers ship on AWS", "OpenAI's stack is X", "Scale AI uses Y framework" — even if you believe these from training data, the user cannot audit them against the corpus.
 - This applies even when the user themselves names a target company. The user mentioning "DeepMind" in their target text is NOT permission for you to infer DeepMind's internal stack from training data; it only tells you which evidence JDs to prioritize if any are in the supplied list.
@@ -105,6 +121,7 @@ export function buildReportUserMessage(
   classification: Classification,
   profile: ArchetypeProfile,
   evidence: JdRecord[],
+  companyProfile?: CompanyProfile | null,
 ): string {
   const skillTable = profile.top_skills
     .slice(0, 18)
@@ -122,6 +139,24 @@ export function buildReportUserMessage(
         `${r.body}\n`,
     )
     .join("\n---\n\n");
+
+  const companyBlock = companyProfile
+    ? `
+COMPANY-SPECIFIC PROFILE (target company: **${companyProfile.company}**, ${companyProfile.n_jds} JDs in corpus):
+Top 18 skills at this company (across all archetypes):
+${companyProfile.top_skills
+  .slice(0, 18)
+  .map(
+    (s) =>
+      `  - \`${s.skill}\` — appears in ${s.pct}% of ${companyProfile.n_jds} ${companyProfile.company} JDs (${s.n_jds} JDs)`,
+  )
+  .join("\n")}
+
+Archetype distribution at ${companyProfile.company}: ${JSON.stringify(companyProfile.archetype_distribution)}
+Seniority distribution at ${companyProfile.company}: ${JSON.stringify(companyProfile.seniority_distribution)}
+Sample titles at ${companyProfile.company}: ${JSON.stringify(companyProfile.titles_sample)}
+`
+    : "";
 
   return `USER RESUME (verbatim, from their text):
 ---
@@ -143,7 +178,7 @@ ${skillTable}
 
 Seniority distribution in this archetype: ${JSON.stringify(profile.seniority_distribution)}
 Top companies hiring this archetype: ${JSON.stringify(profile.top_companies)}
-
+${companyBlock}
 EVIDENCE JDs (use these for quotes and grounding):
 ${evidenceBlocks}
 
