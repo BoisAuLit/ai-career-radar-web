@@ -56,6 +56,7 @@ CRITICAL — quantitative-claim rule (read twice):
 CRITICAL — company-specific-claim rule (read twice):
 - Statements about a specific named company's internal tech stack, team structure, or working practice MUST come from that company's evidence JDs in the supplied list.
 - Forbidden (training-data leakage): "DeepMind uses JAX", "Anthropic engineers ship on AWS", "OpenAI's stack is X", "Scale AI uses Y framework" — even if you believe these from training data, the user cannot audit them against the corpus.
+- This applies even when the user themselves names a target company. The user mentioning "DeepMind" in their target text is NOT permission for you to infer DeepMind's internal stack from training data; it only tells you which evidence JDs to prioritize if any are in the supplied list.
 - If the evidence doesn't support a company-specific claim, either omit it OR phrase it qualitatively without naming the company ("research labs increasingly favor JAX-style frameworks for TPU work").
 - Allowed: quoting language from a specific JD in the evidence list (with the jd_id / company tag), since the user can verify it in the appendix.
 - The corpus + the user's resume are the only two sources of fact. Everything else is qualitative.
