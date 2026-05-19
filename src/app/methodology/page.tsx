@@ -52,8 +52,8 @@ export default function MethodologyPage() {
       </header>
 
       <StatusBadge
-        phase="Phase A0 · Skeleton (2026-05-18)"
-        description="The automated collection pipeline is in its skeleton state — sources.yaml, SQLite schema, and this page exist. No network calls run yet. The /snapshot view still uses the manually-collected May 2026 corpus."
+        phase="Phase E · Live snapshot generation (2026-05-18)"
+        description="The automated collection pipeline now generates snapshot reports end-to-end from live data. 398 Anthropic JDs fetched (Phase A2), 131 classified as AI-related (Phase C), 131 extracted with full skill / archetype / seniority signals (Phase D), rendered to per-archetype reports (Phase E). Each phase is idempotent and SQLite-backed. The /snapshot page in the live web app still serves the May 2026 manual corpus — wiring the pipeline's JSON exports into the web bundle is Phase F1. Auto-running on cron is Phase F2."
       />
 
       <section className="mb-8">
@@ -261,7 +261,15 @@ export default function MethodologyPage() {
         </p>
         <p className="mt-2">
           Last updated 2026-05-18. Pipeline phase status:{" "}
-          <span className="font-mono">A0 · skeleton</span>.
+          <span className="font-mono">E · live snapshot generation</span>.
+          Latest auto-generated snapshot report:{" "}
+          <a
+            className="underline"
+            href={`${LAB_REPO}/tree/main/corpus/snapshots`}
+          >
+            corpus/snapshots/
+          </a>{" "}
+          on GitHub.
         </p>
       </footer>
     </main>
