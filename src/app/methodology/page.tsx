@@ -2,10 +2,11 @@
 // Trust system for the automated AI job-post collection pipeline.
 // See AUTOMATED_COLLECTION_DESIGN.md (v1.2) for the full design.
 //
-// PHASE A0: the automated pipeline is in skeleton state — sources.yaml,
-// SQLite schema, methodology page (this page), but no network calls yet.
-// The /snapshot data still comes from the manually-collected May 2026
-// corpus of 443 JDs from 36 companies.
+// PHASE F2.13 (2026-05-25): daily automated cron is enabled and under
+// observation. The live home page still serves the manually-curated
+// May 2026 corpus (443 JDs); the automated pipeline's output is
+// previewed at /snapshot-pipeline and will be promoted to the live
+// bundle once the daily cron has accumulated enough clean runs.
 
 import Link from "next/link";
 
@@ -52,19 +53,32 @@ export default function MethodologyPage() {
       </header>
 
       <StatusBadge
-        phase="Phase E · Live snapshot generation (2026-05-18)"
-        description="The automated collection pipeline now generates snapshot reports end-to-end from live data. 398 Anthropic JDs fetched (Phase A2), 131 classified as AI-related (Phase C), 131 extracted with full skill / archetype / seniority signals (Phase D), rendered to per-archetype reports (Phase E). Each phase is idempotent and SQLite-backed. The /snapshot page in the live web app still serves the May 2026 manual corpus — wiring the pipeline's JSON exports into the web bundle is Phase F1. Auto-running on cron is Phase F2."
+        phase="Phase F2.13 · Daily automated cron, under observation (2026-05-25)"
+        description="The full pipeline runs unattended on GitHub Actions every day at 06:00 UTC: rehydrate canonical state from the committed dump → fetch 8 first-party ATS sources (Greenhouse + Ashby) → classify AI relevance → extract structured signals → validate against 9 pre-commit gates → re-dump canonical state → commit artifacts back to main. Each phase is idempotent and SQLite-backed; a steady-state run with no new postings costs near $0. The live home page still serves the manually-curated May 2026 corpus (443 JDs). The automated output is previewed at /snapshot-pipeline as a staging surface and will be promoted to the live bundle once the daily cron has accumulated enough clean runs to trust unattended."
       />
 
       <section className="mb-8">
         <h2 className="mb-2 text-lg font-semibold">What this corpus is</h2>
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           A curated set of approximately 40 AI / AI-adjacent technology
-          companies, collected weekly (eventually — currently a single May
-          2026 manual snapshot). The companies span frontier AI labs,
-          big-tech AI teams, AI-native scaleups, AI infrastructure
-          platforms, and AI tooling / evaluation / observability vendors.
-          Most postings are based in the US and EU.
+          companies. The companies span frontier AI labs, big-tech AI
+          teams, AI-native scaleups, AI infrastructure platforms, and AI
+          tooling / evaluation / observability vendors. Most postings are
+          based in the US and EU. The live home page currently serves the
+          May 2026 manually-curated snapshot; the automated pipeline now
+          re-fetches the corpus daily and writes a separate staging
+          bundle previewed at{" "}
+          <Link className="underline" href="/snapshot-pipeline">
+            /snapshot-pipeline
+          </Link>
+          .
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+          Treat the snapshot as <strong>directional intelligence from
+          selected AI-relevant companies</strong>, not a market-wide
+          claim. Numbers reflect <em>postings currently visible on the
+          corpus's careers pages</em>, not hires made, and not the AI job
+          market as a whole.
         </p>
       </section>
 
@@ -96,25 +110,20 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">How we collect</h2>
+        <h2 className="mb-2 text-lg font-semibold">Data sources</h2>
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-          Source priority, in order of preference:
+          All data comes from <strong>first-party company career pages and
+          their ATS providers</strong>. The pipeline currently fetches
+          from two source types: Greenhouse and Ashby. Both expose public
+          job-board APIs that companies opt into when they set up their
+          ATS — no scraping, no headless browsers, no auth bypass.
         </p>
-        <ol className="mt-2 list-decimal space-y-1 pl-6 text-sm text-zinc-700 dark:text-zinc-300">
-          <li>
-            Official public APIs (Greenhouse Job Board API, Lever
-            Postings API) — used wherever available
-          </li>
-          <li>Public ATS pages without authentication</li>
-          <li>Company-owned careers pages (static HTML)</li>
-          <li>Company-owned careers pages (JavaScript-rendered)</li>
-        </ol>
         <p className="mt-3 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-          We <strong>do not automate</strong> against LinkedIn, Indeed, or
-          Glassdoor. Their terms of service prohibit automated access, and
-          the data they aggregate is the same first-party data we collect
-          directly. Going first-party is strictly more legal, equally
-          accurate, and avoids deduplication noise.
+          We <strong>do not scrape</strong> LinkedIn, Indeed, or Glassdoor.
+          Their terms of service prohibit automated access, and the data
+          they aggregate is the same first-party data we collect directly.
+          Going first-party is strictly more legal, equally accurate, and
+          avoids deduplication noise.
         </p>
         <p className="mt-3 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           Every source in our registry has a documented compliance entry:
@@ -124,6 +133,49 @@ export default function MethodologyPage() {
           skipped by the collector — technical ability to crawl does not
           imply permission.
         </p>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-2 text-lg font-semibold">Pipeline flow</h2>
+        <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+          Each daily run is a single idempotent chain:
+        </p>
+        <ol className="mt-2 list-decimal space-y-1 pl-6 text-sm text-zinc-700 dark:text-zinc-300">
+          <li>
+            <code>sources.yaml</code> — the registry of companies and
+            compliance metadata
+          </li>
+          <li><strong>Fetch</strong> — pull current postings from each ATS API</li>
+          <li>
+            <strong>Normalize</strong> — canonical_job_id anchored on the
+            source's stable ID (Greenhouse / Ashby job ID)
+          </li>
+          <li>
+            <strong>Boilerplate clean</strong> — strip each company's
+            stock "About [Company]" prefix/suffix before extraction
+          </li>
+          <li>
+            <strong>Classify AI relevance</strong> — keyword pre-filter
+            then an LLM classifier returning <code>include</code>,{" "}
+            <code>review</code>, or <code>exclude</code>
+          </li>
+          <li>
+            <strong>Extract structured signals</strong> — skills,
+            archetype, seniority, years on include'd JDs
+          </li>
+          <li>
+            <strong>Snapshot</strong> — write a human-readable report and
+            machine-readable JSON of the run
+          </li>
+          <li>
+            <strong>Web bundle</strong> — emit a static JSON the front-end
+            reads (staging at{" "}
+            <Link className="underline" href="/snapshot-pipeline">
+              /snapshot-pipeline
+            </Link>{" "}
+            today; production bundle still manual)
+          </li>
+        </ol>
       </section>
 
       <section className="mb-8">
@@ -213,6 +265,70 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-8">
+        <h2 className="mb-2 text-lg font-semibold">Public display rules</h2>
+        <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+          We do not republish full job descriptions publicly. Public
+          surfaces show <strong>aggregate statistics</strong> (counts,
+          archetype/skill distributions, per-company breakdowns), with
+          links back to the original posting on the company's ATS so the
+          source of every data point is one click away. Short excerpted
+          snippets may appear in analysis where they help interpretation,
+          but the canonical full text is only ever held in the pipeline's
+          private working storage, not republished.
+        </p>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-2 text-lg font-semibold">Human review</h2>
+        <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+          The classifier returns a categorical decision —{" "}
+          <code>include</code>, <code>review</code>, or{" "}
+          <code>exclude</code>. Borderline cases (mid-range confidence,
+          ambiguous AI-relatedness, or surface mentions that may not
+          reflect actual AI work) are routed to a{" "}
+          <strong>human review queue</strong> rather than auto-decided.
+          We do not show a numeric confidence value on public surfaces:
+          an LLM's self-reported probability is uncalibrated, and
+          exposing it as "91% confident" suggests precision we have not
+          earned.
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+          The review queue is part of the trust system. Operators work
+          through it via a small CLI (no auto-resolution, no batch
+          guessing) — each item is decided as include / exclude / defer
+          with a written note, and the audit trail (who, when, why) is
+          persisted as a lifecycle event. The dataset gets cleaner with
+          time, not noisier; the visible cost is a slower path to
+          publication.
+        </p>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="mb-2 text-lg font-semibold">Automation status</h2>
+        <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+          Daily automation is enabled. The pipeline runs unattended on
+          GitHub Actions at 06:00 UTC every day, gated by nine pre-commit
+          validation gates that catch fetch failures, classifier
+          collapse, review-queue explosion, and cost overruns. A run that
+          fails any gate aborts before its artifacts are committed back
+          to the repo.
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+          The automated output is{" "}
+          <strong>still under observation</strong>. The live home page
+          continues to serve the older manually-curated May 2026 bundle;
+          the automated daily output is previewed at{" "}
+          <Link className="underline" href="/snapshot-pipeline">
+            /snapshot-pipeline
+          </Link>{" "}
+          as a staging surface. Promotion of the automated bundle to the
+          live home page is a separate, deliberate step that happens only
+          after the daily cron has accumulated enough clean runs to be
+          trusted unattended.
+        </p>
+      </section>
+
+      <section className="mb-8">
         <h2 className="mb-2 text-lg font-semibold">Trust signals</h2>
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           Every claim in our snapshot report should be auditable. To that
@@ -260,14 +376,17 @@ export default function MethodologyPage() {
           .
         </p>
         <p className="mt-2">
-          Last updated 2026-05-18. Pipeline phase status:{" "}
-          <span className="font-mono">E · live snapshot generation</span>.
-          Latest auto-generated snapshot report:{" "}
+          Last updated 2026-05-25. Pipeline phase status:{" "}
+          <span className="font-mono">
+            F2.13 · daily cron live, under observation
+          </span>
+          . Per-run summaries (one JSON per source per run) are committed
+          to{" "}
           <a
             className="underline"
-            href={`${LAB_REPO}/tree/main/corpus/snapshots`}
+            href={`${LAB_REPO}/tree/main/corpus/runs`}
           >
-            corpus/snapshots/
+            corpus/runs/
           </a>{" "}
           on GitHub.
         </p>
