@@ -95,8 +95,8 @@ export default function MethodologyPage() {
             <strong>Not a flow of hires.</strong> The snapshot reflects
             currently-posted JDs. Specialized hard-to-fill roles persist
             on careers pages longer and are over-represented; hot
-            high-velocity roles fill before our weekly snapshot captures
-            them. Treat archetype shares as "composition of public
+            high-velocity roles fill between two consecutive daily
+            snapshots. Treat archetype shares as "composition of public
             postings," not "composition of hires."
           </li>
           <li>
