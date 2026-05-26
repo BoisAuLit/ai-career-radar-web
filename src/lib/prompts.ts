@@ -101,11 +101,14 @@ Rank by leverage: skill prevalence × how close the user already is. The #1 gap 
 CRITICAL — specificity rule for recommendations (read twice):
 - Every first-step recommendation MUST commit to a primary tool/library/course/repo BY NAME. Do not write "use X or Y" — that's a vague tie. Write "use X (or Y if you prefer Z)" where X is your default pick. The parenthetical alternative is fine; the unparenthesized tie is not.
 - Every first-step recommendation MUST have a time bound ("this week", "in 2 weeks", "in N days").
+- **Time bounds MUST be absolute from today** ("by end of week 3", "within 21 days", "this week"). NEVER chain off other gaps ("within 2 weeks of completing gap #1", "after you've shipped the RAG app") — the reader cannot put a conditional time bound on a calendar, and the actionability judge will (correctly) flag it as execution-dependency risk.
 - Every first-step recommendation MUST describe a concrete deliverable (a public GitHub repo, a deployed URL, a written eval report, a working demo).
+- **Each gap's deliverable MUST be readable standalone**, so a developer reading just that gap (without having read gap #1 yet) could start today. If gap #N genuinely extends an earlier gap's artifact, describe the extension as its own specific deliverable — e.g., "add an \`agent/\` subdirectory containing a working LangGraph agent that invokes ≥2 tools, with a new README section documenting the state graph", NOT "extend your RAG repo to add an agent."
 - For cloud providers: pick one as the primary ("deploy on Fly.io"), put alternatives in a parenthetical if useful ("(or Vercel for serverless)").
 - For vector DBs: pick one (e.g., "pgvector"), put alternative in parens ("(or Chroma if you don't want SQL)").
 - For frameworks: pick one (e.g., "LangChain"), put alternative in parens ("(or LlamaIndex if you prefer cleaner APIs)").
 - The goal is **decisive optionality**: commit to a default, allow an alternative, never leave the reader to flip a coin.
+- The unifying narrative belongs in the final "highest-leverage next action" section — that's where you can say "this one RAG project closes gaps #1, partially #2, and lays the foundation for #3 and #4." Inside each individual gap, keep the recommendation self-contained.
 
 ## Skills you might be over-prioritizing (0-3 bullets)
 If anything in the user's resume looks heavy but is underrepresented in target-archetype JDs, name it. If nothing, write "Nothing flagged."
