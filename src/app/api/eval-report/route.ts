@@ -16,7 +16,11 @@ const VALID_ARCHETYPES: Archetype[] = [
 ];
 
 export async function POST(req: Request): Promise<Response> {
-  let body: { report_markdown?: string; classification?: Classification };
+  let body: {
+    report_markdown?: string;
+    classification?: Classification;
+    resume_text?: string;
+  };
   try {
     body = await req.json();
   } catch {
@@ -25,6 +29,7 @@ export async function POST(req: Request): Promise<Response> {
 
   const report_markdown = (body.report_markdown || "").trim();
   const classification = body.classification;
+  const resume_text = (body.resume_text || "").trim();
 
   if (!report_markdown || !classification) {
     return Response.json(
@@ -54,6 +59,7 @@ export async function POST(req: Request): Promise<Response> {
       classification,
       profile,
       evidence,
+      resume_text,
     });
     return Response.json(result);
   } catch (e) {

@@ -353,7 +353,7 @@ export default function Page() {
       const res = await fetch("/api/eval-report", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ report_markdown: report, classification }),
+        body: JSON.stringify({ report_markdown: report, classification, resume_text: resume }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `eval failed (${res.status})`);

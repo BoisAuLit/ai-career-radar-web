@@ -12,6 +12,7 @@ export interface ReportEvalInput {
   classification: Classification;
   profile: ArchetypeProfile;
   evidence: Pick<JdRecord, "id" | "company" | "title">[];
+  resume_text?: string;
 }
 
 export interface GroundednessDetail {
@@ -119,6 +120,12 @@ Return ONE JSON object, no prose:
 async function evalGroundedness(
   input: ReportEvalInput,
 ): Promise<{ score: number; detail: GroundednessDetail }> {
+  const resumeBlock = input.resume_text
+    ? `RESUME TEXT (source for claims about what the user has / lacks — rule #5):
+${input.resume_text}
+
+`
+    : "";
   const userMessage = `SKILL PROFILE (source of valid percentages):
 ${formatProfile(input.profile)}
 
@@ -128,7 +135,7 @@ ${formatEvidence(input.evidence)}
 CLASSIFICATION REASONING:
 ${input.classification.reasoning}
 
-REPORT TO EVALUATE:
+${resumeBlock}REPORT TO EVALUATE:
 ${input.report_markdown}`;
   type GroundednessJudge = {
     n_claims: number;
