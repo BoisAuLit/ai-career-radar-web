@@ -52,6 +52,41 @@ function stripFences(text: string): string {
   return s;
 }
 
+// Extract the first complete top-level JSON object from a string.
+//
+// The judge models are instructed to return ONE JSON object with no
+// prose, but in practice they sometimes append a trailing explanation
+// or wrap the JSON in fences with trailing prose after the closing
+// fence. `JSON.parse` then errors with "Unexpected non-whitespace
+// character after JSON at position N". This walks braces (respecting
+// strings + escapes) to slice out just the first balanced object.
+function extractFirstJsonObject(text: string): string {
+  const start = text.indexOf("{");
+  if (start === -1) return text;
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (inString) {
+      if (ch === "\\") escape = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return text.slice(start, i + 1);
+    }
+  }
+  return text; // unmatched; let JSON.parse surface a real error
+}
+
 function formatProfile(profile: ArchetypeProfile): string {
   const lines = profile.top_skills
     .slice(0, 18)
@@ -82,7 +117,15 @@ async function judge(systemPrompt: string, userMessage: string): Promise<unknown
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
   });
-  return JSON.parse(stripFences(r.text));
+  const cleaned = extractFirstJsonObject(stripFences(r.text));
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    // Surface enough context to diagnose without dumping the full response.
+    const preview = r.text.slice(0, 200).replace(/\s+/g, " ");
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new Error(`Judge returned unparseable JSON (${msg}). Response preview: ${preview}`);
+  }
 }
 
 // ─── Groundedness ────────────────────────────────────────────────────────────
