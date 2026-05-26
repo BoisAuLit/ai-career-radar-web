@@ -2,7 +2,7 @@
 // Three metrics, each = one Haiku call. Run in parallel.
 
 import { anthropic } from "@ai-sdk/anthropic";
-import { generateText } from "ai";
+import { generateObject, jsonSchema } from "ai";
 import type { ArchetypeProfile, JdRecord, Classification } from "./types";
 
 const JUDGE_MODEL = "claude-haiku-4-5-20251001";
@@ -43,49 +43,12 @@ export interface ReportEvalResult {
   };
 }
 
-function stripFences(text: string): string {
-  let s = text.trim();
-  if (s.startsWith("```")) {
-    s = s.replace(/^```[a-z]*\n/i, "").replace(/\n```$/i, "");
-    s = s.trim();
-  }
-  return s;
-}
-
-// Extract the first complete top-level JSON object from a string.
-//
-// The judge models are instructed to return ONE JSON object with no
-// prose, but in practice they sometimes append a trailing explanation
-// or wrap the JSON in fences with trailing prose after the closing
-// fence. `JSON.parse` then errors with "Unexpected non-whitespace
-// character after JSON at position N". This walks braces (respecting
-// strings + escapes) to slice out just the first balanced object.
-function extractFirstJsonObject(text: string): string {
-  const start = text.indexOf("{");
-  if (start === -1) return text;
-  let depth = 0;
-  let inString = false;
-  let escape = false;
-  for (let i = start; i < text.length; i++) {
-    const ch = text[i];
-    if (escape) {
-      escape = false;
-      continue;
-    }
-    if (inString) {
-      if (ch === "\\") escape = true;
-      else if (ch === '"') inString = false;
-      continue;
-    }
-    if (ch === '"') inString = true;
-    else if (ch === "{") depth++;
-    else if (ch === "}") {
-      depth--;
-      if (depth === 0) return text.slice(start, i + 1);
-    }
-  }
-  return text; // unmatched; let JSON.parse surface a real error
-}
+// Each judge defines its own JSON Schema below; generateObject + jsonSchema
+// constrain Anthropic's output via tool-use, so the model returns a parsed
+// object directly rather than free-form text we have to JSON.parse. This
+// eliminates the entire class of "model emitted invalid JSON" bugs
+// (trailing prose after the closing brace, unescaped quotes inside string
+// values quoted from the source, missing commas, etc).
 
 function formatProfile(profile: ArchetypeProfile): string {
   const lines = profile.top_skills
@@ -111,21 +74,18 @@ function formatEvidence(
   return evidence.map((e) => `  - ${e.id} · ${e.company} · ${e.title}`).join("\n");
 }
 
-async function judge(systemPrompt: string, userMessage: string): Promise<unknown> {
-  const r = await generateText({
+async function judge<T>(
+  systemPrompt: string,
+  userMessage: string,
+  schema: Record<string, unknown>,
+): Promise<T> {
+  const r = await generateObject({
     model: anthropic(JUDGE_MODEL),
     system: systemPrompt,
     messages: [{ role: "user", content: userMessage }],
+    schema: jsonSchema<T>(schema),
   });
-  const cleaned = extractFirstJsonObject(stripFences(r.text));
-  try {
-    return JSON.parse(cleaned);
-  } catch (e) {
-    // Surface enough context to diagnose without dumping the full response.
-    const preview = r.text.slice(0, 200).replace(/\s+/g, " ");
-    const msg = e instanceof Error ? e.message : String(e);
-    throw new Error(`Judge returned unparseable JSON (${msg}). Response preview: ${preview}`);
-  }
+  return r.object;
 }
 
 // ─── Groundedness ────────────────────────────────────────────────────────────
@@ -170,12 +130,28 @@ ${input.classification.reasoning}
 
 REPORT TO EVALUATE:
 ${input.report_markdown}`;
-  const r = (await judge(GROUNDEDNESS_SYSTEM, userMessage)) as {
+  type GroundednessJudge = {
     n_claims: number;
     n_grounded: number;
     score: number;
     ungrounded_examples: string[];
   };
+  const GROUNDEDNESS_SCHEMA = {
+    type: "object",
+    additionalProperties: false,
+    required: ["n_claims", "n_grounded", "score", "ungrounded_examples"],
+    properties: {
+      n_claims: { type: "integer", minimum: 0 },
+      n_grounded: { type: "integer", minimum: 0 },
+      score: { type: "number", minimum: 0, maximum: 1 },
+      ungrounded_examples: { type: "array", items: { type: "string" }, maxItems: 3 },
+    },
+  } as const;
+  const r = await judge<GroundednessJudge>(
+    GROUNDEDNESS_SYSTEM,
+    userMessage,
+    GROUNDEDNESS_SCHEMA,
+  );
   return {
     score: r.score,
     detail: {
@@ -216,12 +192,28 @@ async function evalSpecificity(
 ): Promise<{ score: number; detail: SpecificityDetail }> {
   const userMessage = `REPORT TO EVALUATE:
 ${input.report_markdown}`;
-  const r = (await judge(SPECIFICITY_SYSTEM, userMessage)) as {
+  type SpecificityJudge = {
     n_recommendations: number;
     n_specific: number;
     score: number;
     vague_examples: string[];
   };
+  const SPECIFICITY_SCHEMA = {
+    type: "object",
+    additionalProperties: false,
+    required: ["n_recommendations", "n_specific", "score", "vague_examples"],
+    properties: {
+      n_recommendations: { type: "integer", minimum: 0 },
+      n_specific: { type: "integer", minimum: 0 },
+      score: { type: "number", minimum: 0, maximum: 1 },
+      vague_examples: { type: "array", items: { type: "string" }, maxItems: 3 },
+    },
+  } as const;
+  const r = await judge<SpecificityJudge>(
+    SPECIFICITY_SYSTEM,
+    userMessage,
+    SPECIFICITY_SCHEMA,
+  );
   return {
     score: r.score,
     detail: {
@@ -263,12 +255,28 @@ ${JSON.stringify(input.classification)}
 
 REPORT TO EVALUATE:
 ${input.report_markdown}`;
-  const r = (await judge(ACTIONABILITY_SYSTEM, userMessage)) as {
+  type ActionabilityJudge = {
     n_recommendations: number;
     n_actionable: number;
     score: number;
     blocking_examples: string[];
   };
+  const ACTIONABILITY_SCHEMA = {
+    type: "object",
+    additionalProperties: false,
+    required: ["n_recommendations", "n_actionable", "score", "blocking_examples"],
+    properties: {
+      n_recommendations: { type: "integer", minimum: 0 },
+      n_actionable: { type: "integer", minimum: 0 },
+      score: { type: "number", minimum: 0, maximum: 1 },
+      blocking_examples: { type: "array", items: { type: "string" }, maxItems: 3 },
+    },
+  } as const;
+  const r = await judge<ActionabilityJudge>(
+    ACTIONABILITY_SYSTEM,
+    userMessage,
+    ACTIONABILITY_SCHEMA,
+  );
   return {
     score: r.score,
     detail: {
