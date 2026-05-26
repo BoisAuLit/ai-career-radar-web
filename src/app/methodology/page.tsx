@@ -18,7 +18,7 @@ export const metadata = {
 
 const LAB_REPO = "https://github.com/BoisAuLit/tuto_ai_career_radar";
 const DESIGN_DOC = `${LAB_REPO}/blob/main/AUTOMATED_COLLECTION_DESIGN.md`;
-const BUILD_LOG = `${LAB_REPO}/blob/main/BUILD_LOG.ipynb`;
+const BUILD_LOG = `${LAB_REPO}/blob/main/BUILD_LOG.md`;
 const DECISION_LOG = `${LAB_REPO}/blob/main/DECISION_LOG.md`;
 
 function StatusBadge({
@@ -345,7 +345,7 @@ export default function MethodologyPage() {
           <li>
             The day-by-day build log:{" "}
             <a className="underline" href={BUILD_LOG}>
-              BUILD_LOG.ipynb
+              BUILD_LOG.md
             </a>
           </li>
           <li>
