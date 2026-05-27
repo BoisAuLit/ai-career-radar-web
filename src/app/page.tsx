@@ -571,102 +571,229 @@ export default function Page() {
   }
 
   return (
-    <div className="mx-auto min-h-dvh w-full max-w-3xl px-4 py-8">
-      <nav className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500">
-        <Link href="/methodology" className="underline-offset-2 hover:underline">
-          Methodology
-        </Link>
-        <Link href="/snapshot-pipeline" className="underline-offset-2 hover:underline">
-          Pipeline snapshot <span className="text-amber-600 dark:text-amber-400">(staging)</span>
-        </Link>
-        <Link href="/lab" className="underline-offset-2 hover:underline">
-          Lab · eval matrix
-        </Link>
-      </nav>
-
-      <header className="mb-6">
-        <div className="mb-2 inline-block rounded-full border border-zinc-300 bg-zinc-100 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-          For senior engineers pivoting into AI
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight">AI Career Radar</h1>
-        <p className="mt-2 text-base text-zinc-700 dark:text-zinc-300">
-          The gap between your resume and what AI companies actually hire for —
-          distilled from <strong>443 real JDs</strong> across frontier labs, big
-          tech, AI scaleups, and infra companies.
-        </p>
-        <p className="mt-1 text-sm text-zinc-500">
-          Paste resume + describe the role you want. Get a personalized 5-section
-          gap report — <strong>what you already have</strong>, your{" "}
-          <strong>highest-leverage gaps</strong>, and <strong>what to build next</strong>
-          {" "}— in ~60s.
-        </p>
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-          <span className="rounded-md border border-zinc-300 px-2 py-0.5 dark:border-zinc-700">
-            Quality (V1, LLM-graded): <strong className="text-zinc-700 dark:text-zinc-300">gr 0.93 · sp 0.83 · ac 0.82</strong>
-          </span>
-          <a
-            href="#how-it-works"
-            className="underline underline-offset-2 hover:text-zinc-700 dark:hover:text-zinc-300"
-          >
-            How does this work?
-          </a>
-        </div>
+    <div className="min-h-dvh w-full bg-gradient-to-b from-white via-zinc-50/60 to-white text-zinc-900 dark:from-zinc-950 dark:via-zinc-900/40 dark:to-zinc-950 dark:text-zinc-100">
+      {/* ─────────────────── Sticky navbar ─────────────────── */}
+      <header className="sticky top-0 z-40 w-full border-b border-zinc-200/70 bg-white/80 backdrop-blur dark:border-zinc-800/70 dark:bg-zinc-950/70">
+        <nav className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <Link href="/" className="group flex items-center gap-2">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-700 text-xs font-bold text-white shadow-sm dark:from-zinc-100 dark:to-zinc-300 dark:text-zinc-900">
+              ◉
+            </span>
+            <span className="text-sm font-semibold tracking-tight">AI Career Radar</span>
+            <span className="hidden rounded-full border border-zinc-300 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-600 sm:inline-block dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+              443 real JDs
+            </span>
+          </Link>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
+            <Link href="/methodology" className="hover:text-zinc-900 dark:hover:text-zinc-100">
+              Methodology
+            </Link>
+            <Link href="/snapshot-pipeline" className="inline-flex items-center gap-1.5 hover:text-zinc-900 dark:hover:text-zinc-100">
+              Pipeline snapshot
+              <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                staging
+              </span>
+            </Link>
+            <Link href="/lab" className="hover:text-zinc-900 dark:hover:text-zinc-100">
+              Lab
+            </Link>
+          </div>
+        </nav>
       </header>
 
-      <section className="mb-6 grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
-        <div className="rounded-lg border border-emerald-300 bg-emerald-50/40 px-3 py-2 dark:border-emerald-900 dark:bg-emerald-950/20">
-          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+      <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
+
+      {/* ─────────────────── Hero ─────────────────── */}
+      <section className="relative mb-12 grid grid-cols-1 items-start gap-10 lg:mb-16 lg:grid-cols-5 lg:gap-12">
+        {/* Soft radial glow behind hero (decorative, pointer-events-none) */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-12 left-0 right-0 -z-10 h-72 bg-[radial-gradient(ellipse_60%_60%_at_30%_0%,rgba(99,102,241,0.10),transparent_70%)] dark:bg-[radial-gradient(ellipse_60%_60%_at_30%_0%,rgba(99,102,241,0.18),transparent_70%)]"
+        />
+        <div className="lg:col-span-3">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-zinc-300/80 bg-white/60 px-3 py-1 text-[11px] font-medium tracking-wide text-zinc-600 backdrop-blur dark:border-zinc-700/80 dark:bg-zinc-900/40 dark:text-zinc-400">
+            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+            For senior engineers pivoting into AI
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+            AI career gap reports
+            <br className="hidden sm:block" />
+            <span className="bg-gradient-to-r from-zinc-900 via-zinc-700 to-zinc-500 bg-clip-text text-transparent dark:from-white dark:via-zinc-300 dark:to-zinc-500">
+              for senior engineers.
+            </span>
+          </h1>
+          <p className="mt-4 max-w-xl text-base text-zinc-600 sm:text-lg dark:text-zinc-400">
+            Compare your resume against what AI companies actually hire for —
+            distilled from <strong className="text-zinc-900 dark:text-zinc-100">443 real AI engineering job posts</strong> across
+            frontier labs, big tech, AI scaleups, and infra companies.
+          </p>
+          <ul className="mt-5 space-y-1.5 text-sm text-zinc-700 dark:text-zinc-300">
+            <li className="flex items-start gap-2">
+              <span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+              <span><strong>What you already have</strong> — skills you don&apos;t need to re-learn.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+              <span><strong>Your highest-leverage gaps</strong> — ranked by skill prevalence + how close you are.</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="mt-1 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-500" />
+              <span><strong>What to build next</strong> — one concrete project, time-bounded, named tools.</span>
+            </li>
+          </ul>
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+            <a
+              href="#generator"
+              className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            >
+              Generate my gap report
+              <span aria-hidden>→</span>
+            </a>
+            <a
+              href="#samples"
+              className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 bg-white/70 px-4 py-2.5 text-sm font-medium text-zinc-700 backdrop-blur transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-300 dark:hover:bg-zinc-900"
+            >
+              Try a fictional sample
+            </a>
+          </div>
+          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-zinc-500 dark:text-zinc-500">
+            <span className="inline-flex items-center gap-1.5">
+              <span aria-hidden className="text-emerald-600 dark:text-emerald-400">✓</span>
+              443 real JDs
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span aria-hidden className="text-emerald-600 dark:text-emerald-400">✓</span>
+              Daily automated corpus
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span aria-hidden className="text-emerald-600 dark:text-emerald-400">✓</span>
+              Evidence-grounded reports
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span aria-hidden className="text-emerald-600 dark:text-emerald-400">✓</span>
+              No account required
+            </span>
+          </div>
+        </div>
+
+        {/* Mock report preview card — static, decorative, desktop only */}
+        <aside
+          aria-hidden
+          className="hidden lg:col-span-2 lg:block"
+        >
+          <div className="relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/80 p-5 shadow-lg shadow-zinc-200/60 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-900/60 dark:shadow-zinc-950/40">
+            <div className="mb-3 flex items-center justify-between border-b border-zinc-200 pb-3 dark:border-zinc-800">
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Sample · static</div>
+                <div className="text-sm font-semibold">Target: Applied AI Engineer</div>
+              </div>
+              <span className="rounded-md bg-zinc-900 px-2 py-0.5 text-[10px] font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
+                applied_ai
+              </span>
+            </div>
+            <div className="mb-3">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                Strengths · don&apos;t re-learn
+              </div>
+              <p className="mt-1 text-xs text-zinc-700 dark:text-zinc-300">
+                Frontend systems · product-shipping cadence · CI/CD discipline
+              </p>
+            </div>
+            <div className="mb-3">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                Top gap · 55% of JDs
+              </div>
+              <p className="mt-1 text-xs text-zinc-700 dark:text-zinc-300">
+                Python production AI workflows — RAG, evals, agent orchestration
+              </p>
+            </div>
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-indigo-700 dark:text-indigo-400">
+                Next build · 2 weeks
+              </div>
+              <p className="mt-1 text-xs text-zinc-700 dark:text-zinc-300">
+                Ship a RAG-backed agent workflow debugger to a public GitHub repo.
+              </p>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      {/* Best for / Not for — qualifier strip */}
+      <section className="mb-12 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+        <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/40 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/20">
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
             Best for
           </div>
-          <ul className="space-y-1 text-zinc-700 dark:text-zinc-300">
-            <li>· Senior frontend / backend / data engineers pivoting into AI</li>
-            <li>· Engineers who want evidence from real JDs, not generic course lists</li>
-            <li>· People deciding which one project to build next</li>
+          <ul className="space-y-1.5 text-zinc-700 dark:text-zinc-300">
+            <li className="flex gap-2"><span className="text-emerald-600">·</span>Senior frontend / backend / data engineers pivoting into AI</li>
+            <li className="flex gap-2"><span className="text-emerald-600">·</span>Engineers who want evidence from real JDs, not generic course lists</li>
+            <li className="flex gap-2"><span className="text-emerald-600">·</span>People deciding which one project to build next</li>
           </ul>
         </div>
-        <div className="rounded-lg border border-zinc-300 bg-zinc-50/60 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900/40">
-          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+        <div className="rounded-2xl border border-zinc-200/70 bg-zinc-50/60 p-4 dark:border-zinc-700/60 dark:bg-zinc-900/40">
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
             Not for
           </div>
-          <ul className="space-y-1 text-zinc-700 dark:text-zinc-300">
-            <li>· Generic career advice or interview prep</li>
-            <li>· Salary negotiation or recruiter matching</li>
-            <li>· Net-new juniors with no engineering background yet</li>
+          <ul className="space-y-1.5 text-zinc-700 dark:text-zinc-300">
+            <li className="flex gap-2"><span className="text-zinc-500">·</span>Generic career advice or interview prep</li>
+            <li className="flex gap-2"><span className="text-zinc-500">·</span>Salary negotiation or recruiter matching</li>
+            <li className="flex gap-2"><span className="text-zinc-500">·</span>Net-new juniors with no engineering background yet</li>
           </ul>
         </div>
       </section>
 
-      <section className="space-y-4">
-        {/* Demo / sample mode — populates resume + target with fictional data */}
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50/60 px-3 py-2 text-xs dark:border-zinc-800 dark:bg-zinc-900/40">
-          <div className="mb-1.5 flex items-center gap-2">
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">
-              First time? Try a fictional sample
-            </span>
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
-              Samples are fictional
-            </span>
-          </div>
-          <p className="mb-2 text-[11px] text-zinc-500">
-            Loads a made-up resume + target into the fields below so you can see
-            how the report works before pasting your real resume. Nothing runs
-            until you click <em>Generate</em>.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {SAMPLE_PERSONAS.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => loadSample(p)}
-                disabled={isBusy}
-                title={p.blurb}
-                className="rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-[11px] font-medium hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+      {/* ─────────────────── Sample personas (cards) ─────────────────── */}
+      <section id="samples" className="mb-12 scroll-mt-20">
+        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-lg font-semibold tracking-tight">First time? Try a fictional sample</h2>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+            <span aria-hidden>⚠</span> Samples are fictional
+          </span>
         </div>
+        <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+          Loads a made-up resume + target into the generator below. Nothing runs
+          until you click <em>Generate</em>.
+        </p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {SAMPLE_PERSONAS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => loadSample(p)}
+              disabled={isBusy}
+              title={p.blurb}
+              className="group flex h-full flex-col items-start gap-2 rounded-2xl border border-zinc-200 bg-white p-4 text-left text-sm shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60 dark:hover:border-zinc-700"
+            >
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+                Sample · fictional
+              </span>
+              <span className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+                {p.label}
+              </span>
+              <span className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                {p.blurb}
+              </span>
+              <span className="mt-auto inline-flex items-center gap-1 pt-2 text-xs font-medium text-zinc-700 group-hover:text-zinc-900 dark:text-zinc-300 dark:group-hover:text-zinc-100">
+                Load sample <span aria-hidden>→</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* ─────────────────── Report generator card ─────────────────── */}
+      <section id="generator" className="mb-12 scroll-mt-20">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-7 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <div className="mb-5 border-b border-zinc-200 pb-4 dark:border-zinc-800">
+            <h2 className="text-xl font-semibold tracking-tight">
+              Generate your personalized AI career gap report
+            </h2>
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+              Two LLM calls. About $0.05 and ~60s.
+            </p>
+          </div>
+          <div className="space-y-5">
 
         {/* Resume input with PDF upload */}
         <div>
@@ -831,22 +958,25 @@ export default function Page() {
           </div>
         </details>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 border-t border-zinc-200 pt-5 dark:border-zinc-800">
           <button
             type="button"
             onClick={handleSubmit}
             disabled={!resume.trim() || !target.trim() || isBusy}
-            className="rounded-xl bg-zinc-900 px-5 py-2 text-sm font-medium text-white disabled:opacity-40 dark:bg-white dark:text-black"
+            className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-zinc-900 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 dark:disabled:hover:bg-white"
           >
             {stage === "classifying"
-              ? "Classifying target..."
+              ? "Classifying target…"
               : stage === "generating"
-              ? "Streaming report..."
+              ? "Streaming report…"
               : companyFilter
               ? `Generate ${companyFilter} deep-dive report`
               : "Generate gap report"}
+            {stage !== "classifying" && stage !== "generating" && <span aria-hidden>→</span>}
           </button>
-          <span className="text-xs text-zinc-500">Two LLM calls. ~$0.05, ~60s.</span>
+          <span className="text-xs text-zinc-500">~$0.05 · ~60s · two LLM calls</span>
+        </div>
+          </div>
         </div>
       </section>
 
@@ -1072,88 +1202,143 @@ export default function Page() {
         );
       })()}
 
-      <section id="how-it-works" className="mt-12 space-y-6 border-t border-zinc-200 pt-8 dark:border-zinc-800">
-        <h2 className="text-xl font-semibold">How this works</h2>
-        <ol className="space-y-3 text-sm text-zinc-700 dark:text-zinc-300">
-          <li className="flex gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white dark:bg-white dark:text-black">
-              1
-            </span>
-            <span>
-              <strong>Classify your target</strong> into one of <strong>8 AI engineering archetypes</strong>{" "}
-              — <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">applied_ai</code>,{" "}
-              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">forward_deployed</code>,{" "}
-              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">llm_infra</code>,{" "}
-              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">agent_engineering</code>,{" "}
-              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">eval</code>,{" "}
-              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">research_engineer</code>,{" "}
-              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">ml_engineer</code>,{" "}
-              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">other</code>. The
-              classifier is brutal about title-vs-reality: &quot;Applied AI Engineer at
-              Anthropic&quot; is often actually <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">forward_deployed</code>.
-            </span>
-          </li>
-          <li className="flex gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white dark:bg-white dark:text-black">
-              2
-            </span>
-            <span>
-              <strong>Build a real skill profile</strong> for that archetype from the
-              43–102 JDs in the corpus that match it. Top skills with %, top hiring
-              companies, evidence quotes — all derived from real postings, not surveys.
-            </span>
-          </li>
-          <li className="flex gap-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-xs font-semibold text-white dark:bg-white dark:text-black">
-              3
-            </span>
-            <span>
-              <strong>Generate a personalized 5-section report</strong> grounded in
-              that profile + 5 evidence JDs: what you already have · top 5 gaps ranked
-              · what you might be over-prioritizing · single highest-leverage next action.
-              Quantitative claims are clamped to numbers in the supplied profile (no
-              hallucinated stats).
-            </span>
-          </li>
-        </ol>
-
-        <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
-          <h3 className="mb-2 text-base font-semibold">Quality (V1 LLM-graded baseline)</h3>
-          <p className="mb-3 text-sm text-zinc-600 dark:text-zinc-400">
-            Four representative reports were graded by Claude Haiku 4.5 on three
-            metrics. <strong>The eval is reproducible from the repo.</strong>
-          </p>
-          <div className="mb-3 grid grid-cols-3 gap-3">
-            <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 dark:border-emerald-900 dark:bg-emerald-950/40">
-              <div className="text-[10px] uppercase tracking-wide text-zinc-500">Groundedness</div>
-              <div className="text-xl font-bold text-emerald-700 dark:text-emerald-400">0.93</div>
-            </div>
-            <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 dark:border-emerald-900 dark:bg-emerald-950/40">
-              <div className="text-[10px] uppercase tracking-wide text-zinc-500">Specificity</div>
-              <div className="text-xl font-bold text-emerald-700 dark:text-emerald-400">0.83</div>
-            </div>
-            <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 dark:border-emerald-900 dark:bg-emerald-950/40">
-              <div className="text-[10px] uppercase tracking-wide text-zinc-500">Actionability</div>
-              <div className="text-xl font-bold text-emerald-700 dark:text-emerald-400">0.82</div>
-            </div>
+      {/* ─────────────────── How it works (3 step cards) ─────────────────── */}
+      <section id="how-it-works" className="mb-12 scroll-mt-20">
+        <div className="mb-5 text-center sm:text-left">
+          <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            How it works
           </div>
-          <p className="text-xs text-zinc-500">
-            Each generated report has a <strong>📊 Eval this report</strong> button so
-            you can grade your own report and see exactly which claims the judge
-            considered ungrounded, vague, or blocking.
-          </p>
+          <h2 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+            Three steps. No magic.
+          </h2>
         </div>
-
-        <div className="text-xs text-zinc-500">
-          <strong>Privacy:</strong> Your resume is sent only to Anthropic&apos;s API for
-          generation and is not stored or logged server-side beyond the duration of the
-          request. Each report is generated fresh; nothing is persisted across visits.
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+            <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-sm font-bold text-white dark:bg-white dark:text-zinc-900">
+              1
+            </div>
+            <h3 className="mb-2 text-base font-semibold">Classify your target role</h3>
+            <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+              Mapped into one of 8 AI engineering archetypes —{" "}
+              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">applied_ai</code>,{" "}
+              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">forward_deployed</code>,{" "}
+              <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">llm_infra</code>, and 5 more.
+              Brutal about title-vs-reality: &quot;Applied AI Engineer&quot; at
+              Anthropic is often <code className="rounded bg-zinc-100 px-1 text-xs dark:bg-zinc-800">forward_deployed</code>.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+            <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-sm font-bold text-white dark:bg-white dark:text-zinc-900">
+              2
+            </div>
+            <h3 className="mb-2 text-base font-semibold">Build a real skill profile</h3>
+            <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+              From the 43–102 JDs in the corpus that match the target archetype.
+              Top skills with %, top hiring companies, evidence quotes — all
+              derived from real postings, not surveys.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+            <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-sm font-bold text-white dark:bg-white dark:text-zinc-900">
+              3
+            </div>
+            <h3 className="mb-2 text-base font-semibold">Generate an evidence-grounded action plan</h3>
+            <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+              5-section report: what you already have · top 5 gaps ranked ·
+              what you might be over-prioritizing · single highest-leverage
+              next action. Numbers clamped to the supplied profile — no
+              hallucinated stats.
+            </p>
+          </div>
         </div>
+        <p className="mt-4 text-center text-xs text-zinc-500 sm:text-left">
+          This is a tracked corpus snapshot — not a complete market survey, and not magic.
+        </p>
       </section>
 
-      <footer className="mt-12 border-t border-zinc-200 pt-4 text-xs text-zinc-500 dark:border-zinc-800">
-        Powered by 443 real AI engineering JDs · Claude Sonnet 4.6 · Haiku 4.5 for evals ·
-        Single-shot, evidence-grounded · Built for senior engineers pivoting to AI.
+      {/* ─────────────────── Quality / trust ─────────────────── */}
+      <section className="mb-12">
+        <div className="mb-5">
+          <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            Quality
+          </div>
+          <h2 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+            LLM-graded baseline · V1
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+            Four representative reports were graded by Claude Haiku 4.5 on three
+            metrics. The eval is reproducible from the repo. This is a baseline,
+            not a guarantee — every report you generate also has its own{" "}
+            <strong>Eval this report</strong> button so you can grade it live.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm dark:border-emerald-900/60 dark:from-emerald-950/40 dark:to-zinc-900/40">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              Evidence-grounded
+            </div>
+            <div className="mt-1 text-3xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400">
+              0.93
+            </div>
+            <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+              Factual claims traced to the supplied profile / evidence JDs.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm dark:border-emerald-900/60 dark:from-emerald-950/40 dark:to-zinc-900/40">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              Specificity
+            </div>
+            <div className="mt-1 text-3xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400">
+              0.83
+            </div>
+            <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+              Recommendations with named tool + time bound + concrete output.
+            </p>
+          </div>
+          <div className="rounded-2xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm dark:border-emerald-900/60 dark:from-emerald-950/40 dark:to-zinc-900/40">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+              Actionability
+            </div>
+            <div className="mt-1 text-3xl font-bold tracking-tight text-emerald-700 dark:text-emerald-400">
+              0.82
+            </div>
+            <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+              Recommendations executable by the user given their background.
+            </p>
+          </div>
+        </div>
+      </section>
+      </main>
+
+      {/* ─────────────────── Footer ─────────────────── */}
+      <footer className="border-t border-zinc-200 bg-white/60 dark:border-zinc-800 dark:bg-zinc-950/60">
+        <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-700 text-xs font-bold text-white dark:from-zinc-100 dark:to-zinc-300 dark:text-zinc-900">
+                ◉
+              </span>
+              <span className="text-sm font-semibold tracking-tight">AI Career Radar</span>
+            </div>
+            <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-zinc-500">
+              <Link href="/methodology" className="hover:text-zinc-700 dark:hover:text-zinc-300">Methodology</Link>
+              <Link href="/snapshot-pipeline" className="hover:text-zinc-700 dark:hover:text-zinc-300">Pipeline snapshot</Link>
+              <Link href="/lab" className="hover:text-zinc-700 dark:hover:text-zinc-300">Lab</Link>
+            </div>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-500">
+            <span>Built from 443 real AI engineering JDs</span>
+            <span aria-hidden>·</span>
+            <span>Daily automated corpus</span>
+            <span aria-hidden>·</span>
+            <span>Transparent methodology</span>
+            <span aria-hidden>·</span>
+            <span>For senior engineers pivoting into AI</span>
+          </div>
+          <div className="mt-2 text-[11px] text-zinc-500">
+            Claude Sonnet 4.6 (generation) · Haiku 4.5 (eval) · Single-shot, evidence-grounded.
+          </div>
+        </div>
       </footer>
     </div>
   );
