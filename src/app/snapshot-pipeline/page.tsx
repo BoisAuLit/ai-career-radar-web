@@ -12,6 +12,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
+import CompanyBreakdownTable from "./CompanyBreakdownTable";
 
 export const metadata = {
   title: "Snapshot (pipeline) · AI Career Radar",
@@ -211,6 +212,40 @@ export default function SnapshotPipelinePage() {
 
       <StagingBanner />
 
+      {/* What this is + what this is NOT */}
+      <section className="mb-8 grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
+        <div className="rounded-md border border-zinc-200 bg-zinc-50/60 p-3 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+            What this page shows
+          </div>
+          <ul className="space-y-1 text-zinc-700 dark:text-zinc-300">
+            <li>· The latest snapshot from the automated daily pipeline.</li>
+            <li>· Counts and breakdowns over postings the classifier marked as AI-related.</li>
+            <li>
+              · A staging surface — useful for inspecting the pipeline's output
+              before any decision to promote it to the live home page.
+            </li>
+          </ul>
+        </div>
+        <div className="rounded-md border border-zinc-200 bg-zinc-50/60 p-3 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+            What this page does NOT show
+          </div>
+          <ul className="space-y-1 text-zinc-700 dark:text-zinc-300">
+            <li>· The live production dataset (still the May 2026 manual corpus, 443 JDs).</li>
+            <li>· The whole AI job market — only a curated ~40-company sample.</li>
+            <li>
+              · Trend / time-series data. Each daily snapshot is a single point in
+              time; trend claims require months of accumulation.
+            </li>
+            <li>
+              · Full job descriptions. Counts only, with links back to original
+              ATS postings — never republished prose.
+            </li>
+          </ul>
+        </div>
+      </section>
+
       {/* Pipeline summary */}
       <section className="mb-8">
         <h2 className="mb-3 text-lg font-semibold">Pipeline summary</h2>
@@ -280,42 +315,10 @@ export default function SnapshotPipelinePage() {
         </ul>
       </section>
 
-      {/* Company breakdown */}
+      {/* Company breakdown (with client-side filter) */}
       <section className="mb-8">
         <h2 className="mb-3 text-lg font-semibold">Company breakdown</h2>
-        <div className="overflow-x-auto rounded-md border border-zinc-200 dark:border-zinc-800">
-          <table className="min-w-full text-sm">
-            <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wider text-zinc-500 dark:bg-zinc-900">
-              <tr>
-                <th className="px-3 py-2">Company</th>
-                <th className="px-3 py-2 text-right">Included jobs</th>
-                <th className="px-3 py-2">Dominant archetype</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-              {companyRows.map((c) => (
-                <tr key={c.company}>
-                  <td className="px-3 py-2">{c.company}</td>
-                  <td className="px-3 py-2 text-right font-mono">{c.n}</td>
-                  <td className="px-3 py-2 text-zinc-600 dark:text-zinc-400">
-                    {c.dominantArchetype ? (
-                      <>
-                        <span className="font-mono">
-                          {c.dominantArchetype}
-                        </span>{" "}
-                        <span className="text-zinc-400">
-                          ({c.dominantCount})
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-zinc-400">—</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <CompanyBreakdownTable rows={companyRows} />
       </section>
 
       <footer className="mt-12 border-t border-zinc-200 pt-4 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
