@@ -790,6 +790,47 @@ export default function Page() {
           </div>
         )}
 
+        {/* Privacy & trust — short version near the action button so it's read before submitting */}
+        <details className="rounded-xl border border-zinc-200 bg-zinc-50/60 text-xs dark:border-zinc-800 dark:bg-zinc-900/40">
+          <summary className="cursor-pointer select-none px-3 py-2 font-medium text-zinc-700 dark:text-zinc-300">
+            🔒 What happens to my resume? (1-min read)
+          </summary>
+          <div className="space-y-2 border-t border-zinc-200 px-3 py-3 leading-relaxed text-zinc-700 dark:border-zinc-800 dark:text-zinc-300">
+            <p>
+              <strong>Sent to:</strong> Anthropic&apos;s API (Claude Sonnet 4.6 for
+              generation, Haiku 4.5 if you run the eval). Nothing else.
+            </p>
+            <p>
+              <strong>Saved on this server:</strong> nothing. The request is
+              proxied through the API route, streamed back to your browser, and
+              dropped. No database, no logging of your resume or your report.
+            </p>
+            <p>
+              <strong>Training:</strong> Anthropic&apos;s API does not use input
+              data for model training by default (see their privacy policy).
+              This app sends no opt-in for training.
+            </p>
+            <p>
+              <strong>Stateless:</strong> each visit starts fresh. The only thing
+              persisted in your browser is an optional <code>ref=</code> URL
+              param (for attribution on feedback emails) — no resume content.
+            </p>
+            <p>
+              <strong>Practical advice:</strong> don&apos;t paste anything you
+              wouldn&apos;t put into a model context — phone numbers, full
+              addresses, real client/employer secrets. The tool works fine on a
+              lightly anonymized resume.
+            </p>
+            <p className="text-zinc-500">
+              Want more detail? See the{" "}
+              <Link className="underline" href="/methodology">
+                methodology page
+              </Link>
+              .
+            </p>
+          </div>
+        </details>
+
         <div className="flex items-center gap-3">
           <button
             type="button"
