@@ -161,8 +161,8 @@ export default function SampleReportPage() {
                 Top leverage gaps · ranked
               </h2>
               <ol className="mt-4 space-y-5">
-                <li className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50/60 to-white p-6 shadow-lg shadow-amber-200/30 ring-1 ring-amber-200/60 sm:p-7 dark:from-amber-950/20 dark:to-zinc-900/40 dark:shadow-black/30 dark:ring-amber-900/40">
-                  <span aria-hidden className="absolute right-5 top-5 text-[11px] font-mono uppercase tracking-[0.15em] text-amber-700/70 dark:text-amber-400/70">
+                <li className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-white to-amber-50/40 p-6 shadow-md shadow-amber-200/20 ring-1 ring-amber-200/50 sm:p-7 dark:from-zinc-900/60 dark:to-amber-950/20 dark:shadow-black/30 dark:ring-amber-900/30">
+                  <span aria-hidden className="absolute right-6 top-6 eyebrow text-amber-700/80 dark:text-amber-400/80">
                     Top priority
                   </span>
                   <div className="flex flex-wrap items-baseline gap-3">

@@ -105,7 +105,7 @@ export default function LabPage() {
         <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">
           The matrix (pre-fix)
         </h2>
-        <div className="overflow-x-auto">
+        <div className="surface-card overflow-x-auto p-1">
           <table className="w-full text-sm">
             <thead className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               <tr className="border-b-2 border-zinc-300 dark:border-zinc-700">
@@ -142,7 +142,7 @@ export default function LabPage() {
           claims about ADJACENT companies as substitutes. Judge-flagged
           ungrounded quotes from the outlier cell:
         </p>
-        <ul className="mb-3 list-disc rounded-md bg-rose-50 px-6 py-3 text-sm dark:bg-rose-950/30">
+        <ul className="mb-3 list-disc rounded-2xl bg-gradient-to-br from-rose-50 to-rose-50/40 px-8 py-5 text-sm ring-1 ring-rose-200/60 dark:from-rose-950/30 dark:to-rose-950/10 dark:ring-rose-900/40">
           {PRE_FIX_MATRIX[3].ungrounded.map((q, i) => (
             <li key={i} className="font-mono text-xs text-rose-900 dark:text-rose-200">
               &ldquo;{q}&rdquo;
@@ -162,7 +162,7 @@ export default function LabPage() {
 
       <section className="mb-10">
         <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">The fix · 5 prompt lines</h2>
-        <pre className="overflow-x-auto rounded-md bg-zinc-100 px-4 py-3 text-xs leading-relaxed text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
+        <pre className="overflow-x-auto rounded-2xl bg-zinc-950 px-6 py-5 font-mono text-xs leading-relaxed text-zinc-100 ring-1 ring-zinc-200/70 shadow-sm shadow-zinc-200/40 dark:ring-zinc-800/70 dark:shadow-black/30">
           {PROMPT_RULE_FIX}
         </pre>
       </section>
@@ -171,7 +171,7 @@ export default function LabPage() {
         <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">
           The result · same input, same model, post-fix
         </h2>
-        <div className="overflow-x-auto">
+        <div className="surface-card overflow-x-auto p-1">
           <table className="w-full text-sm">
             <thead className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               <tr className="border-b-2 border-zinc-300 dark:border-zinc-700">

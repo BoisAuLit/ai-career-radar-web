@@ -296,36 +296,64 @@ export default function SnapshotPipelinePage() {
         </p>
       </section>
 
-      {/* Top archetypes */}
+      {/* Top archetypes — bar-chart row treatment (data feel) */}
       <section className="mb-8">
         <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">Top archetypes</h2>
-        <ul className="divide-y divide-zinc-200 rounded-xl bg-white/60 shadow-sm shadow-zinc-200/40 ring-1 ring-zinc-200/70 dark:divide-zinc-800 dark:bg-zinc-900/40 dark:shadow-black/20 dark:ring-zinc-800/70">
-          {topArchetypes.map((a) => (
-            <li
-              key={a.key}
-              className="flex items-center justify-between px-3 py-2 text-sm"
-            >
-              <span className="font-mono">{a.key}</span>
-              <span className="text-zinc-500">{a.count}</span>
-            </li>
-          ))}
-        </ul>
+        {(() => {
+          const maxA = Math.max(1, ...topArchetypes.map((a) => a.count));
+          return (
+            <ul className="surface-card overflow-hidden">
+              {topArchetypes.map((a, i) => (
+                <li
+                  key={a.key}
+                  className={
+                    "relative px-4 py-2.5 text-sm" +
+                    (i > 0 ? " border-t border-zinc-200/70 dark:border-zinc-800/70" : "")
+                  }
+                >
+                  {/* progress bar background, very subtle */}
+                  <div
+                    aria-hidden
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500/[0.08] to-transparent dark:from-emerald-400/[0.12]"
+                    style={{ width: `${(a.count / maxA) * 100}%` }}
+                  />
+                  <div className="relative flex items-center justify-between">
+                    <span className="font-mono">{a.key}</span>
+                    <span className="metric text-zinc-600 dark:text-zinc-400">{a.count}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          );
+        })()}
       </section>
 
-      {/* Top skills */}
+      {/* Top skills — bar-chart treatment, two columns */}
       <section className="mb-8">
         <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">Top skills</h2>
-        <ul className="grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
-          {topSkills.map((s) => (
-            <li
-              key={s.key}
-              className="flex items-center justify-between border-b border-zinc-100 py-1 dark:border-zinc-900"
-            >
-              <span>{s.key}</span>
-              <span className="text-zinc-500">{s.count}</span>
-            </li>
-          ))}
-        </ul>
+        {(() => {
+          const maxS = Math.max(1, ...topSkills.map((s) => s.count));
+          return (
+            <ul className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
+              {topSkills.map((s) => (
+                <li
+                  key={s.key}
+                  className="relative overflow-hidden rounded-md px-3 py-1.5"
+                >
+                  <div
+                    aria-hidden
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-indigo-500/[0.08] to-transparent dark:from-indigo-400/[0.14]"
+                    style={{ width: `${(s.count / maxS) * 100}%` }}
+                  />
+                  <div className="relative flex items-center justify-between">
+                    <span>{s.key}</span>
+                    <span className="metric text-zinc-500">{s.count}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          );
+        })()}
       </section>
 
       {/* Company breakdown (with client-side filter) */}
