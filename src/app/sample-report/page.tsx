@@ -95,7 +95,7 @@ export default function SampleReportPage() {
           </div>
 
           {/* Body */}
-          <div className="space-y-10 px-7 py-8 sm:space-y-12 sm:px-10 sm:py-12">
+          <div className="divide-y divide-zinc-200/70 px-7 py-8 sm:px-10 sm:py-12 dark:divide-zinc-800/60 [&>section]:py-10 sm:[&>section]:py-12 [&>section:first-child]:pt-0 [&>section:last-child]:pb-0">
             {/* Background */}
             <section>
               <h2 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
@@ -160,24 +160,27 @@ export default function SampleReportPage() {
                 Top leverage gaps · ranked
               </h2>
               <ol className="mt-4 space-y-5">
-                <li className="rounded-2xl bg-zinc-50/60 p-5 ring-1 ring-zinc-200/70 dark:bg-zinc-900/40 dark:ring-zinc-800/70">
+                <li className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50/60 to-white p-6 shadow-sm ring-1 ring-amber-200/60 sm:p-7 dark:from-amber-950/20 dark:to-zinc-900/40 dark:ring-amber-900/40">
+                  <span aria-hidden className="absolute right-5 top-5 text-[11px] font-mono uppercase tracking-[0.15em] text-amber-700/70 dark:text-amber-400/70">
+                    Top priority
+                  </span>
                   <div className="flex flex-wrap items-baseline gap-3">
-                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 text-sm font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900">
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-base font-semibold text-white shadow-sm dark:bg-zinc-100 dark:text-zinc-900">
                       1
                     </span>
-                    <h3 className="text-lg font-semibold tracking-tight">
+                    <h3 className="text-xl font-semibold tracking-tight">
                       Python production AI workflows
                     </h3>
-                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-950/60 dark:text-amber-200">
+                    <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-950/60 dark:text-amber-200">
                       55% of applied_ai JDs
                     </span>
                   </div>
-                  <p className="mt-3 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+                  <p className="mt-4 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
                     Your Python is scripting-only. The role expects you to wire
                     LLM APIs into production paths: RAG retrieval, evaluation
                     harnesses, structured output, prompt versioning.
                   </p>
-                  <blockquote className="mt-3 border-l-2 border-amber-300 pl-3 text-xs italic text-zinc-600 dark:border-amber-700 dark:text-zinc-400">
+                  <blockquote className="mt-4 border-l-2 border-amber-400 pl-4 text-xs italic text-zinc-600 dark:border-amber-700 dark:text-zinc-400">
                     &quot;Build, evaluate, and ship LLM-powered features in
                     production.&quot;
                     <br />— Anthropic · jd_000017
@@ -303,36 +306,32 @@ export default function SampleReportPage() {
               <h2 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
                 First seven days · concrete plan
               </h2>
-              <ul className="mt-4 space-y-2 text-sm">
-                <li className="flex gap-3 rounded-xl bg-zinc-50/60 px-4 py-2 dark:bg-zinc-900/40">
-                  <span className="font-mono text-xs text-zinc-500">Day 1</span>
-                  <span>Read 5 applied_ai JDs end-to-end (Anthropic, Cursor, Cohere, Together AI, NVIDIA). Take notes on language.</span>
-                </li>
-                <li className="flex gap-3 rounded-xl bg-zinc-50/60 px-4 py-2 dark:bg-zinc-900/40">
-                  <span className="font-mono text-xs text-zinc-500">Day 2</span>
-                  <span>Stand up the Anthropic SDK locally. Ship a tiny single-prompt CLI that takes a query and returns a structured JSON.</span>
-                </li>
-                <li className="flex gap-3 rounded-xl bg-zinc-50/60 px-4 py-2 dark:bg-zinc-900/40">
-                  <span className="font-mono text-xs text-zinc-500">Day 3</span>
-                  <span>Add a second tool to the agent (web search). Wire it through LangGraph.</span>
-                </li>
-                <li className="flex gap-3 rounded-xl bg-zinc-50/60 px-4 py-2 dark:bg-zinc-900/40">
-                  <span className="font-mono text-xs text-zinc-500">Day 4</span>
-                  <span>Add a third tool (pgvector lookup over your own document set). Write the chunking strategy in the README.</span>
-                </li>
-                <li className="flex gap-3 rounded-xl bg-zinc-50/60 px-4 py-2 dark:bg-zinc-900/40">
-                  <span className="font-mono text-xs text-zinc-500">Day 5</span>
-                  <span>Add a Promptfoo eval suite with 10 representative tasks. Make the scores reproducible.</span>
-                </li>
-                <li className="flex gap-3 rounded-xl bg-zinc-50/60 px-4 py-2 dark:bg-zinc-900/40">
-                  <span className="font-mono text-xs text-zinc-500">Day 6</span>
-                  <span>Add an eval-trace viewer (a tiny Next.js page over the run logs). This is where your frontend depth shines.</span>
-                </li>
-                <li className="flex gap-3 rounded-xl bg-zinc-50/60 px-4 py-2 dark:bg-zinc-900/40">
-                  <span className="font-mono text-xs text-zinc-500">Day 7</span>
-                  <span>Deploy on Modal. Write a 1-paragraph design note. Open the repo. Reassess in 7 more days.</span>
-                </li>
-              </ul>
+              <ol className="mt-5 overflow-hidden rounded-2xl ring-1 ring-zinc-200/70 dark:ring-zinc-800/70">
+                {[
+                  ["1", "Read 5 applied_ai JDs end-to-end (Anthropic, Cursor, Cohere, Together AI, NVIDIA). Take notes on language."],
+                  ["2", "Stand up the Anthropic SDK locally. Ship a tiny single-prompt CLI that takes a query and returns a structured JSON."],
+                  ["3", "Add a second tool to the agent (web search). Wire it through LangGraph."],
+                  ["4", "Add a third tool (pgvector lookup over your own document set). Write the chunking strategy in the README."],
+                  ["5", "Add a Promptfoo eval suite with 10 representative tasks. Make the scores reproducible."],
+                  ["6", "Add an eval-trace viewer (a tiny Next.js page over the run logs). This is where your frontend depth shines."],
+                  ["7", "Deploy on Modal. Write a 1-paragraph design note. Open the repo. Reassess in 7 more days."],
+                ].map(([day, copy], i) => (
+                  <li
+                    key={day}
+                    className={`flex items-start gap-5 px-5 py-4 text-sm ${
+                      i % 2 === 0
+                        ? "bg-white dark:bg-zinc-900/30"
+                        : "bg-zinc-50/60 dark:bg-zinc-900/50"
+                    } ${i > 0 ? "border-t border-zinc-200/70 dark:border-zinc-800/70" : ""}`}
+                  >
+                    <div className="flex shrink-0 items-baseline gap-1.5 font-mono text-xs">
+                      <span className="text-zinc-400">Day</span>
+                      <span className="text-base font-semibold text-zinc-900 tabular-nums dark:text-zinc-100">{day}</span>
+                    </div>
+                    <span className="leading-relaxed text-zinc-700 dark:text-zinc-300">{copy}</span>
+                  </li>
+                ))}
+              </ol>
             </section>
 
             {/* Honest note */}
