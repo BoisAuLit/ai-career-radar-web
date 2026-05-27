@@ -70,11 +70,11 @@ function topCounts<T extends string>(
 
 function StagingBanner() {
   return (
-    <div className="mb-6 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700 dark:bg-amber-950/40">
-      <div className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+    <div className="mb-10 rounded-2xl bg-gradient-to-br from-amber-50/80 to-white p-5 ring-1 ring-amber-200/70 dark:from-amber-950/30 dark:to-zinc-900/30 dark:ring-amber-900/40">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-amber-700 dark:text-amber-300">
         Staging — not the live dataset
       </div>
-      <p className="mt-1 text-sm text-zinc-800 dark:text-zinc-200">
+      <p className="mt-2 text-sm leading-relaxed text-zinc-800 dark:text-zinc-200">
         This page is generated from the automated pipeline and is not yet
         the live production dataset. The live{" "}
         <Link className="underline" href="/">
@@ -261,7 +261,7 @@ export default function SnapshotPipelinePage() {
 
       {/* Pipeline summary */}
       <section className="mb-8">
-        <h2 className="mb-3 text-lg font-semibold">Pipeline summary</h2>
+        <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">Pipeline summary</h2>
         <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
           <div className="rounded-md border border-zinc-200 p-3 dark:border-zinc-800">
             <dt className="text-xs uppercase tracking-wider text-zinc-500">
@@ -298,7 +298,7 @@ export default function SnapshotPipelinePage() {
 
       {/* Top archetypes */}
       <section className="mb-8">
-        <h2 className="mb-3 text-lg font-semibold">Top archetypes</h2>
+        <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">Top archetypes</h2>
         <ul className="divide-y divide-zinc-200 rounded-md border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
           {topArchetypes.map((a) => (
             <li
@@ -314,7 +314,7 @@ export default function SnapshotPipelinePage() {
 
       {/* Top skills */}
       <section className="mb-8">
-        <h2 className="mb-3 text-lg font-semibold">Top skills</h2>
+        <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">Top skills</h2>
         <ul className="grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
           {topSkills.map((s) => (
             <li
@@ -330,7 +330,7 @@ export default function SnapshotPipelinePage() {
 
       {/* Company breakdown (with client-side filter) */}
       <section className="mb-8">
-        <h2 className="mb-3 text-lg font-semibold">Company breakdown</h2>
+        <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">Company breakdown</h2>
         <CompanyBreakdownTable rows={companyRows} />
       </section>
 

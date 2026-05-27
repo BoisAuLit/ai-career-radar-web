@@ -85,7 +85,7 @@ export default function LabPage() {
       </header>
 
       <section className="mb-10">
-        <h2 className="mb-2 text-lg font-semibold">The setup</h2>
+        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">The setup</h2>
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           Per-company &ldquo;deep-dive&rdquo; mode contrasts a target
           company&apos;s JDs against the industry-wide archetype baseline.
@@ -102,7 +102,7 @@ export default function LabPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-3 text-lg font-semibold">
+        <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">
           The matrix (pre-fix)
         </h2>
         <div className="overflow-x-auto">
@@ -132,7 +132,7 @@ export default function LabPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-3 text-lg font-semibold">
+        <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">
           The bug · cross-company training-data leakage
         </h2>
         <p className="mb-3 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
@@ -161,14 +161,14 @@ export default function LabPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-3 text-lg font-semibold">The fix · 5 prompt lines</h2>
+        <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">The fix · 5 prompt lines</h2>
         <pre className="overflow-x-auto rounded-md bg-zinc-100 px-4 py-3 text-xs leading-relaxed text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
           {PROMPT_RULE_FIX}
         </pre>
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-3 text-lg font-semibold">
+        <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">
           The result · same input, same model, post-fix
         </h2>
         <div className="overflow-x-auto">
@@ -220,7 +220,7 @@ export default function LabPage() {
       </section>
 
       <section className="mb-10">
-        <h2 className="mb-3 text-lg font-semibold">Why this generalizes</h2>
+        <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">Why this generalizes</h2>
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           This isn&apos;t a code bug. No test would have caught it. It&apos;s
           a <strong>prompt-and-data interaction</strong> that only surfaces

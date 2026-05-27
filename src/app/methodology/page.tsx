@@ -30,12 +30,12 @@ function StatusBadge({
   description: string;
 }) {
   return (
-    <div className="my-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-700 dark:bg-amber-950/40">
-      <div className="text-xs font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+    <div className="mb-10 rounded-2xl bg-gradient-to-br from-amber-50/80 to-white p-5 ring-1 ring-amber-200/70 dark:from-amber-950/30 dark:to-zinc-900/30 dark:ring-amber-900/40">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-amber-700 dark:text-amber-300">
         Current pipeline phase
       </div>
-      <div className="mt-1 font-mono text-sm">{phase}</div>
-      <div className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
+      <div className="mt-2 font-mono text-sm font-medium text-zinc-900 dark:text-zinc-100">{phase}</div>
+      <div className="mt-2 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
         {description}
       </div>
     </div>
@@ -65,7 +65,7 @@ export default function MethodologyPage() {
       />
 
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">What this corpus is</h2>
+        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">What this corpus is</h2>
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           A curated set of approximately 40 AI / AI-adjacent technology
           companies. The companies span frontier AI labs, big-tech AI
@@ -90,7 +90,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">What this corpus is NOT</h2>
+        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">What this corpus is NOT</h2>
         <ul className="list-disc space-y-2 pl-6 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           <li>
             <strong>Not the entire AI job market.</strong> 40 companies is
@@ -117,7 +117,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">Data sources</h2>
+        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Data sources</h2>
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           All data comes from <strong>first-party company career pages and
           their ATS providers</strong>. The pipeline currently fetches
@@ -143,7 +143,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">Pipeline flow</h2>
+        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Pipeline flow</h2>
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           Each daily run is a single idempotent chain:
         </p>
@@ -186,7 +186,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">How we deduplicate</h2>
+        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">How we deduplicate</h2>
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           Deduplication runs as a layered cascade, cheapest-signals first:
           source URL → content hash → normalized title equality → TF-IDF
@@ -205,7 +205,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">How we strip boilerplate</h2>
+        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">How we strip boilerplate</h2>
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           Most companies put a stock "About [Company]" paragraph at the
           top of every JD. Without stripping, the same words inflate skill
@@ -218,7 +218,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">AI relevance classification</h2>
+        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">AI relevance classification</h2>
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           A two-stage filter: a cheap keyword pre-filter (high recall,
           loose precision) followed by an LLM classifier that returns a
@@ -232,7 +232,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">What we report and why</h2>
+        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">What we report and why</h2>
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           <strong>V1 ships snapshot-only.</strong> We report:
         </p>
@@ -272,7 +272,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">Public display rules</h2>
+        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Public display rules</h2>
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           We do not republish full job descriptions publicly. Public
           surfaces show <strong>aggregate statistics</strong> (counts,
@@ -286,7 +286,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">Human review</h2>
+        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Human review</h2>
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           The classifier returns a categorical decision —{" "}
           <code>include</code>, <code>review</code>, or{" "}
@@ -311,7 +311,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">Automation status</h2>
+        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Automation status</h2>
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           Daily automation is enabled. The pipeline runs unattended on
           GitHub Actions at 06:00 UTC every day, gated by nine pre-commit
@@ -336,7 +336,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-8">
-        <h2 className="mb-2 text-lg font-semibold">Trust signals</h2>
+        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Trust signals</h2>
         <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
           Every claim in our snapshot report should be auditable. To that
           end, we publish:
