@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Classification } from "@/lib/types";
@@ -171,6 +172,56 @@ function ScoreCard({ label, score }: { label: string; score: number }) {
   );
 }
 
+// Human-friendly error categorizer. Maps raw error text to a category +
+// friendly title + hint while preserving the raw message for debugging.
+function categorizeError(raw: string): { title: string; hint: string } {
+  const m = raw.toLowerCase();
+  if (m.includes("pdf") || m.includes("extract") || m.includes("encrypted")) {
+    return {
+      title: "Couldn't read that PDF",
+      hint:
+        "Some PDFs are scanned images or encrypted. Try pasting your resume as plain text instead.",
+    };
+  }
+  if (m.includes("rate limit") || m.includes("429")) {
+    return {
+      title: "Rate-limited by the model API",
+      hint: "Wait ~30s and try again. This is set by Anthropic, not the app.",
+    };
+  }
+  if (m.includes("timeout") || m.includes("aborted")) {
+    return {
+      title: "Request timed out",
+      hint:
+        "The model took longer than ~60s. Unusual — retrying once usually fixes it.",
+    };
+  }
+  if (m.includes("network") || m.includes("fetch failed") || m.includes("failed to fetch")) {
+    return {
+      title: "Network error",
+      hint: "Check your connection and try again.",
+    };
+  }
+  if (m.includes("classify")) {
+    return {
+      title: "Couldn't classify your target role",
+      hint:
+        "If your target is very short or vague, try writing 1–3 sentences describing what you'd actually do day-to-day.",
+    };
+  }
+  if (m.includes("generate")) {
+    return {
+      title: "Couldn't generate the report",
+      hint:
+        "The model API call failed mid-stream. Retrying usually works; if it persists, the model service may be temporarily degraded.",
+    };
+  }
+  return {
+    title: "Something went wrong",
+    hint: "Please try again. The raw error is below for debugging.",
+  };
+}
+
 const FEEDBACK_EMAIL =
   process.env.NEXT_PUBLIC_FEEDBACK_EMAIL || "arthur130237@hotmail.com";
 
@@ -331,6 +382,24 @@ export default function Page() {
     }
   }
 
+  function handleStartOver() {
+    setResume("");
+    setTarget("");
+    setStage("idle");
+    setClassification(null);
+    setReport("");
+    setErrMsg("");
+    setEvalResult(null);
+    setEvalErr("");
+    setCopied(false);
+    setPdfErr("");
+    setPdfFilename(null);
+    setCompanyFilter("");
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
   function handleDownload() {
     const blob = new Blob([report], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -367,18 +436,33 @@ export default function Page() {
 
   return (
     <div className="mx-auto min-h-dvh w-full max-w-3xl px-4 py-8">
+      <nav className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500">
+        <Link href="/methodology" className="underline-offset-2 hover:underline">
+          Methodology
+        </Link>
+        <Link href="/snapshot-pipeline" className="underline-offset-2 hover:underline">
+          Pipeline snapshot <span className="text-amber-600 dark:text-amber-400">(staging)</span>
+        </Link>
+        <Link href="/lab" className="underline-offset-2 hover:underline">
+          Lab · eval matrix
+        </Link>
+      </nav>
+
       <header className="mb-6">
         <div className="mb-2 inline-block rounded-full border border-zinc-300 bg-zinc-100 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
           For senior engineers pivoting into AI
         </div>
         <h1 className="text-3xl font-bold tracking-tight">AI Career Radar</h1>
         <p className="mt-2 text-base text-zinc-700 dark:text-zinc-300">
-          What AI companies actually hire for — distilled from <strong>443 real JDs</strong>
-          across frontier labs, big tech, AI scaleups, and infra companies.
+          The gap between your resume and what AI companies actually hire for —
+          distilled from <strong>443 real JDs</strong> across frontier labs, big
+          tech, AI scaleups, and infra companies.
         </p>
         <p className="mt-1 text-sm text-zinc-500">
-          Paste resume + describe the role you want. Get a personalized 5-section gap
-          report in ~60s.
+          Paste resume + describe the role you want. Get a personalized 5-section
+          gap report — <strong>what you already have</strong>, your{" "}
+          <strong>highest-leverage gaps</strong>, and <strong>what to build next</strong>
+          {" "}— in ~60s.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-zinc-500">
           <span className="rounded-md border border-zinc-300 px-2 py-0.5 dark:border-zinc-700">
@@ -392,6 +476,29 @@ export default function Page() {
           </a>
         </div>
       </header>
+
+      <section className="mb-6 grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
+        <div className="rounded-lg border border-emerald-300 bg-emerald-50/40 px-3 py-2 dark:border-emerald-900 dark:bg-emerald-950/20">
+          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+            Best for
+          </div>
+          <ul className="space-y-1 text-zinc-700 dark:text-zinc-300">
+            <li>· Senior frontend / backend / data engineers pivoting into AI</li>
+            <li>· Engineers who want evidence from real JDs, not generic course lists</li>
+            <li>· People deciding which one project to build next</li>
+          </ul>
+        </div>
+        <div className="rounded-lg border border-zinc-300 bg-zinc-50/60 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900/40">
+          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+            Not for
+          </div>
+          <ul className="space-y-1 text-zinc-700 dark:text-zinc-300">
+            <li>· Generic career advice or interview prep</li>
+            <li>· Salary negotiation or recruiter matching</li>
+            <li>· Net-new juniors with no engineering background yet</li>
+          </ul>
+        </div>
+      </section>
 
       <section className="space-y-4">
         {/* Resume input with PDF upload */}
@@ -565,6 +672,34 @@ export default function Page() {
         </section>
       )}
 
+      {isBusy && (
+        <section
+          className="mt-6 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm dark:border-zinc-800 dark:bg-zinc-900/40"
+          aria-live="polite"
+        >
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-zinc-500" />
+            Working
+          </div>
+          <ol className="space-y-1 text-xs text-zinc-700 dark:text-zinc-300">
+            <li className="flex items-center gap-2">
+              <span aria-hidden>
+                {stage === "classifying" ? "▶" : "✓"}
+              </span>
+              <span className={stage === "classifying" ? "font-medium" : "text-zinc-500"}>
+                Classifying your target role into one of 8 AI engineering archetypes…
+              </span>
+            </li>
+            <li className="flex items-center gap-2">
+              <span aria-hidden>{stage === "generating" ? "▶" : "•"}</span>
+              <span className={stage === "generating" ? "font-medium" : "text-zinc-500"}>
+                Comparing your resume against the matching skill profile + 5 evidence JDs, then streaming your gap report…
+              </span>
+            </li>
+          </ol>
+        </section>
+      )}
+
       {(stage === "generating" || stage === "done") && (
         <>
           <section className="mt-6 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
@@ -599,6 +734,14 @@ export default function Page() {
                   {evalRunning ? "Scoring (3 parallel judges)..." : "📊 Eval this report"}
                 </button>
               )}
+              <button
+                type="button"
+                onClick={handleStartOver}
+                className="ml-auto rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                title="Clear the report and inputs to start over"
+              >
+                ↺ Start over
+              </button>
             </section>
           )}
 
@@ -686,12 +829,40 @@ export default function Page() {
         </>
       )}
 
-      {stage === "error" && (
-        <section className="mt-6 rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
-          <div className="mb-1 font-medium">Failed</div>
-          <div className="whitespace-pre-wrap break-words font-mono text-xs">{errMsg}</div>
-        </section>
-      )}
+      {stage === "error" && (() => {
+        const cat = categorizeError(errMsg);
+        return (
+          <section className="mt-6 rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+            <div className="mb-1 font-semibold">{cat.title}</div>
+            <p className="mb-3 text-sm">{cat.hint}</p>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!resume.trim() || !target.trim()}
+                className="rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-40 dark:border-red-800 dark:bg-zinc-900 dark:text-red-200 dark:hover:bg-zinc-800"
+              >
+                ↻ Retry
+              </button>
+              <button
+                type="button"
+                onClick={handleStartOver}
+                className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              >
+                ↺ Start over
+              </button>
+            </div>
+            <details className="text-xs">
+              <summary className="cursor-pointer select-none text-red-700/70 dark:text-red-300/70">
+                Show raw error (for debugging)
+              </summary>
+              <div className="mt-2 whitespace-pre-wrap break-words font-mono text-[11px] text-red-800/80 dark:text-red-200/80">
+                {errMsg}
+              </div>
+            </details>
+          </section>
+        );
+      })()}
 
       <section id="how-it-works" className="mt-12 space-y-6 border-t border-zinc-200 pt-8 dark:border-zinc-800">
         <h2 className="text-xl font-semibold">How this works</h2>
