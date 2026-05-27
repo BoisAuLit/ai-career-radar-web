@@ -9,6 +9,7 @@
 // bundle once the daily cron has accumulated enough clean runs.
 
 import Link from "next/link";
+import { PageBackground, SiteHeader, SiteFooter } from "@/components/SiteChrome";
 
 export const metadata = {
   title: "Methodology · AI Career Radar",
@@ -43,12 +44,18 @@ function StatusBadge({
 
 export default function MethodologyPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      <header className="mb-8 border-b border-zinc-200 pb-4 dark:border-zinc-800">
-        <h1 className="text-2xl font-semibold tracking-tight">Methodology</h1>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-          How we collect, deduplicate, classify, and report on AI job
-          postings. Read this before trusting any number in our reports.
+    <PageBackground>
+      <SiteHeader />
+      <main className="mx-auto max-w-3xl px-6 py-12 sm:px-8 sm:py-16">
+      <header className="mb-10">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
+          Methodology
+        </div>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+          How we collect, classify, and report.
+        </h1>
+        <p className="mt-3 text-base text-zinc-600 dark:text-zinc-400">
+          Read this before trusting any number in our reports.
         </p>
       </header>
 
@@ -391,6 +398,8 @@ export default function MethodologyPage() {
           on GitHub.
         </p>
       </footer>
-    </main>
+      </main>
+      <SiteFooter />
+    </PageBackground>
   );
 }

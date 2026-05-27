@@ -13,6 +13,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import CompanyBreakdownTable from "./CompanyBreakdownTable";
+import { PageBackground, SiteHeader, SiteFooter } from "@/components/SiteChrome";
 
 export const metadata = {
   title: "Snapshot (pipeline) · AI Career Radar",
@@ -91,9 +92,14 @@ function StagingBanner() {
 
 function EmptyState() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      <header className="mb-8 border-b border-zinc-200 pb-4 dark:border-zinc-800">
-        <h1 className="text-2xl font-semibold tracking-tight">
+    <PageBackground>
+      <SiteHeader />
+      <main className="mx-auto max-w-3xl px-6 py-12 sm:px-8 sm:py-16">
+      <header className="mb-8">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
+          Pipeline snapshot
+        </div>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
           Snapshot (pipeline)
         </h1>
       </header>
@@ -108,7 +114,9 @@ function EmptyState() {
           <code>corpus/web_bundle_pipeline.json</code> in the lab repo.
         </p>
       </section>
-    </main>
+      </main>
+      <SiteFooter />
+    </PageBackground>
   );
 }
 
@@ -195,12 +203,17 @@ export default function SnapshotPipelinePage() {
     .sort((a, b) => b.n - a.n);
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      <header className="mb-6 border-b border-zinc-200 pb-4 dark:border-zinc-800">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Snapshot (pipeline)
+    <PageBackground>
+      <SiteHeader />
+      <main className="mx-auto max-w-5xl px-6 py-12 sm:px-8 sm:py-16">
+      <header className="mb-10">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
+          Pipeline snapshot · staging
+        </div>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+          Snapshot from the automated daily pipeline.
         </h1>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-3 max-w-2xl text-base text-zinc-600 dark:text-zinc-400">
           Staging preview of what the automated daily pipeline currently
           emits. For the methodology behind these numbers, see the{" "}
           <Link className="underline" href="/methodology">
@@ -331,6 +344,8 @@ export default function SnapshotPipelinePage() {
           automation status.
         </p>
       </footer>
-    </main>
+      </main>
+      <SiteFooter />
+    </PageBackground>
   );
 }

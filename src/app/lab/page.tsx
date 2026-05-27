@@ -9,6 +9,7 @@ import {
   PROMPT_RULE_FIX,
   type MatrixCell,
 } from "@/data/lab/eval_matrix";
+import { PageBackground, SiteHeader, SiteFooter } from "@/components/SiteChrome";
 
 export const metadata = {
   title: "Lab — Eval Matrix · AI Career Radar",
@@ -57,12 +58,17 @@ function CellRow({ c }: { c: MatrixCell }) {
 
 export default function LabPage() {
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      <header className="mb-8 border-b border-zinc-200 pb-4 dark:border-zinc-800">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Lab · how the eval matrix caught a real LLM-prompt bug
+    <PageBackground>
+      <SiteHeader />
+      <main className="mx-auto max-w-5xl px-6 py-12 sm:px-8 sm:py-16">
+      <header className="mb-10">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
+          Lab
+        </div>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+          How the eval matrix caught a real LLM-prompt bug.
         </h1>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-3 max-w-2xl text-base text-zinc-600 dark:text-zinc-400">
           Snapshot from Day 10 (2026-05-17). Live tool:{" "}
           <a className="underline" href="/">
             ai-career-radar-web
@@ -70,9 +76,9 @@ export default function LabPage() {
           . Full build log:{" "}
           <a
             className="underline"
-            href="https://github.com/BoisAuLit/tuto_ai_career_radar/blob/main/BUILD_LOG.ipynb"
+            href="https://github.com/BoisAuLit/tuto_ai_career_radar/blob/main/BUILD_LOG.md"
           >
-            BUILD_LOG.ipynb
+            BUILD_LOG.md
           </a>
           .
         </p>
@@ -265,6 +271,8 @@ export default function LabPage() {
           archetype-only mode) — documented, not a bug.
         </p>
       </footer>
-    </main>
+      </main>
+      <SiteFooter />
+    </PageBackground>
   );
 }
