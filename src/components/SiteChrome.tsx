@@ -6,13 +6,32 @@
 
 import Link from "next/link";
 
+// Brand mark — inline SVG radar. Concentric rings + offset dot to suggest
+// "detected signal at a distance" — on-brand for "Career Radar". Stays
+// crisp at any size, inherits currentColor.
+export function BrandMark({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 28 28"
+      fill="none"
+      className={className}
+      aria-hidden
+    >
+      <circle cx="14" cy="14" r="11.5" stroke="currentColor" strokeWidth="1.25" opacity="0.35" />
+      <circle cx="14" cy="14" r="6.5" stroke="currentColor" strokeWidth="1.25" opacity="0.7" />
+      <circle cx="14" cy="14" r="1.75" fill="currentColor" />
+      <circle cx="20.5" cy="14" r="1.5" fill="currentColor" opacity="0.7" />
+    </svg>
+  );
+}
+
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-zinc-200/70 bg-white/80 backdrop-blur dark:border-zinc-800/70 dark:bg-zinc-950/70">
       <nav className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <Link href="/" className="group flex items-center gap-2">
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-700 text-xs font-bold text-white shadow-sm dark:from-zinc-100 dark:to-zinc-300 dark:text-zinc-900">
-            ◉
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-700 text-white shadow-sm dark:from-zinc-100 dark:to-zinc-300 dark:text-zinc-900">
+            <BrandMark className="h-4 w-4" />
           </span>
           <span className="text-sm font-semibold tracking-tight">AI Career Radar</span>
           <span className="hidden rounded-full border border-zinc-300 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-600 sm:inline-block dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">

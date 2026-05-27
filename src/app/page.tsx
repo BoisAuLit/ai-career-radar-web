@@ -5,6 +5,7 @@ import Link from "next/link";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Classification } from "@/lib/types";
+import { BrandMark } from "@/components/SiteChrome";
 
 // ─── Local types (avoid server-only imports in client component) ─────────────
 
@@ -581,8 +582,8 @@ export default function Page() {
       <header className="sticky top-0 z-40 w-full border-b border-zinc-200/70 bg-white/80 backdrop-blur dark:border-zinc-800/70 dark:bg-zinc-950/70">
         <nav className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link href="/" className="group flex items-center gap-2">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-700 text-xs font-bold text-white shadow-sm dark:from-zinc-100 dark:to-zinc-300 dark:text-zinc-900">
-              ◉
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-700 text-white shadow-sm dark:from-zinc-100 dark:to-zinc-300 dark:text-zinc-900">
+              <BrandMark className="h-4 w-4" />
             </span>
             <span className="text-sm font-semibold tracking-tight">AI Career Radar</span>
             <span className="hidden rounded-full border border-zinc-300 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-600 sm:inline-block dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
@@ -618,26 +619,22 @@ export default function Page() {
           <div className="absolute left-1/2 top-0 h-[600px] w-[1000px] -translate-x-1/2 bg-[radial-gradient(ellipse_50%_60%_at_50%_0%,rgba(99,102,241,0.10),transparent_70%)] dark:bg-[radial-gradient(ellipse_50%_60%_at_50%_0%,rgba(99,102,241,0.16),transparent_70%)]" />
         </div>
 
-        <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-zinc-200/80 bg-white/70 px-3 py-1 text-xs text-zinc-600 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-900/60 dark:text-zinc-400">
+        <div className="mx-auto mb-7 inline-flex items-center gap-2 rounded-full border border-zinc-200/80 bg-white/70 px-3 py-1 text-xs text-zinc-600 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-900/60 dark:text-zinc-400">
           <span aria-hidden className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-          <span className="font-medium">Live</span>
-          <span className="text-zinc-400">·</span>
-          <span>Daily corpus refresh at 06:00 UTC</span>
+          <span className="font-medium">443 real JDs</span>
+          <span className="text-zinc-300 dark:text-zinc-700">·</span>
+          <span>Daily automated corpus</span>
         </div>
-        <h1 className="mx-auto max-w-4xl text-5xl font-semibold tracking-tight sm:text-7xl">
+        <h1 className="mx-auto max-w-4xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-7xl">
           Know exactly{" "}
           <span className="bg-gradient-to-r from-zinc-900 via-zinc-700 to-zinc-500 bg-clip-text text-transparent dark:from-white dark:via-zinc-300 dark:to-zinc-500">
             what to build next.
           </span>
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-lg text-zinc-600 sm:mt-8 sm:text-xl dark:text-zinc-400">
-          AI Career Radar compares your resume against what AI companies
-          actually hire for — distilled from{" "}
-          <span className="text-zinc-900 dark:text-zinc-100">443 real AI engineering job posts</span>.
-        </p>
-        <p className="mx-auto mt-3 max-w-xl text-sm text-zinc-500 sm:text-base">
-          For senior engineers moving into applied AI, LLM infrastructure,
-          agent engineering, and frontier-lab roles.
+        <p className="mx-auto mt-8 max-w-2xl text-lg text-zinc-600 sm:text-xl dark:text-zinc-400">
+          A career gap report for senior engineers moving into AI —
+          compared against what frontier labs, big tech, and AI scaleups
+          actually hire for.
         </p>
 
         <div className="mt-10 flex flex-wrap justify-center gap-3 sm:mt-12">
@@ -656,52 +653,33 @@ export default function Page() {
             <span aria-hidden>→</span>
           </Link>
         </div>
-
-        <div className="mx-auto mt-12 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-zinc-500 sm:text-sm dark:text-zinc-500">
-          <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="text-emerald-600 dark:text-emerald-400">✓</span>
-            443 real JDs
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="text-emerald-600 dark:text-emerald-400">✓</span>
-            Daily automated corpus
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="text-emerald-600 dark:text-emerald-400">✓</span>
-            Evidence-grounded
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="text-emerald-600 dark:text-emerald-400">✓</span>
-            No account required
-          </span>
-        </div>
       </section>
 
-      {/* ─────────────────── Hero mock preview (large, premium card) ─────────────────── */}
+      {/* ─────────────────── Hero mock preview (the product artifact) ─────────────────── */}
       <section className="relative pb-24 sm:pb-32">
-        {/* Soft radial glow */}
+        {/* Stronger radial glow behind */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-1/4 -z-10 mx-auto h-[500px] max-w-4xl bg-[radial-gradient(ellipse_60%_55%_at_50%_50%,rgba(99,102,241,0.10),transparent_70%)] dark:bg-[radial-gradient(ellipse_60%_55%_at_50%_50%,rgba(99,102,241,0.18),transparent_70%)]"
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 mx-auto h-[600px] max-w-5xl bg-[radial-gradient(ellipse_55%_60%_at_50%_40%,rgba(99,102,241,0.14),transparent_70%)] dark:bg-[radial-gradient(ellipse_55%_60%_at_50%_40%,rgba(99,102,241,0.22),transparent_70%)]"
         />
-        {/* Subtle stacked card behind for depth (decorative) */}
+        {/* Stacked decorative card behind for depth */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-6 -z-10 mx-auto h-32 max-w-3xl rounded-3xl bg-gradient-to-b from-zinc-200/40 to-transparent blur-md dark:from-zinc-700/30"
+          className="pointer-events-none absolute inset-x-0 top-8 -z-10 mx-auto h-40 max-w-4xl rounded-3xl bg-gradient-to-b from-zinc-200/50 to-transparent blur-md dark:from-zinc-700/40"
         />
-        <div className="relative mx-auto max-w-4xl">
-          {/* Floating decorative dots beside the card on desktop */}
+        <div className="relative mx-auto max-w-5xl">
+          {/* Side glow orbs */}
           <div
             aria-hidden
-            className="pointer-events-none absolute -left-6 top-1/4 hidden h-32 w-32 rounded-full bg-gradient-to-br from-indigo-200/40 to-emerald-200/40 blur-3xl lg:block dark:from-indigo-700/30 dark:to-emerald-700/30"
+            className="pointer-events-none absolute -left-10 top-1/3 hidden h-40 w-40 rounded-full bg-gradient-to-br from-indigo-300/35 to-emerald-300/35 blur-3xl lg:block dark:from-indigo-700/30 dark:to-emerald-700/30"
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute -right-6 bottom-1/4 hidden h-40 w-40 rounded-full bg-gradient-to-br from-amber-200/40 to-rose-200/40 blur-3xl lg:block dark:from-amber-700/30 dark:to-rose-700/30"
+            className="pointer-events-none absolute -right-10 bottom-1/3 hidden h-48 w-48 rounded-full bg-gradient-to-br from-amber-300/35 to-rose-300/35 blur-3xl lg:block dark:from-amber-700/30 dark:to-rose-700/30"
           />
           <div
             aria-hidden
-            className="relative overflow-hidden rounded-3xl border border-zinc-200/60 bg-gradient-to-br from-white via-white to-zinc-50 shadow-2xl shadow-zinc-400/30 dark:border-zinc-800/60 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950 dark:shadow-black/50"
+            className="relative overflow-hidden rounded-3xl border border-zinc-200/60 bg-gradient-to-br from-white via-white to-zinc-50 shadow-[0_30px_80px_-30px_rgba(24,24,27,0.35)] dark:border-zinc-800/60 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950 dark:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)]"
           >
             {/* Window chrome — gives a product/screenshot feel */}
             <div className="flex items-center justify-between border-b border-zinc-200/70 bg-zinc-50/60 px-5 py-3 dark:border-zinc-800/70 dark:bg-zinc-900/40">
@@ -1564,8 +1542,8 @@ export default function Page() {
         <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-700 text-xs font-bold text-white dark:from-zinc-100 dark:to-zinc-300 dark:text-zinc-900">
-                ◉
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-700 text-white dark:from-zinc-100 dark:to-zinc-300 dark:text-zinc-900">
+                <BrandMark className="h-4 w-4" />
               </span>
               <span className="text-sm font-semibold tracking-tight">AI Career Radar</span>
             </div>
