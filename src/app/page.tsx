@@ -637,13 +637,13 @@ export default function Page() {
             Generate my report
             <span aria-hidden>→</span>
           </a>
-          <a
-            href="#samples"
+          <Link
+            href="/sample-report"
             className="inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-base font-medium text-zinc-700 transition hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"
           >
-            See sample
-            <span aria-hidden>↓</span>
-          </a>
+            See sample report
+            <span aria-hidden>→</span>
+          </Link>
         </div>
 
         <div className="mx-auto mt-12 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-zinc-500 sm:text-sm dark:text-zinc-500">
@@ -668,45 +668,80 @@ export default function Page() {
 
       {/* ─────────────────── Hero mock preview (large, premium card) ─────────────────── */}
       <section className="relative pb-24 sm:pb-32">
+        {/* Soft radial glow */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-1/4 -z-10 mx-auto h-[400px] max-w-3xl bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(99,102,241,0.08),transparent_70%)] dark:bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(99,102,241,0.14),transparent_70%)]"
+          className="pointer-events-none absolute inset-x-0 top-1/4 -z-10 mx-auto h-[500px] max-w-4xl bg-[radial-gradient(ellipse_60%_55%_at_50%_50%,rgba(99,102,241,0.10),transparent_70%)] dark:bg-[radial-gradient(ellipse_60%_55%_at_50%_50%,rgba(99,102,241,0.18),transparent_70%)]"
+        />
+        {/* Subtle stacked card behind for depth (decorative) */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-6 -z-10 mx-auto h-32 max-w-3xl rounded-3xl bg-gradient-to-b from-zinc-200/40 to-transparent blur-md dark:from-zinc-700/30"
         />
         <div className="mx-auto max-w-4xl">
           <div
             aria-hidden
-            className="relative overflow-hidden rounded-3xl border border-zinc-200/60 bg-gradient-to-br from-white via-white to-zinc-50 p-8 shadow-2xl shadow-zinc-300/40 sm:p-12 dark:border-zinc-800/60 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950 dark:shadow-black/40"
+            className="relative overflow-hidden rounded-3xl border border-zinc-200/60 bg-gradient-to-br from-white via-white to-zinc-50 p-8 shadow-2xl shadow-zinc-400/30 sm:p-12 dark:border-zinc-800/60 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950 dark:shadow-black/50"
           >
-            <div className="mb-6 flex items-center justify-between border-b border-zinc-200/70 pb-5 dark:border-zinc-800/70">
+            {/* Header strip */}
+            <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-zinc-200/70 pb-5 dark:border-zinc-800/70">
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">Sample report</div>
-                <div className="mt-1 text-xl font-semibold tracking-tight sm:text-2xl">
-                  Target · Applied AI Engineer
+                <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">Sample report · static</div>
+                <div className="mt-1.5 text-2xl font-semibold tracking-tight sm:text-3xl">
+                  Applied AI Engineer
                 </div>
+                <div className="mt-1 text-sm text-zinc-500">Frontier lab · customer-facing applied AI</div>
               </div>
               <span className="rounded-full bg-zinc-900 px-3 py-1 text-xs font-medium text-white dark:bg-zinc-100 dark:text-zinc-900">
                 applied_ai
               </span>
             </div>
 
+            {/* Fit signal strip */}
+            <div className="mb-7 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl bg-zinc-50/70 px-4 py-3 text-xs sm:text-sm dark:bg-zinc-900/40">
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="text-zinc-600 dark:text-zinc-400">Fit signal</span>
+                <span className="font-semibold text-zinc-900 dark:text-zinc-100">Strong baseline · 5 leverage gaps</span>
+              </div>
+              <div className="ml-auto text-zinc-500">
+                Based on <span className="font-semibold text-zinc-700 dark:text-zinc-300">92</span> applied_ai JDs
+              </div>
+            </div>
+
+            {/* Three columns */}
             <div className="grid grid-cols-1 gap-7 sm:grid-cols-3 sm:gap-10">
               <div>
                 <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-emerald-700 dark:text-emerald-400">
-                  Already strong
+                  Already strong · don&apos;t re-learn
                 </div>
-                <ul className="mt-3 space-y-1.5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-                  <li>Frontend systems</li>
-                  <li>Product shipping cadence</li>
-                  <li>TypeScript / React depth</li>
+                <ul className="mt-3 space-y-2 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+                  <li className="flex gap-2">
+                    <span aria-hidden className="mt-1 text-emerald-600 dark:text-emerald-400">✓</span>
+                    <span>Frontend systems</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span aria-hidden className="mt-1 text-emerald-600 dark:text-emerald-400">✓</span>
+                    <span>Product shipping cadence</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span aria-hidden className="mt-1 text-emerald-600 dark:text-emerald-400">✓</span>
+                    <span>TypeScript / React depth</span>
+                  </li>
                 </ul>
               </div>
               <div>
                 <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-amber-700 dark:text-amber-400">
-                  Highest-leverage gap
+                  Highest-leverage gap · <span className="text-amber-800 dark:text-amber-300">55% of JDs</span>
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-                  Python production AI workflows — RAG retrieval, evaluation
-                  harnesses, agent orchestration.
+                  <span className="font-medium">Python production AI workflows.</span>{" "}
+                  RAG retrieval, evaluation harnesses, agent orchestration.
+                </p>
+                <p className="mt-2 text-xs italic text-zinc-500">
+                  &quot;Build, evaluate, and ship LLM-powered features in production.&quot;
+                  <br />
+                  — Anthropic · jd_000017
                 </p>
               </div>
               <div>
@@ -714,9 +749,14 @@ export default function Page() {
                   Build next · 2 weeks
                 </div>
                 <p className="mt-3 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-                  An agent workflow debugger with eval traces, shipped as a
-                  public GitHub repo.
+                  <span className="font-medium">Agent workflow debugger</span> with eval
+                  traces, shipped as a public GitHub repo.
                 </p>
+                <div className="mt-3 flex flex-wrap gap-1.5 text-[10px]">
+                  <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">LangGraph</span>
+                  <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">promptfoo</span>
+                  <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">Anthropic SDK</span>
+                </div>
               </div>
             </div>
           </div>
@@ -813,8 +853,9 @@ export default function Page() {
             report in about a minute.
           </p>
         </div>
-        <div className="mx-auto max-w-5xl rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-7 shadow-xl shadow-zinc-300/30 ring-1 ring-zinc-200/70 sm:p-10 dark:from-zinc-900/80 dark:to-zinc-900/40 dark:shadow-black/40 dark:ring-zinc-800/70">
-          <div className="space-y-6">
+        <div className="mx-auto max-w-6xl rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-7 shadow-xl shadow-zinc-300/30 ring-1 ring-zinc-200/70 sm:p-10 dark:from-zinc-900/80 dark:to-zinc-900/40 dark:shadow-black/40 dark:ring-zinc-800/70">
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
 
         {/* Resume input with PDF upload */}
         <div>
@@ -998,6 +1039,62 @@ export default function Page() {
           <span className="text-xs text-zinc-500">~$0.05 · ~60s · two LLM calls</span>
         </div>
           </div>
+          {/* Right-side: What your report includes (static explanatory panel) */}
+          <aside className="lg:col-span-1">
+            <div className="sticky top-24 rounded-2xl bg-zinc-50/80 p-6 ring-1 ring-zinc-200/70 dark:bg-zinc-900/50 dark:ring-zinc-800/70">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                What your report includes
+              </div>
+              <ul className="mt-4 space-y-4 text-sm leading-relaxed">
+                <li>
+                  <div className="flex items-start gap-2.5">
+                    <span aria-hidden className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">1</span>
+                    <div>
+                      <div className="font-medium text-zinc-900 dark:text-zinc-100">Strengths you already have</div>
+                      <div className="text-zinc-600 dark:text-zinc-400">Skills the target archetype values that you don&apos;t need to re-learn.</div>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div className="flex items-start gap-2.5">
+                    <span aria-hidden className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-amber-100 text-[10px] font-bold text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">2</span>
+                    <div>
+                      <div className="font-medium text-zinc-900 dark:text-zinc-100">Highest-leverage gaps</div>
+                      <div className="text-zinc-600 dark:text-zinc-400">Top 5, ranked by skill prevalence × proximity to your current resume.</div>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div className="flex items-start gap-2.5">
+                    <span aria-hidden className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-[10px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">3</span>
+                    <div>
+                      <div className="font-medium text-zinc-900 dark:text-zinc-100">Evidence from real JDs</div>
+                      <div className="text-zinc-600 dark:text-zinc-400">Direct quotes from five matching job posts, with company + ID tags.</div>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div className="flex items-start gap-2.5">
+                    <span aria-hidden className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-indigo-100 text-[10px] font-bold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400">4</span>
+                    <div>
+                      <div className="font-medium text-zinc-900 dark:text-zinc-100">One project to build next</div>
+                      <div className="text-zinc-600 dark:text-zinc-400">Single highest-leverage deliverable, time-bounded, named tools.</div>
+                    </div>
+                  </div>
+                </li>
+                <li>
+                  <div className="flex items-start gap-2.5">
+                    <span aria-hidden className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-zinc-100 text-[10px] font-bold text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">+</span>
+                    <div>
+                      <div className="font-medium text-zinc-900 dark:text-zinc-100">Optional company deep-dive</div>
+                      <div className="text-zinc-600 dark:text-zinc-400">Contrast a specific company&apos;s JDs against the industry baseline.</div>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </aside>
+          </div>
         </div>
       </section>
 
@@ -1064,10 +1161,43 @@ export default function Page() {
 
       {(stage === "generating" || stage === "done") && (
         <>
-          <section className="mt-6 rounded-3xl bg-white p-7 shadow-xl shadow-zinc-300/30 ring-1 ring-zinc-200/70 sm:p-10 dark:bg-zinc-900/60 dark:shadow-black/40 dark:ring-zinc-800/70">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-              {report || "..."}
-            </ReactMarkdown>
+          <section className="mt-6 overflow-hidden rounded-3xl bg-white shadow-xl shadow-zinc-300/30 ring-1 ring-zinc-200/70 dark:bg-zinc-900/60 dark:shadow-black/40 dark:ring-zinc-800/70">
+            {/* Executive summary strip — only when classification is available */}
+            {classification && (
+              <div className="border-b border-zinc-200/70 bg-gradient-to-br from-zinc-50/60 to-white px-7 py-5 sm:px-10 sm:py-6 dark:border-zinc-800/70 dark:from-zinc-900 dark:to-zinc-900/40">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                    Gap report
+                  </div>
+                  <div className="text-xs text-zinc-500">
+                    Generated from tracked JD corpus · evidence-grounded
+                  </div>
+                </div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                  <h3 className="text-lg font-semibold tracking-tight sm:text-xl">
+                    Target ·{" "}
+                    <code className="rounded-md bg-zinc-900 px-2 py-0.5 font-mono text-sm text-white dark:bg-zinc-100 dark:text-zinc-900">
+                      {classification.archetype}
+                    </code>
+                  </h3>
+                  {companyFilter && (
+                    <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                      Deep-dive · {companyFilter}
+                    </span>
+                  )}
+                  {classification.level_hint && classification.level_hint !== "unknown" && (
+                    <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                      {classification.level_hint}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+            <div className="px-7 py-7 sm:px-10 sm:py-10">
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                {report || "..."}
+              </ReactMarkdown>
+            </div>
           </section>
 
           {stage === "done" && (
@@ -1329,6 +1459,57 @@ export default function Page() {
           a guarantee. Every report you generate has its own{" "}
           <strong>Eval this report</strong> button so you can audit your own.
         </p>
+      </section>
+
+      {/* ─────────────────── Trust layer: Built to be inspectable ─────────────────── */}
+      <section className="pb-24 sm:pb-32">
+        <div className="mx-auto mb-10 max-w-2xl text-center sm:mb-14">
+          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            Built to be inspectable.
+          </h2>
+          <p className="mt-4 text-base text-zinc-600 sm:text-lg dark:text-zinc-400">
+            Every claim, traceable. Every limitation, named.
+          </p>
+        </div>
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-5 md:grid-cols-4 md:gap-6">
+          <div className="rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-6 ring-1 ring-zinc-200/60 sm:p-7 dark:from-zinc-900/60 dark:to-zinc-900/20 dark:ring-zinc-800/60">
+            <div className="text-2xl">📄</div>
+            <h3 className="mt-3 text-base font-semibold tracking-tight">First-party career sources</h3>
+            <p className="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+              Greenhouse + Ashby company boards. No LinkedIn, Indeed, or Glassdoor scraping.
+            </p>
+          </div>
+          <div className="rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-6 ring-1 ring-zinc-200/60 sm:p-7 dark:from-zinc-900/60 dark:to-zinc-900/20 dark:ring-zinc-800/60">
+            <div className="text-2xl">↻</div>
+            <h3 className="mt-3 text-base font-semibold tracking-tight">Daily automated corpus</h3>
+            <p className="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+              Re-fetched 06:00 UTC every day. Validation-gated before publish.
+            </p>
+          </div>
+          <div className="rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-6 ring-1 ring-zinc-200/60 sm:p-7 dark:from-zinc-900/60 dark:to-zinc-900/20 dark:ring-zinc-800/60">
+            <div className="text-2xl">✎</div>
+            <h3 className="mt-3 text-base font-semibold tracking-tight">Human review queue</h3>
+            <p className="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+              Borderline classifications go to a human, not auto-decided silently.
+            </p>
+          </div>
+          <div className="rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-6 ring-1 ring-zinc-200/60 sm:p-7 dark:from-zinc-900/60 dark:to-zinc-900/20 dark:ring-zinc-800/60">
+            <div className="text-2xl">⛔</div>
+            <h3 className="mt-3 text-base font-semibold tracking-tight">No full JD republication</h3>
+            <p className="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+              Aggregates + short quotes only, with links back to the original posting.
+            </p>
+          </div>
+        </div>
+        <div className="mt-8 text-center">
+          <Link
+            href="/methodology"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"
+          >
+            Read the full methodology
+            <span aria-hidden>→</span>
+          </Link>
+        </div>
       </section>
       </main>
 
