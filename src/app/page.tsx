@@ -79,6 +79,129 @@ The tool works best with at least one job (with bullets describing what you did)
 
 const EXAMPLE_TARGET = `Describe in 1-3 sentences what role you want — or pick a preset above.`;
 
+// Demo mode — fictional resume + target pairs. Useful for new visitors
+// who want to see the product work before pasting their real resume.
+// Each persona is bluntly marked as fictional in the UI; do NOT use real
+// names. Keep resumes ~600-900 chars: long enough to produce a meaningful
+// gap report, short enough to keep the bundle small.
+const SAMPLE_PERSONAS: {
+  id: string;
+  label: string;
+  blurb: string;
+  resume: string;
+  target: string;
+}[] = [
+  {
+    id: "frontend_to_applied_ai",
+    label: "Frontend → Applied AI",
+    blurb: "7yr JS/React shipping product features → applied AI at an LLM-product company",
+    resume: `Pat Example — Frontend Engineer (FICTIONAL SAMPLE)
+
+KEY SKILLS
+- TypeScript (7y), JavaScript (8y), Python (3y, scripting only)
+- React (7y), Next.js (4y), Redux/Zustand, Tailwind, Storybook
+- Jest, Playwright, Cypress; visual regression; BDD/Gherkin
+- Docker (3y), GitHub Actions, Vercel deploys
+
+EXPERIENCE
+Senior Frontend Engineer · 2022–present · MidSizeSaaS
+- Led migration of a B2B dashboard from CRA → Next.js App Router
+- Shipped ~12 product features touching billing, onboarding, analytics
+- Mentored 3 juniors; ran the frontend hiring loop
+- Built a Storybook + visual-regression pipeline; cut UI bug escapes ~60%
+
+Frontend Engineer · 2019–2022 · ConsumerStartup
+- Greenfield React app; built design system from scratch
+- Worked with PMs/designers; A/B tested 8 features
+
+Education: BS in Computer Science, 2019`,
+    target:
+      "Applied AI Engineer at an LLM-product company (e.g., Anthropic, OpenAI, Cursor). Ship customer-facing AI features in production; not pure research. Comfortable with TypeScript + Python; want to grow into the AI stack (RAG, agents, eval).",
+  },
+  {
+    id: "backend_to_llm_infra",
+    label: "Backend → LLM Infra",
+    blurb: "8yr Go/Python distributed systems → LLM infrastructure / inference",
+    resume: `Sam Example — Backend Engineer (FICTIONAL SAMPLE)
+
+KEY SKILLS
+- Go (6y), Python (8y), Rust (1y hobby)
+- Kubernetes (4y), Helm, Terraform; AWS (5y) — EKS, S3, RDS, Lambda
+- gRPC, Protobuf, REST; PostgreSQL, Redis, Kafka
+- Prometheus, Grafana, distributed tracing (OpenTelemetry)
+- Docker, CI/CD (GitHub Actions, ArgoCD)
+
+EXPERIENCE
+Staff Backend Engineer · 2020–present · PaymentsCo
+- Led migration of monolithic payments service → 7 microservices on EKS
+- Built a request-coalescing layer that cut p99 latency ~40%
+- On-call lead for 18 months; wrote the SLO/SLI framework
+- Mentored 5 engineers across two teams
+
+Senior Backend Engineer · 2017–2020 · LogisticsStartup
+- Designed an event-sourced order-state machine (Kafka + Go)
+- Built the team's load-testing harness (k6)
+
+Education: BS in EECS, 2016`,
+    target:
+      "LLM Infrastructure Engineer at NVIDIA, Together AI, Fireworks, Modal, or similar. Inference optimization, GPU systems, model serving at scale. Strong systems background, less ML; want to grow into CUDA + vLLM-style serving.",
+  },
+  {
+    id: "data_eng_to_ai_platform",
+    label: "Data Eng → AI Platform",
+    blurb: "6yr Spark/Airflow/dbt → data engineering for AI / eval datasets / training data",
+    resume: `Jordan Example — Data Engineer (FICTIONAL SAMPLE)
+
+KEY SKILLS
+- Python (8y), SQL (8y), Scala (3y)
+- Apache Spark (6y), Apache Airflow (5y), dbt (3y)
+- Snowflake (4y), BigQuery (2y), Postgres
+- Kafka, Kinesis; AWS (Glue, EMR, S3, Athena)
+- Great Expectations, dbt tests, data-quality SLAs
+
+EXPERIENCE
+Senior Data Engineer · 2021–present · AdTechCo
+- Owned the clickstream pipeline (5B rows/day) — Spark on EMR
+- Built dbt models powering exec dashboards; 200+ models, 95% test coverage
+- Designed a metric-store layer that cut analyst SQL time ~50%
+- Mentored 2 juniors; led data-quality reviews
+
+Data Engineer · 2018–2021 · RetailAnalytics
+- Built the company's first Airflow deployment from scratch
+- Migrated batch ETLs from Hive → Spark
+
+Education: MS in Statistics, 2018`,
+    target:
+      "Data engineering for AI / AI platform role. Building training data pipelines, eval datasets, fine-tuning data prep, and the data infrastructure underneath an LLM product team. Companies: Scale AI, Anthropic, OpenAI, Cohere.",
+  },
+  {
+    id: "ml_phd_to_research_engineer",
+    label: "ML PhD → Research Engineer",
+    blurb: "ML PhD (NLP) + 3yr post-PhD → research engineer at a frontier lab",
+    resume: `Riley Example — Research Engineer (FICTIONAL SAMPLE)
+
+KEY SKILLS
+- Python (10y), PyTorch (6y), JAX (2y)
+- Distributed training (DeepSpeed, FSDP); CUDA basics; H100 clusters
+- HuggingFace ecosystem; vLLM for serving experiments
+- 4 first-author NLP papers (EMNLP, ACL); ~80 citations
+
+EXPERIENCE
+ML Engineer / Researcher · 2022–present · AppliedML Startup
+- Led pre-training experiments for a 7B domain model; ran scaling ablations
+- Built the team's eval harness (10+ benchmarks, auto-promotion gates)
+- Co-authored 2 papers on retrieval-augmented fine-tuning
+
+PhD in Machine Learning · 2018–2022 · State University
+- Thesis: efficient attention variants for long-context language models
+- TA'd two grad-level ML courses
+
+Education: PhD ML 2022, BS CS 2018`,
+    target:
+      "Research Engineer at a frontier lab (Anthropic, OpenAI, Google DeepMind, Meta FAIR). Bridge between research and production — implement papers, run experiments at scale, ship to internal users. NOT pure research scientist.",
+  },
+];
+
 const TARGET_PRESETS: { label: string; text: string }[] = [
   {
     label: "Applied AI · frontier lab",
@@ -382,6 +505,19 @@ export default function Page() {
     }
   }
 
+  function loadSample(persona: (typeof SAMPLE_PERSONAS)[number]) {
+    setResume(persona.resume);
+    setTarget(persona.target);
+    setPdfFilename(null);
+    setPdfErr("");
+    setErrMsg("");
+    setReport("");
+    setClassification(null);
+    setEvalResult(null);
+    setEvalErr("");
+    setStage("idle");
+  }
+
   function handleStartOver() {
     setResume("");
     setTarget("");
@@ -501,6 +637,37 @@ export default function Page() {
       </section>
 
       <section className="space-y-4">
+        {/* Demo / sample mode — populates resume + target with fictional data */}
+        <div className="rounded-xl border border-zinc-200 bg-zinc-50/60 px-3 py-2 text-xs dark:border-zinc-800 dark:bg-zinc-900/40">
+          <div className="mb-1.5 flex items-center gap-2">
+            <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+              First time? Try a fictional sample
+            </span>
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+              Samples are fictional
+            </span>
+          </div>
+          <p className="mb-2 text-[11px] text-zinc-500">
+            Loads a made-up resume + target into the fields below so you can see
+            how the report works before pasting your real resume. Nothing runs
+            until you click <em>Generate</em>.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {SAMPLE_PERSONAS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => loadSample(p)}
+                disabled={isBusy}
+                title={p.blurb}
+                className="rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-[11px] font-medium hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Resume input with PDF upload */}
         <div>
           <div className="mb-1 flex items-center justify-between">
