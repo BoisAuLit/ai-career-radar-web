@@ -571,7 +571,12 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-dvh w-full bg-gradient-to-b from-white via-zinc-50/60 to-white text-zinc-900 dark:from-zinc-950 dark:via-zinc-900/40 dark:to-zinc-950 dark:text-zinc-100">
+    <div className="relative min-h-dvh w-full overflow-hidden bg-gradient-to-b from-white via-zinc-50/60 to-white text-zinc-900 dark:from-zinc-950 dark:via-zinc-900/40 dark:to-zinc-950 dark:text-zinc-100">
+      {/* Page-level decorative background: very subtle grid pattern + warm-to-cool wash */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-20 bg-[linear-gradient(to_right,rgba(0,0,0,0.025)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.025)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black,transparent_70%)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)]"
+      />
       {/* ─────────────────── Sticky navbar ─────────────────── */}
       <header className="sticky top-0 z-40 w-full border-b border-zinc-200/70 bg-white/80 backdrop-blur dark:border-zinc-800/70 dark:bg-zinc-950/70">
         <nav className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
@@ -613,6 +618,12 @@ export default function Page() {
           <div className="absolute left-1/2 top-0 h-[600px] w-[1000px] -translate-x-1/2 bg-[radial-gradient(ellipse_50%_60%_at_50%_0%,rgba(99,102,241,0.10),transparent_70%)] dark:bg-[radial-gradient(ellipse_50%_60%_at_50%_0%,rgba(99,102,241,0.16),transparent_70%)]" />
         </div>
 
+        <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-zinc-200/80 bg-white/70 px-3 py-1 text-xs text-zinc-600 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-900/60 dark:text-zinc-400">
+          <span aria-hidden className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+          <span className="font-medium">Live</span>
+          <span className="text-zinc-400">·</span>
+          <span>Daily corpus refresh at 06:00 UTC</span>
+        </div>
         <h1 className="mx-auto max-w-4xl text-5xl font-semibold tracking-tight sm:text-7xl">
           Know exactly{" "}
           <span className="bg-gradient-to-r from-zinc-900 via-zinc-700 to-zinc-500 bg-clip-text text-transparent dark:from-white dark:via-zinc-300 dark:to-zinc-500">
@@ -678,11 +689,33 @@ export default function Page() {
           aria-hidden
           className="pointer-events-none absolute inset-x-0 top-6 -z-10 mx-auto h-32 max-w-3xl rounded-3xl bg-gradient-to-b from-zinc-200/40 to-transparent blur-md dark:from-zinc-700/30"
         />
-        <div className="mx-auto max-w-4xl">
+        <div className="relative mx-auto max-w-4xl">
+          {/* Floating decorative dots beside the card on desktop */}
           <div
             aria-hidden
-            className="relative overflow-hidden rounded-3xl border border-zinc-200/60 bg-gradient-to-br from-white via-white to-zinc-50 p-8 shadow-2xl shadow-zinc-400/30 sm:p-12 dark:border-zinc-800/60 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950 dark:shadow-black/50"
+            className="pointer-events-none absolute -left-6 top-1/4 hidden h-32 w-32 rounded-full bg-gradient-to-br from-indigo-200/40 to-emerald-200/40 blur-3xl lg:block dark:from-indigo-700/30 dark:to-emerald-700/30"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-6 bottom-1/4 hidden h-40 w-40 rounded-full bg-gradient-to-br from-amber-200/40 to-rose-200/40 blur-3xl lg:block dark:from-amber-700/30 dark:to-rose-700/30"
+          />
+          <div
+            aria-hidden
+            className="relative overflow-hidden rounded-3xl border border-zinc-200/60 bg-gradient-to-br from-white via-white to-zinc-50 shadow-2xl shadow-zinc-400/30 dark:border-zinc-800/60 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950 dark:shadow-black/50"
           >
+            {/* Window chrome — gives a product/screenshot feel */}
+            <div className="flex items-center justify-between border-b border-zinc-200/70 bg-zinc-50/60 px-5 py-3 dark:border-zinc-800/70 dark:bg-zinc-900/40">
+              <div className="flex items-center gap-1.5">
+                <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+                <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+                <span aria-hidden className="h-2.5 w-2.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+              </div>
+              <span className="font-mono text-[10px] text-zinc-500">ai-career-radar / sample · static</span>
+              <span className="font-mono text-[10px] text-zinc-400">⋯</span>
+            </div>
+
+            {/* Body padding wrapper */}
+            <div className="p-8 sm:p-12">
             {/* Header strip */}
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-zinc-200/70 pb-5 dark:border-zinc-800/70">
               <div>
@@ -758,6 +791,7 @@ export default function Page() {
                   <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">Anthropic SDK</span>
                 </div>
               </div>
+            </div>
             </div>
           </div>
         </div>
@@ -879,9 +913,9 @@ export default function Page() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={pdfUploading || isBusy}
-                className="rounded-lg border border-zinc-300 px-2 py-1 text-xs font-medium hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium shadow-sm ring-1 ring-zinc-200 transition hover:ring-zinc-300 disabled:opacity-40 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:ring-zinc-700"
               >
-                {pdfUploading ? "Extracting..." : "📎 Upload PDF"}
+                {pdfUploading ? "Extracting…" : "📎 Upload PDF"}
               </button>
               {pdfFilename && (
                 <span className="text-xs text-zinc-500">
@@ -901,7 +935,7 @@ export default function Page() {
             onChange={(e) => setResume(e.target.value)}
             placeholder={EXAMPLE_RESUME}
             rows={12}
-            className="w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-900"
+            className="w-full resize-y rounded-2xl border-0 bg-white px-4 py-3 font-mono text-sm shadow-sm ring-1 ring-zinc-200 transition placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:bg-zinc-900 dark:ring-zinc-800 dark:focus:ring-zinc-100"
             disabled={isBusy || pdfUploading}
           />
         </div>
@@ -918,7 +952,7 @@ export default function Page() {
                 type="button"
                 onClick={() => setTarget(p.text)}
                 disabled={isBusy}
-                className="rounded-full border border-zinc-300 bg-white px-3 py-1 text-xs font-medium hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                className="rounded-full bg-white px-3 py-1.5 text-xs font-medium shadow-sm ring-1 ring-zinc-200 transition hover:ring-zinc-300 disabled:opacity-40 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:ring-zinc-700"
               >
                 {p.label}
               </button>
@@ -930,7 +964,7 @@ export default function Page() {
             onChange={(e) => setTarget(e.target.value)}
             placeholder={EXAMPLE_TARGET}
             rows={4}
-            className="w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+            className="w-full resize-y rounded-2xl border-0 bg-white px-4 py-3 text-sm shadow-sm ring-1 ring-zinc-200 transition placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:bg-zinc-900 dark:ring-zinc-800 dark:focus:ring-zinc-100"
             disabled={isBusy}
           />
         </div>
@@ -946,7 +980,7 @@ export default function Page() {
               value={companyFilter}
               onChange={(e) => setCompanyFilter(e.target.value)}
               disabled={isBusy}
-              className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="w-full rounded-2xl border-0 bg-white px-4 py-3 text-sm shadow-sm ring-1 ring-zinc-200 transition focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:bg-zinc-900 dark:ring-zinc-800 dark:focus:ring-zinc-100"
             >
               <option value="">No deep dive — use full corpus for the target archetype</option>
               {eligibleCompanies.map((c) => (
@@ -1025,7 +1059,7 @@ export default function Page() {
             type="button"
             onClick={handleSubmit}
             disabled={!resume.trim() || !target.trim() || isBusy}
-            className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-zinc-900 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200 dark:disabled:hover:bg-white"
+            className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-7 py-3.5 text-base font-semibold text-white shadow-sm shadow-zinc-900/20 transition hover:bg-zinc-800 hover:shadow-md hover:shadow-zinc-900/30 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-sm disabled:hover:bg-zinc-900 dark:bg-white dark:text-zinc-900 dark:shadow-white/20 dark:hover:bg-zinc-200 dark:disabled:hover:bg-white"
           >
             {stage === "classifying"
               ? "Classifying target…"
@@ -1367,39 +1401,47 @@ export default function Page() {
             Three steps. No surveys, no generic course lists, no magic.
           </p>
         </div>
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
-          <div className="rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-8 sm:p-10 dark:from-zinc-900/60 dark:to-zinc-900/20">
-            <div className="mb-5 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-900 text-base font-semibold text-white dark:bg-white dark:text-zinc-900">
-              1
+        {/* Horizontal connected flow — distinct visual treatment from value pillars */}
+        <div className="mx-auto max-w-6xl">
+          <div className="relative grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-0">
+            {/* connecting line on desktop */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-[16.67%] right-[16.67%] top-7 hidden h-px bg-gradient-to-r from-transparent via-zinc-300 to-transparent md:block dark:via-zinc-700"
+            />
+            <div className="relative text-center md:px-6">
+              <div className="relative mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-full border border-zinc-200 bg-white text-base font-mono font-medium text-zinc-900 shadow-sm ring-4 ring-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-950">
+                01
+              </div>
+              <h3 className="text-lg font-semibold tracking-tight">Understand your target</h3>
+              <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                Your stated target role is mapped to one of eight AI engineering
+                archetypes. The classifier reads what you&apos;d actually do
+                day-to-day, not just the title.
+              </p>
             </div>
-            <h3 className="text-xl font-semibold tracking-tight">Understand your target</h3>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              Your stated target role is mapped to one of eight AI engineering
-              archetypes. The classifier reads what you&apos;d actually do
-              day-to-day, not just the title.
-            </p>
-          </div>
-          <div className="rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-8 sm:p-10 dark:from-zinc-900/60 dark:to-zinc-900/20">
-            <div className="mb-5 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-900 text-base font-semibold text-white dark:bg-white dark:text-zinc-900">
-              2
+            <div className="relative text-center md:px-6">
+              <div className="relative mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-full border border-zinc-200 bg-white text-base font-mono font-medium text-zinc-900 shadow-sm ring-4 ring-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-950">
+                02
+              </div>
+              <h3 className="text-lg font-semibold tracking-tight">Compare against real evidence</h3>
+              <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                Your resume is compared against the skill profile of dozens of
+                real job posts matching that archetype, plus five evidence JDs
+                quoted directly in your report.
+              </p>
             </div>
-            <h3 className="text-xl font-semibold tracking-tight">Compare against real evidence</h3>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              Your resume is compared against the skill profile of dozens of
-              real job posts matching that archetype, plus five evidence JDs
-              quoted directly in your report.
-            </p>
-          </div>
-          <div className="rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-8 sm:p-10 dark:from-zinc-900/60 dark:to-zinc-900/20">
-            <div className="mb-5 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-zinc-900 text-base font-semibold text-white dark:bg-white dark:text-zinc-900">
-              3
+            <div className="relative text-center md:px-6">
+              <div className="relative mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-full border border-zinc-200 bg-white text-base font-mono font-medium text-zinc-900 shadow-sm ring-4 ring-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-950">
+                03
+              </div>
+              <h3 className="text-lg font-semibold tracking-tight">Generate a focused action plan</h3>
+              <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                A five-section report: what you already have, your five ranked
+                gaps, what you might be over-prioritizing, and the single
+                highest-leverage thing to build next.
+              </p>
             </div>
-            <h3 className="text-xl font-semibold tracking-tight">Generate a focused action plan</h3>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              A five-section report: what you already have, your five ranked
-              gaps, what you might be over-prioritizing, and the single
-              highest-leverage thing to build next.
-            </p>
           </div>
         </div>
         <p className="mx-auto mt-8 max-w-2xl text-center text-xs text-zinc-500">
@@ -1419,37 +1461,38 @@ export default function Page() {
             Every metric the model claims, audited by an independent judge.
           </p>
         </div>
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
-          <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-white p-8 ring-1 ring-emerald-100/80 sm:p-10 dark:from-emerald-950/30 dark:to-zinc-900/30 dark:ring-emerald-900/40">
+        {/* Quality metrics — minimal, oversized numbers, no boxed cards */}
+        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-12 md:grid-cols-3 md:gap-6">
+          <div className="border-t border-zinc-200 pt-6 text-center dark:border-zinc-800">
             <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
               Evidence-grounded
             </div>
-            <div className="mt-3 text-5xl font-semibold tracking-tight text-emerald-700 dark:text-emerald-400">
+            <div className="mt-3 text-7xl font-semibold tracking-tight text-zinc-900 sm:text-8xl dark:text-zinc-100">
               0.93
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <p className="mx-auto mt-4 max-w-xs text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
               Factual claims traced back to the supplied profile or evidence JDs.
             </p>
           </div>
-          <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-white p-8 ring-1 ring-emerald-100/80 sm:p-10 dark:from-emerald-950/30 dark:to-zinc-900/30 dark:ring-emerald-900/40">
+          <div className="border-t border-zinc-200 pt-6 text-center dark:border-zinc-800">
             <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
               Specificity
             </div>
-            <div className="mt-3 text-5xl font-semibold tracking-tight text-emerald-700 dark:text-emerald-400">
+            <div className="mt-3 text-7xl font-semibold tracking-tight text-zinc-900 sm:text-8xl dark:text-zinc-100">
               0.83
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <p className="mx-auto mt-4 max-w-xs text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
               Recommendations with a named tool, time bound, and concrete output.
             </p>
           </div>
-          <div className="rounded-3xl bg-gradient-to-br from-emerald-50 to-white p-8 ring-1 ring-emerald-100/80 sm:p-10 dark:from-emerald-950/30 dark:to-zinc-900/30 dark:ring-emerald-900/40">
+          <div className="border-t border-zinc-200 pt-6 text-center dark:border-zinc-800">
             <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
               Actionability
             </div>
-            <div className="mt-3 text-5xl font-semibold tracking-tight text-emerald-700 dark:text-emerald-400">
+            <div className="mt-3 text-7xl font-semibold tracking-tight text-zinc-900 sm:text-8xl dark:text-zinc-100">
               0.82
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <p className="mx-auto mt-4 max-w-xs text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
               Recommendations executable by the user given their background.
             </p>
           </div>
@@ -1471,34 +1514,37 @@ export default function Page() {
             Every claim, traceable. Every limitation, named.
           </p>
         </div>
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-5 md:grid-cols-4 md:gap-6">
-          <div className="rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-6 ring-1 ring-zinc-200/60 sm:p-7 dark:from-zinc-900/60 dark:to-zinc-900/20 dark:ring-zinc-800/60">
-            <div className="text-2xl">📄</div>
-            <h3 className="mt-3 text-base font-semibold tracking-tight">First-party career sources</h3>
-            <p className="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-              Greenhouse + Ashby company boards. No LinkedIn, Indeed, or Glassdoor scraping.
-            </p>
-          </div>
-          <div className="rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-6 ring-1 ring-zinc-200/60 sm:p-7 dark:from-zinc-900/60 dark:to-zinc-900/20 dark:ring-zinc-800/60">
-            <div className="text-2xl">↻</div>
-            <h3 className="mt-3 text-base font-semibold tracking-tight">Daily automated corpus</h3>
-            <p className="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-              Re-fetched 06:00 UTC every day. Validation-gated before publish.
-            </p>
-          </div>
-          <div className="rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-6 ring-1 ring-zinc-200/60 sm:p-7 dark:from-zinc-900/60 dark:to-zinc-900/20 dark:ring-zinc-800/60">
-            <div className="text-2xl">✎</div>
-            <h3 className="mt-3 text-base font-semibold tracking-tight">Human review queue</h3>
-            <p className="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-              Borderline classifications go to a human, not auto-decided silently.
-            </p>
-          </div>
-          <div className="rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-6 ring-1 ring-zinc-200/60 sm:p-7 dark:from-zinc-900/60 dark:to-zinc-900/20 dark:ring-zinc-800/60">
-            <div className="text-2xl">⛔</div>
-            <h3 className="mt-3 text-base font-semibold tracking-tight">No full JD republication</h3>
-            <p className="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-              Aggregates + short quotes only, with links back to the original posting.
-            </p>
+        {/* Trust strip — single rounded surface with internal dividers, distinct from card grids */}
+        <div className="mx-auto max-w-6xl">
+          <div className="grid grid-cols-2 divide-zinc-200 overflow-hidden rounded-3xl bg-white/70 ring-1 ring-zinc-200/70 backdrop-blur md:grid-cols-4 md:divide-x dark:bg-zinc-900/40 dark:divide-zinc-800 dark:ring-zinc-800/70">
+            <div className="p-7 sm:p-8">
+              <div className="text-xl">📄</div>
+              <h3 className="mt-4 text-sm font-semibold tracking-tight">First-party career sources</h3>
+              <p className="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                Greenhouse + Ashby company boards. No LinkedIn, Indeed, or Glassdoor scraping.
+              </p>
+            </div>
+            <div className="p-7 sm:p-8">
+              <div className="text-xl">↻</div>
+              <h3 className="mt-4 text-sm font-semibold tracking-tight">Daily automated corpus</h3>
+              <p className="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                Re-fetched 06:00 UTC every day. Validation-gated before publish.
+              </p>
+            </div>
+            <div className="p-7 sm:p-8">
+              <div className="text-xl">✎</div>
+              <h3 className="mt-4 text-sm font-semibold tracking-tight">Human review queue</h3>
+              <p className="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                Borderline classifications go to a human, not auto-decided silently.
+              </p>
+            </div>
+            <div className="p-7 sm:p-8">
+              <div className="text-xl">⛔</div>
+              <h3 className="mt-4 text-sm font-semibold tracking-tight">No full JD republication</h3>
+              <p className="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                Aggregates + short quotes only, with links back to the original posting.
+              </p>
+            </div>
           </div>
         </div>
         <div className="mt-8 text-center">
