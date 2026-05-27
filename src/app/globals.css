@@ -24,3 +24,89 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Design system — Phase P2.0 consolidation.
+ *
+ * Naming intentionally semantic, not visual. When a page wants a card,
+ * it says `surface`, not `rounded-2xl ring-1 ring-zinc-200`. This is the
+ * single source of truth for radii, shadows, eyebrows, and section rhythm.
+ *
+ * Radius scale (3 tiers, strict roles):
+ *   rounded-xl  (12px) — chips, inputs, small badges
+ *   rounded-2xl (16px) — cards, panels, list containers   ← .surface
+ *   rounded-3xl (24px) — hero / featured product surfaces ← .surface-hero
+ *
+ * Elevation scale (3 tiers):
+ *   flat       — ring only, no shadow                     ← .surface
+ *   card       — ring + small shadow                      ← .surface-card
+ *   float      — ring + long-offset shadow                ← .surface-hero
+ *
+ * Don't introduce new shadows/radii outside this file.
+ * ─────────────────────────────────────────────────────────────────────── */
+
+@layer components {
+  /* Eyebrow label — one canonical style across all pages */
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500;
+  }
+
+  /* Base surface — gradient bg + ring, no shadow. */
+  .surface {
+    @apply rounded-2xl bg-gradient-to-br from-white to-zinc-50/60
+           ring-1 ring-zinc-200/70
+           dark:from-zinc-900/60 dark:to-zinc-900/30 dark:ring-zinc-800/70;
+  }
+
+  /* Card surface — surface + soft shadow. Inlined (don't chain @apply). */
+  .surface-card {
+    @apply rounded-2xl bg-gradient-to-br from-white to-zinc-50/60
+           ring-1 ring-zinc-200/70
+           shadow-sm shadow-zinc-200/40
+           dark:from-zinc-900/60 dark:to-zinc-900/30 dark:ring-zinc-800/70 dark:shadow-black/20;
+  }
+
+  /* Hero surface — large product artifact. */
+  .surface-hero {
+    @apply rounded-3xl bg-gradient-to-br from-white via-white to-zinc-50
+           ring-1 ring-zinc-200/70
+           shadow-[0_30px_80px_-30px_rgba(24,24,27,0.25)]
+           dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950
+           dark:ring-zinc-800/70
+           dark:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)];
+  }
+
+  /* Section rhythm */
+  .section-y {
+    @apply pb-24 sm:pb-32;
+  }
+
+  /* Whitepaper body — for long-form reading */
+  .prose-body {
+    @apply text-base leading-7 text-zinc-700 dark:text-zinc-300;
+  }
+  .prose-body p {
+    @apply mt-4;
+  }
+  .prose-body p:first-child {
+    @apply mt-0;
+  }
+  .prose-body strong {
+    @apply font-semibold text-zinc-900 dark:text-zinc-100;
+  }
+  .prose-body code {
+    @apply rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-[0.875em]
+           text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200;
+  }
+
+  /* Pull-quote / callout */
+  .pull-quote {
+    @apply my-6 border-l-2 border-zinc-300 pl-5 text-base leading-relaxed
+           text-zinc-700 dark:border-zinc-700 dark:text-zinc-300;
+  }
+
+  /* Tabular metric */
+  .metric {
+    @apply font-mono tabular-nums;
+  }
+}

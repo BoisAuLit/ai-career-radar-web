@@ -668,19 +668,7 @@ export default function Page() {
           className="pointer-events-none absolute inset-x-0 top-8 -z-10 mx-auto h-40 max-w-4xl rounded-3xl bg-gradient-to-b from-zinc-200/50 to-transparent blur-md dark:from-zinc-700/40"
         />
         <div className="relative mx-auto max-w-5xl">
-          {/* Side glow orbs */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -left-10 top-1/3 hidden h-40 w-40 rounded-full bg-gradient-to-br from-indigo-300/35 to-emerald-300/35 blur-3xl lg:block dark:from-indigo-700/30 dark:to-emerald-700/30"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-10 bottom-1/3 hidden h-48 w-48 rounded-full bg-gradient-to-br from-amber-300/35 to-rose-300/35 blur-3xl lg:block dark:from-amber-700/30 dark:to-rose-700/30"
-          />
-          <div
-            aria-hidden
-            className="relative overflow-hidden rounded-3xl border border-zinc-200/60 bg-gradient-to-br from-white via-white to-zinc-50 shadow-[0_30px_80px_-30px_rgba(24,24,27,0.35)] dark:border-zinc-800/60 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-950 dark:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)]"
-          >
+          <div aria-hidden className="surface-hero relative overflow-hidden">
             {/* Window chrome — gives a product/screenshot feel */}
             <div className="flex items-center justify-between border-b border-zinc-200/70 bg-zinc-50/60 px-5 py-3 dark:border-zinc-800/70 dark:bg-zinc-900/40">
               <div className="flex items-center gap-1.5">
@@ -783,7 +771,7 @@ export default function Page() {
           </h2>
         </div>
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
-          <div className="group rounded-3xl bg-gradient-to-br from-white to-zinc-50/50 p-8 shadow-sm shadow-zinc-200/40 ring-1 ring-zinc-200/50 transition-shadow duration-300 hover:shadow-lg hover:shadow-zinc-200/60 sm:p-10 dark:from-zinc-900/60 dark:to-zinc-900/20 dark:shadow-black/20 dark:ring-zinc-800/50 dark:hover:shadow-black/40">
+          <div className="group surface-card rounded-3xl p-8 transition-shadow duration-300 hover:shadow-lg hover:shadow-zinc-200/60 sm:p-10 dark:hover:shadow-black/40">
             <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-lg text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">
               ◎
             </div>
@@ -793,7 +781,7 @@ export default function Page() {
               career advice. Every claim traces back to a real posting.
             </p>
           </div>
-          <div className="group rounded-3xl bg-gradient-to-br from-white to-zinc-50/50 p-8 shadow-sm shadow-zinc-200/40 ring-1 ring-zinc-200/50 transition-shadow duration-300 hover:shadow-lg hover:shadow-zinc-200/60 sm:p-10 dark:from-zinc-900/60 dark:to-zinc-900/20 dark:shadow-black/20 dark:ring-zinc-800/50 dark:hover:shadow-black/40">
+          <div className="group surface-card rounded-3xl p-8 transition-shadow duration-300 hover:shadow-lg hover:shadow-zinc-200/60 sm:p-10 dark:hover:shadow-black/40">
             <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-100 text-lg text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
               ↗
             </div>
@@ -803,7 +791,7 @@ export default function Page() {
               ranked by skill prevalence and how close you already are.
             </p>
           </div>
-          <div className="group rounded-3xl bg-gradient-to-br from-white to-zinc-50/50 p-8 shadow-sm shadow-zinc-200/40 ring-1 ring-zinc-200/50 transition-shadow duration-300 hover:shadow-lg hover:shadow-zinc-200/60 sm:p-10 dark:from-zinc-900/60 dark:to-zinc-900/20 dark:shadow-black/20 dark:ring-zinc-800/50 dark:hover:shadow-black/40">
+          <div className="group surface-card rounded-3xl p-8 transition-shadow duration-300 hover:shadow-lg hover:shadow-zinc-200/60 sm:p-10 dark:hover:shadow-black/40">
             <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-lg text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400">
               ⌘
             </div>
@@ -865,7 +853,7 @@ export default function Page() {
             report in about a minute.
           </p>
         </div>
-        <div className="mx-auto max-w-6xl rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-7 shadow-[0_20px_60px_-20px_rgba(24,24,27,0.18)] ring-1 ring-zinc-200/70 sm:p-10 dark:from-zinc-900/80 dark:to-zinc-900/40 dark:shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)] dark:ring-zinc-800/70">
+        <div className="surface-hero mx-auto max-w-6xl p-7 sm:p-10">
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
 
@@ -1053,10 +1041,8 @@ export default function Page() {
           </div>
           {/* Right-side: What your report includes (static explanatory panel) */}
           <aside className="lg:col-span-1">
-            <div className="sticky top-24 rounded-2xl bg-gradient-to-br from-zinc-50 to-white p-6 shadow-md shadow-zinc-200/40 ring-1 ring-zinc-200/70 dark:from-zinc-900/60 dark:to-zinc-900/30 dark:shadow-black/30 dark:ring-zinc-800/70">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
-                What your report includes
-              </div>
+            <div className="surface-card sticky top-24 p-6">
+              <div className="eyebrow">What your report includes</div>
               <ul className="mt-4 space-y-4 text-sm leading-relaxed">
                 <li>
                   <div className="flex items-start gap-2.5">
