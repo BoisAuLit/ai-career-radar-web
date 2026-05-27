@@ -227,7 +227,7 @@ export default function SnapshotPipelinePage() {
 
       {/* What this is + what this is NOT */}
       <section className="mb-8 grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
-        <div className="rounded-md border border-zinc-200 bg-zinc-50/60 p-3 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <div className="rounded-xl bg-gradient-to-br from-zinc-50 to-white p-4 shadow-sm shadow-zinc-200/40 ring-1 ring-zinc-200/70 dark:from-zinc-900/60 dark:to-zinc-900/30 dark:shadow-black/20 dark:ring-zinc-800/70">
           <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
             What this page shows
           </div>
@@ -240,7 +240,7 @@ export default function SnapshotPipelinePage() {
             </li>
           </ul>
         </div>
-        <div className="rounded-md border border-zinc-200 bg-zinc-50/60 p-3 dark:border-zinc-800 dark:bg-zinc-900/40">
+        <div className="rounded-xl bg-gradient-to-br from-zinc-50 to-white p-4 shadow-sm shadow-zinc-200/40 ring-1 ring-zinc-200/70 dark:from-zinc-900/60 dark:to-zinc-900/30 dark:shadow-black/20 dark:ring-zinc-800/70">
           <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
             What this page does NOT show
           </div>
@@ -263,25 +263,25 @@ export default function SnapshotPipelinePage() {
       <section className="mb-8">
         <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">Pipeline summary</h2>
         <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
-          <div className="rounded-md border border-zinc-200 p-3 dark:border-zinc-800">
+          <div className="rounded-xl bg-gradient-to-br from-white to-zinc-50/60 p-4 shadow-sm shadow-zinc-200/40 ring-1 ring-zinc-200/70 dark:from-zinc-900/60 dark:to-zinc-900/30 dark:shadow-black/20 dark:ring-zinc-800/70">
             <dt className="text-xs uppercase tracking-wider text-zinc-500">
               Records
             </dt>
             <dd className="mt-1 font-mono text-lg">{nRecords}</dd>
           </div>
-          <div className="rounded-md border border-zinc-200 p-3 dark:border-zinc-800">
+          <div className="rounded-xl bg-gradient-to-br from-white to-zinc-50/60 p-4 shadow-sm shadow-zinc-200/40 ring-1 ring-zinc-200/70 dark:from-zinc-900/60 dark:to-zinc-900/30 dark:shadow-black/20 dark:ring-zinc-800/70">
             <dt className="text-xs uppercase tracking-wider text-zinc-500">
               Companies
             </dt>
             <dd className="mt-1 font-mono text-lg">{companies.size}</dd>
           </div>
-          <div className="rounded-md border border-zinc-200 p-3 dark:border-zinc-800">
+          <div className="rounded-xl bg-gradient-to-br from-white to-zinc-50/60 p-4 shadow-sm shadow-zinc-200/40 ring-1 ring-zinc-200/70 dark:from-zinc-900/60 dark:to-zinc-900/30 dark:shadow-black/20 dark:ring-zinc-800/70">
             <dt className="text-xs uppercase tracking-wider text-zinc-500">
               Archetypes
             </dt>
             <dd className="mt-1 font-mono text-lg">{archetypesShown.size}</dd>
           </div>
-          <div className="rounded-md border border-zinc-200 p-3 dark:border-zinc-800">
+          <div className="rounded-xl bg-gradient-to-br from-white to-zinc-50/60 p-4 shadow-sm shadow-zinc-200/40 ring-1 ring-zinc-200/70 dark:from-zinc-900/60 dark:to-zinc-900/30 dark:shadow-black/20 dark:ring-zinc-800/70">
             <dt className="text-xs uppercase tracking-wider text-zinc-500">
               Generated at (UTC)
             </dt>
@@ -299,7 +299,7 @@ export default function SnapshotPipelinePage() {
       {/* Top archetypes */}
       <section className="mb-8">
         <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">Top archetypes</h2>
-        <ul className="divide-y divide-zinc-200 rounded-md border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+        <ul className="divide-y divide-zinc-200 rounded-xl bg-white/60 shadow-sm shadow-zinc-200/40 ring-1 ring-zinc-200/70 dark:divide-zinc-800 dark:bg-zinc-900/40 dark:shadow-black/20 dark:ring-zinc-800/70">
           {topArchetypes.map((a) => (
             <li
               key={a.key}

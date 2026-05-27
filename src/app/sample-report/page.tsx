@@ -21,7 +21,7 @@ export default function SampleReportPage() {
   return (
     <div className="min-h-dvh w-full bg-gradient-to-b from-white via-zinc-50/60 to-white text-zinc-900 dark:from-zinc-950 dark:via-zinc-900/40 dark:to-zinc-950 dark:text-zinc-100">
       {/* Sticky navbar — matches homepage */}
-      <header className="sticky top-0 z-40 w-full border-b border-zinc-200/70 bg-white/80 backdrop-blur dark:border-zinc-800/70 dark:bg-zinc-950/70">
+      <header className="sticky top-0 z-40 w-full border-b border-zinc-200/70 bg-white/75 shadow-sm shadow-zinc-200/30 backdrop-blur-md dark:border-zinc-800/70 dark:bg-zinc-950/70 dark:shadow-black/30">
         <nav className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link href="/" className="group flex items-center gap-2">
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-700 text-white shadow-sm dark:from-zinc-100 dark:to-zinc-300 dark:text-zinc-900">
@@ -65,7 +65,7 @@ export default function SampleReportPage() {
         </div>
 
         {/* Report shell */}
-        <article className="overflow-hidden rounded-3xl bg-white shadow-xl shadow-zinc-300/30 ring-1 ring-zinc-200/70 dark:bg-zinc-900/60 dark:shadow-black/40 dark:ring-zinc-800/70">
+        <article className="overflow-hidden rounded-3xl bg-white shadow-[0_30px_80px_-30px_rgba(24,24,27,0.25)] ring-1 ring-zinc-200/70 dark:bg-zinc-900/60 dark:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)] dark:ring-zinc-800/70">
           {/* Executive summary strip */}
           <div className="border-b border-zinc-200/70 bg-gradient-to-br from-zinc-50/60 to-white px-7 py-6 sm:px-10 sm:py-8 dark:border-zinc-800/70 dark:from-zinc-900 dark:to-zinc-900/40">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -116,7 +116,7 @@ export default function SampleReportPage() {
                 Already strong · don&apos;t re-learn
               </h2>
               <ul className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-                <li className="flex items-start gap-3 rounded-2xl bg-emerald-50/40 px-4 py-3 ring-1 ring-emerald-100/80 dark:bg-emerald-950/20 dark:ring-emerald-900/40">
+                <li className="flex items-start gap-3 rounded-2xl bg-gradient-to-br from-emerald-50/60 to-white px-4 py-3 shadow-sm shadow-emerald-100/40 ring-1 ring-emerald-100/80 transition-shadow hover:shadow-md dark:from-emerald-950/30 dark:to-zinc-900/40 dark:shadow-black/20 dark:ring-emerald-900/40">
                   <span aria-hidden className="mt-0.5 text-emerald-600 dark:text-emerald-400">✓</span>
                   <div>
                     <div className="font-medium">Frontend systems</div>
@@ -125,7 +125,7 @@ export default function SampleReportPage() {
                     </div>
                   </div>
                 </li>
-                <li className="flex items-start gap-3 rounded-2xl bg-emerald-50/40 px-4 py-3 ring-1 ring-emerald-100/80 dark:bg-emerald-950/20 dark:ring-emerald-900/40">
+                <li className="flex items-start gap-3 rounded-2xl bg-gradient-to-br from-emerald-50/60 to-white px-4 py-3 shadow-sm shadow-emerald-100/40 ring-1 ring-emerald-100/80 transition-shadow hover:shadow-md dark:from-emerald-950/30 dark:to-zinc-900/40 dark:shadow-black/20 dark:ring-emerald-900/40">
                   <span aria-hidden className="mt-0.5 text-emerald-600 dark:text-emerald-400">✓</span>
                   <div>
                     <div className="font-medium">Product shipping cadence</div>
@@ -134,7 +134,7 @@ export default function SampleReportPage() {
                     </div>
                   </div>
                 </li>
-                <li className="flex items-start gap-3 rounded-2xl bg-emerald-50/40 px-4 py-3 ring-1 ring-emerald-100/80 dark:bg-emerald-950/20 dark:ring-emerald-900/40">
+                <li className="flex items-start gap-3 rounded-2xl bg-gradient-to-br from-emerald-50/60 to-white px-4 py-3 shadow-sm shadow-emerald-100/40 ring-1 ring-emerald-100/80 transition-shadow hover:shadow-md dark:from-emerald-950/30 dark:to-zinc-900/40 dark:shadow-black/20 dark:ring-emerald-900/40">
                   <span aria-hidden className="mt-0.5 text-emerald-600 dark:text-emerald-400">✓</span>
                   <div>
                     <div className="font-medium">TypeScript / React depth</div>
@@ -143,7 +143,7 @@ export default function SampleReportPage() {
                     </div>
                   </div>
                 </li>
-                <li className="flex items-start gap-3 rounded-2xl bg-emerald-50/40 px-4 py-3 ring-1 ring-emerald-100/80 dark:bg-emerald-950/20 dark:ring-emerald-900/40">
+                <li className="flex items-start gap-3 rounded-2xl bg-gradient-to-br from-emerald-50/60 to-white px-4 py-3 shadow-sm shadow-emerald-100/40 ring-1 ring-emerald-100/80 transition-shadow hover:shadow-md dark:from-emerald-950/30 dark:to-zinc-900/40 dark:shadow-black/20 dark:ring-emerald-900/40">
                   <span aria-hidden className="mt-0.5 text-emerald-600 dark:text-emerald-400">✓</span>
                   <div>
                     <div className="font-medium">CI/CD + Docker discipline</div>
@@ -161,7 +161,7 @@ export default function SampleReportPage() {
                 Top leverage gaps · ranked
               </h2>
               <ol className="mt-4 space-y-5">
-                <li className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50/60 to-white p-6 shadow-sm ring-1 ring-amber-200/60 sm:p-7 dark:from-amber-950/20 dark:to-zinc-900/40 dark:ring-amber-900/40">
+                <li className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50/60 to-white p-6 shadow-lg shadow-amber-200/30 ring-1 ring-amber-200/60 sm:p-7 dark:from-amber-950/20 dark:to-zinc-900/40 dark:shadow-black/30 dark:ring-amber-900/40">
                   <span aria-hidden className="absolute right-5 top-5 text-[11px] font-mono uppercase tracking-[0.15em] text-amber-700/70 dark:text-amber-400/70">
                     Top priority
                   </span>
@@ -187,7 +187,7 @@ export default function SampleReportPage() {
                     <br />— Anthropic · jd_000017
                   </blockquote>
                 </li>
-                <li className="rounded-2xl bg-zinc-50/60 p-5 ring-1 ring-zinc-200/70 dark:bg-zinc-900/40 dark:ring-zinc-800/70">
+                <li className="rounded-2xl bg-gradient-to-br from-zinc-50 to-white p-5 shadow-sm shadow-zinc-200/30 ring-1 ring-zinc-200/70 transition-shadow hover:shadow-md hover:shadow-zinc-200/50 dark:from-zinc-900/50 dark:to-zinc-900/30 dark:shadow-black/20 dark:ring-zinc-800/70">
                   <div className="flex flex-wrap items-baseline gap-3">
                     <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 text-sm font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900">
                       2
@@ -210,7 +210,7 @@ export default function SampleReportPage() {
                     <br />— Cursor · jd_000412
                   </blockquote>
                 </li>
-                <li className="rounded-2xl bg-zinc-50/60 p-5 ring-1 ring-zinc-200/70 dark:bg-zinc-900/40 dark:ring-zinc-800/70">
+                <li className="rounded-2xl bg-gradient-to-br from-zinc-50 to-white p-5 shadow-sm shadow-zinc-200/30 ring-1 ring-zinc-200/70 transition-shadow hover:shadow-md hover:shadow-zinc-200/50 dark:from-zinc-900/50 dark:to-zinc-900/30 dark:shadow-black/20 dark:ring-zinc-800/70">
                   <div className="flex flex-wrap items-baseline gap-3">
                     <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 text-sm font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900">
                       3
@@ -228,7 +228,7 @@ export default function SampleReportPage() {
                     in state from your Redux background.
                   </p>
                 </li>
-                <li className="rounded-2xl bg-zinc-50/60 p-5 ring-1 ring-zinc-200/70 dark:bg-zinc-900/40 dark:ring-zinc-800/70">
+                <li className="rounded-2xl bg-gradient-to-br from-zinc-50 to-white p-5 shadow-sm shadow-zinc-200/30 ring-1 ring-zinc-200/70 transition-shadow hover:shadow-md hover:shadow-zinc-200/50 dark:from-zinc-900/50 dark:to-zinc-900/30 dark:shadow-black/20 dark:ring-zinc-800/70">
                   <div className="flex flex-wrap items-baseline gap-3">
                     <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 text-sm font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900">
                       4
@@ -246,7 +246,7 @@ export default function SampleReportPage() {
                     bottleneck.
                   </p>
                 </li>
-                <li className="rounded-2xl bg-zinc-50/60 p-5 ring-1 ring-zinc-200/70 dark:bg-zinc-900/40 dark:ring-zinc-800/70">
+                <li className="rounded-2xl bg-gradient-to-br from-zinc-50 to-white p-5 shadow-sm shadow-zinc-200/30 ring-1 ring-zinc-200/70 transition-shadow hover:shadow-md hover:shadow-zinc-200/50 dark:from-zinc-900/50 dark:to-zinc-900/30 dark:shadow-black/20 dark:ring-zinc-800/70">
                   <div className="flex flex-wrap items-baseline gap-3">
                     <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 text-sm font-semibold text-white dark:bg-zinc-100 dark:text-zinc-900">
                       5
@@ -271,7 +271,7 @@ export default function SampleReportPage() {
               <h2 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-indigo-700 dark:text-indigo-400">
                 One project to build next · 2 weeks
               </h2>
-              <div className="mt-4 rounded-2xl bg-gradient-to-br from-indigo-50/60 to-white p-6 ring-1 ring-indigo-100/80 dark:from-indigo-950/30 dark:to-zinc-900/40 dark:ring-indigo-900/40">
+              <div className="mt-4 rounded-2xl bg-gradient-to-br from-indigo-50/60 to-white p-6 shadow-md shadow-indigo-200/30 ring-1 ring-indigo-100/80 dark:from-indigo-950/30 dark:to-zinc-900/40 dark:shadow-black/30 dark:ring-indigo-900/40">
                 <h3 className="text-xl font-semibold tracking-tight">
                   Agent workflow debugger with eval traces
                 </h3>
@@ -307,7 +307,7 @@ export default function SampleReportPage() {
               <h2 className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
                 First seven days · concrete plan
               </h2>
-              <ol className="mt-5 overflow-hidden rounded-2xl ring-1 ring-zinc-200/70 dark:ring-zinc-800/70">
+              <ol className="mt-5 overflow-hidden rounded-2xl shadow-sm shadow-zinc-200/30 ring-1 ring-zinc-200/70 dark:shadow-black/20 dark:ring-zinc-800/70">
                 {[
                   ["1", "Read 5 applied_ai JDs end-to-end (Anthropic, Cursor, Cohere, Together AI, NVIDIA). Take notes on language."],
                   ["2", "Stand up the Anthropic SDK locally. Ship a tiny single-prompt CLI that takes a query and returns a structured JSON."],
@@ -351,7 +351,7 @@ export default function SampleReportPage() {
         <div className="mx-auto mt-12 flex flex-wrap justify-center gap-3 sm:mt-16">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-7 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-zinc-800 to-zinc-900 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-zinc-900/25 ring-1 ring-zinc-900/10 transition-all duration-200 hover:from-zinc-700 hover:to-zinc-800 hover:shadow-xl hover:shadow-zinc-900/35 dark:from-zinc-100 dark:to-white dark:text-zinc-900 dark:shadow-white/20 dark:hover:from-zinc-200 dark:hover:to-zinc-100"
           >
             Generate my own report
             <span aria-hidden>→</span>

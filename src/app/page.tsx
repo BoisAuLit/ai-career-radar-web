@@ -579,7 +579,7 @@ export default function Page() {
         className="pointer-events-none absolute inset-0 -z-20 bg-[linear-gradient(to_right,rgba(0,0,0,0.025)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.025)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black,transparent_70%)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)]"
       />
       {/* ─────────────────── Sticky navbar ─────────────────── */}
-      <header className="sticky top-0 z-40 w-full border-b border-zinc-200/70 bg-white/80 backdrop-blur dark:border-zinc-800/70 dark:bg-zinc-950/70">
+      <header className="sticky top-0 z-40 w-full border-b border-zinc-200/70 bg-white/75 shadow-sm shadow-zinc-200/30 backdrop-blur-md dark:border-zinc-800/70 dark:bg-zinc-950/70 dark:shadow-black/30">
         <nav className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link href="/" className="group flex items-center gap-2">
             <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-700 text-white shadow-sm dark:from-zinc-100 dark:to-zinc-300 dark:text-zinc-900">
@@ -640,7 +640,7 @@ export default function Page() {
         <div className="mt-10 flex flex-wrap justify-center gap-3 sm:mt-12">
           <a
             href="#generator"
-            className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-7 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-zinc-800 to-zinc-900 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-zinc-900/25 ring-1 ring-zinc-900/10 transition-all duration-200 hover:from-zinc-700 hover:to-zinc-800 hover:shadow-xl hover:shadow-zinc-900/35 dark:from-zinc-100 dark:to-white dark:text-zinc-900 dark:shadow-white/20 dark:hover:from-zinc-200 dark:hover:to-zinc-100"
           >
             Generate my report
             <span aria-hidden>→</span>
@@ -783,7 +783,7 @@ export default function Page() {
           </h2>
         </div>
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 md:grid-cols-3 md:gap-8">
-          <div className="rounded-3xl bg-gradient-to-br from-white to-zinc-50/50 p-8 sm:p-10 dark:from-zinc-900/60 dark:to-zinc-900/20">
+          <div className="group rounded-3xl bg-gradient-to-br from-white to-zinc-50/50 p-8 shadow-sm shadow-zinc-200/40 ring-1 ring-zinc-200/50 transition-shadow duration-300 hover:shadow-lg hover:shadow-zinc-200/60 sm:p-10 dark:from-zinc-900/60 dark:to-zinc-900/20 dark:shadow-black/20 dark:ring-zinc-800/50 dark:hover:shadow-black/40">
             <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-lg text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">
               ◎
             </div>
@@ -793,7 +793,7 @@ export default function Page() {
               career advice. Every claim traces back to a real posting.
             </p>
           </div>
-          <div className="rounded-3xl bg-gradient-to-br from-white to-zinc-50/50 p-8 sm:p-10 dark:from-zinc-900/60 dark:to-zinc-900/20">
+          <div className="group rounded-3xl bg-gradient-to-br from-white to-zinc-50/50 p-8 shadow-sm shadow-zinc-200/40 ring-1 ring-zinc-200/50 transition-shadow duration-300 hover:shadow-lg hover:shadow-zinc-200/60 sm:p-10 dark:from-zinc-900/60 dark:to-zinc-900/20 dark:shadow-black/20 dark:ring-zinc-800/50 dark:hover:shadow-black/40">
             <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-100 text-lg text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
               ↗
             </div>
@@ -803,7 +803,7 @@ export default function Page() {
               ranked by skill prevalence and how close you already are.
             </p>
           </div>
-          <div className="rounded-3xl bg-gradient-to-br from-white to-zinc-50/50 p-8 sm:p-10 dark:from-zinc-900/60 dark:to-zinc-900/20">
+          <div className="group rounded-3xl bg-gradient-to-br from-white to-zinc-50/50 p-8 shadow-sm shadow-zinc-200/40 ring-1 ring-zinc-200/50 transition-shadow duration-300 hover:shadow-lg hover:shadow-zinc-200/60 sm:p-10 dark:from-zinc-900/60 dark:to-zinc-900/20 dark:shadow-black/20 dark:ring-zinc-800/50 dark:hover:shadow-black/40">
             <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-100 text-lg text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400">
               ⌘
             </div>
@@ -835,7 +835,7 @@ export default function Page() {
               onClick={() => loadSample(p)}
               disabled={isBusy}
               title={p.blurb}
-              className="group relative flex h-full flex-col items-start gap-3 overflow-hidden rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-7 text-left shadow-sm ring-1 ring-zinc-200/60 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-zinc-300/30 hover:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-sm dark:from-zinc-900/70 dark:to-zinc-900/30 dark:ring-zinc-800/60 dark:hover:ring-zinc-700 dark:hover:shadow-black/40"
+              className="group relative flex h-full flex-col items-start gap-3 overflow-hidden rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-7 text-left shadow-md shadow-zinc-200/50 ring-1 ring-zinc-200/60 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-zinc-300/50 hover:ring-zinc-300 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-md dark:from-zinc-900/70 dark:to-zinc-900/30 dark:shadow-black/30 dark:ring-zinc-800/60 dark:hover:ring-zinc-700 dark:hover:shadow-black/50"
             >
               <h3 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
                 {p.label}
@@ -865,7 +865,7 @@ export default function Page() {
             report in about a minute.
           </p>
         </div>
-        <div className="mx-auto max-w-6xl rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-7 shadow-xl shadow-zinc-300/30 ring-1 ring-zinc-200/70 sm:p-10 dark:from-zinc-900/80 dark:to-zinc-900/40 dark:shadow-black/40 dark:ring-zinc-800/70">
+        <div className="mx-auto max-w-6xl rounded-3xl bg-gradient-to-br from-white to-zinc-50/60 p-7 shadow-[0_20px_60px_-20px_rgba(24,24,27,0.18)] ring-1 ring-zinc-200/70 sm:p-10 dark:from-zinc-900/80 dark:to-zinc-900/40 dark:shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)] dark:ring-zinc-800/70">
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
 
@@ -1037,7 +1037,7 @@ export default function Page() {
             type="button"
             onClick={handleSubmit}
             disabled={!resume.trim() || !target.trim() || isBusy}
-            className="inline-flex items-center gap-2 rounded-full bg-zinc-900 px-7 py-3.5 text-base font-semibold text-white shadow-sm shadow-zinc-900/20 transition hover:bg-zinc-800 hover:shadow-md hover:shadow-zinc-900/30 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-sm disabled:hover:bg-zinc-900 dark:bg-white dark:text-zinc-900 dark:shadow-white/20 dark:hover:bg-zinc-200 dark:disabled:hover:bg-white"
+            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-zinc-800 to-zinc-900 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-zinc-900/25 ring-1 ring-zinc-900/10 transition-all duration-200 hover:from-zinc-700 hover:to-zinc-800 hover:shadow-xl hover:shadow-zinc-900/35 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-sm disabled:hover:from-zinc-800 dark:from-zinc-100 dark:to-white dark:text-zinc-900 dark:shadow-white/20 dark:hover:from-zinc-200 dark:hover:to-zinc-100 dark:disabled:hover:from-zinc-100"
           >
             {stage === "classifying"
               ? "Classifying target…"
@@ -1053,7 +1053,7 @@ export default function Page() {
           </div>
           {/* Right-side: What your report includes (static explanatory panel) */}
           <aside className="lg:col-span-1">
-            <div className="sticky top-24 rounded-2xl bg-zinc-50/80 p-6 ring-1 ring-zinc-200/70 dark:bg-zinc-900/50 dark:ring-zinc-800/70">
+            <div className="sticky top-24 rounded-2xl bg-gradient-to-br from-zinc-50 to-white p-6 shadow-md shadow-zinc-200/40 ring-1 ring-zinc-200/70 dark:from-zinc-900/60 dark:to-zinc-900/30 dark:shadow-black/30 dark:ring-zinc-800/70">
               <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
                 What your report includes
               </div>
@@ -1388,7 +1388,7 @@ export default function Page() {
               className="pointer-events-none absolute left-[16.67%] right-[16.67%] top-7 hidden h-px bg-gradient-to-r from-transparent via-zinc-300 to-transparent md:block dark:via-zinc-700"
             />
             <div className="relative text-center md:px-6">
-              <div className="relative mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-full border border-zinc-200 bg-white text-base font-mono font-medium text-zinc-900 shadow-sm ring-4 ring-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-950">
+              <div className="relative mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-full border border-zinc-200 bg-gradient-to-br from-white to-zinc-50 text-base font-mono font-medium text-zinc-900 shadow-md shadow-zinc-200/50 ring-4 ring-white dark:border-zinc-700 dark:from-zinc-900 dark:to-zinc-800 dark:text-zinc-100 dark:shadow-black/30 dark:ring-zinc-950">
                 01
               </div>
               <h3 className="text-lg font-semibold tracking-tight">Understand your target</h3>
@@ -1399,7 +1399,7 @@ export default function Page() {
               </p>
             </div>
             <div className="relative text-center md:px-6">
-              <div className="relative mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-full border border-zinc-200 bg-white text-base font-mono font-medium text-zinc-900 shadow-sm ring-4 ring-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-950">
+              <div className="relative mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-full border border-zinc-200 bg-gradient-to-br from-white to-zinc-50 text-base font-mono font-medium text-zinc-900 shadow-md shadow-zinc-200/50 ring-4 ring-white dark:border-zinc-700 dark:from-zinc-900 dark:to-zinc-800 dark:text-zinc-100 dark:shadow-black/30 dark:ring-zinc-950">
                 02
               </div>
               <h3 className="text-lg font-semibold tracking-tight">Compare against real evidence</h3>
@@ -1410,7 +1410,7 @@ export default function Page() {
               </p>
             </div>
             <div className="relative text-center md:px-6">
-              <div className="relative mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-full border border-zinc-200 bg-white text-base font-mono font-medium text-zinc-900 shadow-sm ring-4 ring-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-950">
+              <div className="relative mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-full border border-zinc-200 bg-gradient-to-br from-white to-zinc-50 text-base font-mono font-medium text-zinc-900 shadow-md shadow-zinc-200/50 ring-4 ring-white dark:border-zinc-700 dark:from-zinc-900 dark:to-zinc-800 dark:text-zinc-100 dark:shadow-black/30 dark:ring-zinc-950">
                 03
               </div>
               <h3 className="text-lg font-semibold tracking-tight">Generate a focused action plan</h3>
@@ -1494,7 +1494,7 @@ export default function Page() {
         </div>
         {/* Trust strip — single rounded surface with internal dividers, distinct from card grids */}
         <div className="mx-auto max-w-6xl">
-          <div className="grid grid-cols-2 divide-zinc-200 overflow-hidden rounded-3xl bg-white/70 ring-1 ring-zinc-200/70 backdrop-blur md:grid-cols-4 md:divide-x dark:bg-zinc-900/40 dark:divide-zinc-800 dark:ring-zinc-800/70">
+          <div className="grid grid-cols-2 divide-zinc-200 overflow-hidden rounded-3xl bg-white/70 shadow-lg shadow-zinc-200/40 ring-1 ring-zinc-200/70 backdrop-blur md:grid-cols-4 md:divide-x dark:bg-zinc-900/40 dark:divide-zinc-800 dark:shadow-black/30 dark:ring-zinc-800/70">
             <div className="p-7 sm:p-8">
               <div className="text-xl">📄</div>
               <h3 className="mt-4 text-sm font-semibold tracking-tight">First-party career sources</h3>

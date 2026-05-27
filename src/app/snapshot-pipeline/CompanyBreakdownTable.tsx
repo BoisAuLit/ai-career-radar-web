@@ -52,7 +52,7 @@ export default function CompanyBreakdownTable({ rows }: { rows: CompanyRow[] }) 
           {filtered.length} of {rows.length}
         </span>
       </div>
-      <div className="overflow-x-auto rounded-md border border-zinc-200 dark:border-zinc-800">
+      <div className="overflow-x-auto rounded-xl bg-white/60 shadow-sm shadow-zinc-200/40 ring-1 ring-zinc-200/70 dark:bg-zinc-900/40 dark:shadow-black/20 dark:ring-zinc-800/70">
         <table className="min-w-full text-sm">
           <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wider text-zinc-500 dark:bg-zinc-900">
             <tr>

@@ -27,7 +27,7 @@ export function BrandMark({ className = "h-4 w-4" }: { className?: string }) {
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-zinc-200/70 bg-white/80 backdrop-blur dark:border-zinc-800/70 dark:bg-zinc-950/70">
+    <header className="sticky top-0 z-40 w-full border-b border-zinc-200/70 bg-white/75 shadow-sm shadow-zinc-200/30 backdrop-blur-md dark:border-zinc-800/70 dark:bg-zinc-950/70 dark:shadow-black/30">
       <nav className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <Link href="/" className="group flex items-center gap-2">
           <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-zinc-900 to-zinc-700 text-white shadow-sm dark:from-zinc-100 dark:to-zinc-300 dark:text-zinc-900">
