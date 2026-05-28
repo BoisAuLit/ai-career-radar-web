@@ -25,10 +25,19 @@ export default function CompanyBreakdownTable({ rows }: { rows: CompanyRow[] }) 
     );
   }, [rows, query]);
 
+  // Proportional bar fill is computed against the page-wide max so
+  // companies with thin coverage still render a visible bar relative
+  // to the leader.
+  const maxN = useMemo(() => Math.max(1, ...rows.map((r) => r.n)), [rows]);
+
   return (
     <div>
-      <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
-        <label htmlFor="company-filter" className="text-zinc-600 dark:text-zinc-400">
+      {/* Filter row */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <label
+          htmlFor="company-filter"
+          className="eyebrow shrink-0"
+        >
           Filter
         </label>
         <input
@@ -37,48 +46,66 @@ export default function CompanyBreakdownTable({ rows }: { rows: CompanyRow[] }) 
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="company or archetype…"
-          className="flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-900"
+          className="flex-1 rounded-xl bg-white px-3 py-2 text-sm shadow-sm ring-1 ring-zinc-200 transition placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:bg-zinc-900 dark:ring-zinc-800 dark:focus:ring-zinc-100"
         />
         {query && (
           <button
             type="button"
             onClick={() => setQuery("")}
-            className="rounded-md border border-zinc-300 px-2 py-1 text-[11px] text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            className="rounded-full bg-white px-3 py-1.5 text-xs font-medium shadow-sm ring-1 ring-zinc-200 transition hover:ring-zinc-300 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:ring-zinc-700"
           >
             Clear
           </button>
         )}
-        <span className="text-zinc-500">
+        <span className="metric text-xs text-zinc-500">
           {filtered.length} of {rows.length}
         </span>
       </div>
-      <div className="overflow-x-auto rounded-xl bg-white/60 shadow-sm shadow-zinc-200/40 ring-1 ring-zinc-200/70 dark:bg-zinc-900/40 dark:shadow-black/20 dark:ring-zinc-800/70">
+
+      <div className="surface-card overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wider text-zinc-500 dark:bg-zinc-900">
-            <tr>
-              <th className="px-3 py-2">Company</th>
-              <th className="px-3 py-2 text-right">Included jobs</th>
-              <th className="px-3 py-2">Dominant archetype</th>
+          <thead>
+            <tr className="border-b border-zinc-200/80 bg-zinc-50/60 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+              <th className="eyebrow px-4 py-3 text-left">Company</th>
+              <th className="eyebrow px-4 py-3 text-right">Included jobs</th>
+              <th className="eyebrow px-4 py-3 text-left">Dominant archetype</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+          <tbody className="divide-y divide-zinc-200/70 dark:divide-zinc-800/70">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={3} className="px-3 py-4 text-center text-xs text-zinc-500">
+                <td colSpan={3} className="px-4 py-6 text-center text-xs text-zinc-500">
                   No companies match &quot;{query}&quot;.
                 </td>
               </tr>
             ) : (
               filtered.map((c) => (
-                <tr key={c.company}>
-                  <td className="px-3 py-2">{c.company}</td>
-                  <td className="px-3 py-2 text-right font-mono">{c.n}</td>
-                  <td className="px-3 py-2 text-zinc-600 dark:text-zinc-400">
+                <tr key={c.company} className="relative">
+                  <td className="px-4 py-2.5 font-medium">{c.company}</td>
+                  <td className="relative px-4 py-2.5">
+                    {/* Bar fill behind the count, proportional to maxN */}
+                    <div
+                      aria-hidden
+                      className="absolute inset-y-1.5 right-4 rounded-md bg-gradient-to-l from-emerald-500/[0.10] to-transparent dark:from-emerald-400/[0.16]"
+                      style={{
+                        width: `${(c.n / maxN) * 100}%`,
+                        maxWidth: "calc(100% - 1rem)",
+                      }}
+                    />
+                    <span className="metric relative block text-right text-zinc-700 dark:text-zinc-300">
+                      {c.n}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5">
                     {c.dominantArchetype ? (
-                      <>
-                        <span className="font-mono">{c.dominantArchetype}</span>{" "}
-                        <span className="text-zinc-400">({c.dominantCount})</span>
-                      </>
+                      <span className="inline-flex items-center gap-1.5">
+                        <code className="rounded-md bg-zinc-100 px-1.5 py-0.5 font-mono text-[11px] text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                          {c.dominantArchetype}
+                        </code>
+                        <span className="metric text-xs text-zinc-400">
+                          {c.dominantCount}
+                        </span>
+                      </span>
                     ) : (
                       <span className="text-zinc-400">—</span>
                     )}

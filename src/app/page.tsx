@@ -32,46 +32,103 @@ interface ReportEvalResult {
   };
 }
 
+// Editorial styling for the streamed report body. Section headers get a
+// visible "chapter" break, quotes from real JDs render as pull-quotes so
+// evidence is unmistakable, and inline code (skill names, archetype slugs)
+// renders as a small chip. Tuned to feel like a deliberate document rather
+// than raw markdown.
 const markdownComponents: Components = {
-  p: ({ children }) => <p className="mb-2 leading-relaxed">{children}</p>,
+  p: ({ children }) => (
+    <p className="mb-4 leading-7 text-zinc-700 dark:text-zinc-300">{children}</p>
+  ),
   a: ({ children, href }) => (
-    <a href={href} target="_blank" rel="noopener noreferrer"
-       className="text-blue-600 underline underline-offset-2 hover:text-blue-700 dark:text-blue-400">
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-medium text-zinc-900 underline decoration-zinc-300 underline-offset-4 transition hover:decoration-zinc-900 dark:text-zinc-100 dark:decoration-zinc-700 dark:hover:decoration-zinc-100"
+    >
       {children}
     </a>
   ),
-  ul: ({ children }) => <ul className="mb-2 list-disc space-y-1 pl-5">{children}</ul>,
-  ol: ({ children }) => <ol className="mb-2 list-decimal space-y-1 pl-5">{children}</ol>,
-  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-  h1: ({ children }) => <h1 className="mb-2 mt-4 text-xl font-bold">{children}</h1>,
-  h2: ({ children }) => <h2 className="mb-2 mt-4 border-b border-zinc-200 pb-1 text-lg font-semibold dark:border-zinc-800">{children}</h2>,
-  h3: ({ children }) => <h3 className="mb-1 mt-3 text-base font-semibold">{children}</h3>,
-  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+  ul: ({ children }) => (
+    <ul className="mb-5 list-disc space-y-2 pl-5 marker:text-zinc-400 dark:marker:text-zinc-600">
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="mb-5 list-decimal space-y-2 pl-5 marker:font-mono marker:text-xs marker:text-zinc-400 dark:marker:text-zinc-600">
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => (
+    <li className="pl-1 leading-7 text-zinc-700 dark:text-zinc-300">{children}</li>
+  ),
+  h1: ({ children }) => (
+    <h1 className="mb-4 mt-6 text-2xl font-semibold tracking-tight text-zinc-900 first:mt-0 dark:text-zinc-100">
+      {children}
+    </h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="mb-4 mt-10 border-t border-zinc-200 pt-6 text-xl font-semibold tracking-tight text-zinc-900 first:mt-0 first:border-0 first:pt-0 dark:border-zinc-800 dark:text-zinc-100">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="mb-2 mt-6 text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+      {children}
+    </h3>
+  ),
+  strong: ({ children }) => (
+    <strong className="font-semibold text-zinc-900 dark:text-zinc-100">{children}</strong>
+  ),
   em: ({ children }) => <em className="italic">{children}</em>,
   blockquote: ({ children }) => (
-    <blockquote className="my-2 border-l-2 border-zinc-300 pl-3 italic text-zinc-600 dark:border-zinc-600 dark:text-zinc-400">
+    <blockquote className="my-5 rounded-r-xl border-l-2 border-emerald-400/70 bg-emerald-50/40 px-5 py-3 text-[0.95rem] leading-7 text-zinc-700 dark:border-emerald-500/60 dark:bg-emerald-950/20 dark:text-zinc-300">
       {children}
     </blockquote>
   ),
   code: ({ className, children }) => {
     const isBlock = (className ?? "").startsWith("language-");
     if (isBlock) {
-      return <code className="block whitespace-pre-wrap break-words font-mono text-xs">{children}</code>;
+      return (
+        <code className="block whitespace-pre-wrap break-words font-mono text-xs">
+          {children}
+        </code>
+      );
     }
-    return <code className="rounded bg-zinc-200 px-1 py-0.5 font-mono text-xs dark:bg-zinc-700">{children}</code>;
+    return (
+      <code className="rounded-md bg-zinc-100 px-1.5 py-0.5 font-mono text-[0.85em] text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200">
+        {children}
+      </code>
+    );
   },
   pre: ({ children }) => (
-    <pre className="my-2 overflow-x-auto rounded-lg bg-zinc-900 p-3 text-xs text-zinc-100">{children}</pre>
+    <pre className="my-5 overflow-x-auto rounded-xl bg-zinc-900 p-4 text-xs leading-relaxed text-zinc-100 ring-1 ring-zinc-800 dark:ring-zinc-700">
+      {children}
+    </pre>
   ),
   table: ({ children }) => (
-    <div className="my-2 overflow-x-auto">
-      <table className="min-w-full border-collapse text-xs">{children}</table>
+    <div className="my-5 overflow-x-auto rounded-xl ring-1 ring-zinc-200 dark:ring-zinc-800">
+      <table className="min-w-full border-collapse text-sm">{children}</table>
     </div>
   ),
-  thead: ({ children }) => <thead className="border-b border-zinc-300 dark:border-zinc-700">{children}</thead>,
-  th: ({ children }) => <th className="px-2 py-1 text-left font-semibold">{children}</th>,
-  td: ({ children }) => <td className="border-b border-zinc-200 px-2 py-1 dark:border-zinc-800">{children}</td>,
-  hr: () => <hr className="my-3 border-zinc-300 dark:border-zinc-700" />,
+  thead: ({ children }) => (
+    <thead className="bg-zinc-50/70 dark:bg-zinc-900/50">{children}</thead>
+  ),
+  th: ({ children }) => (
+    <th className="eyebrow border-b border-zinc-200 px-4 py-2.5 text-left dark:border-zinc-800">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="border-b border-zinc-100 px-4 py-2.5 text-zinc-700 last:border-0 dark:border-zinc-800/60 dark:text-zinc-300">
+      {children}
+    </td>
+  ),
+  hr: () => (
+    <hr className="my-8 border-0 border-t border-zinc-200 dark:border-zinc-800" />
+  ),
 };
 
 const EXAMPLE_RESUME = `Paste your resume here in plain text, or upload a PDF (button above).
