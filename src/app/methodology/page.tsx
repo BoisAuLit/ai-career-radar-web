@@ -11,6 +11,44 @@
 import Link from "next/link";
 import { PageBackground, SiteHeader, SiteFooter } from "@/components/SiteChrome";
 
+const SECTIONS = [
+  { id: "what-this-corpus-is", title: "What this corpus is" },
+  { id: "what-this-corpus-is-not", title: "What this corpus is NOT" },
+  { id: "data-sources", title: "Data sources" },
+  { id: "pipeline-flow", title: "Pipeline flow" },
+  { id: "how-we-deduplicate", title: "How we deduplicate" },
+  { id: "how-we-strip-boilerplate", title: "How we strip boilerplate" },
+  { id: "ai-relevance-classification", title: "AI relevance classification" },
+  { id: "what-we-report", title: "What we report and why" },
+  { id: "public-display-rules", title: "Public display rules" },
+  { id: "human-review", title: "Human review" },
+  { id: "automation-status", title: "Automation status" },
+  { id: "trust-signals", title: "Trust signals" },
+] as const;
+
+function TableOfContents({ className = "" }: { className?: string }) {
+  return (
+    <nav aria-label="Table of contents" className={className}>
+      <div className="eyebrow mb-3">Contents</div>
+      <ol className="space-y-2 text-sm">
+        {SECTIONS.map((s, i) => (
+          <li key={s.id} className="flex gap-2">
+            <span className="metric w-5 shrink-0 text-zinc-400">
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <a
+              href={`#${s.id}`}
+              className="text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              {s.title}
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
 export const metadata = {
   title: "Methodology · AI Career Radar",
   description:
@@ -47,26 +85,34 @@ export default function MethodologyPage() {
   return (
     <PageBackground>
       <SiteHeader />
-      <main className="mx-auto max-w-3xl px-6 py-12 sm:px-8 sm:py-16">
-      <header className="mb-10">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
-          Methodology
-        </div>
+      <main className="mx-auto max-w-6xl px-6 py-12 sm:px-8 sm:py-16">
+      <header className="mb-10 lg:mb-16">
+        <div className="eyebrow">Methodology</div>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
           How we collect, classify, and report.
         </h1>
-        <p className="mt-3 text-base text-zinc-600 dark:text-zinc-400">
+        <p className="mt-3 max-w-2xl text-base text-zinc-600 dark:text-zinc-400">
           Read this before trusting any number in our reports.
         </p>
       </header>
 
+      {/* Mobile + tablet: inline TOC at top */}
+      <TableOfContents className="mb-12 lg:hidden" />
+
+      {/* Two-column layout on desktop: sticky TOC sidebar + main column */}
+      <div className="lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-16">
+        <aside className="hidden lg:block">
+          <TableOfContents className="sticky top-24" />
+        </aside>
+
+        <div className="max-w-3xl">
       <StatusBadge
         phase="Phase F2.13 · Daily automated cron, under observation (2026-05-25)"
         description="The full pipeline runs unattended on GitHub Actions every day at 06:00 UTC: rehydrate canonical state from the committed dump → fetch 8 first-party ATS sources (Greenhouse + Ashby) → classify AI relevance → extract structured signals → validate against 9 pre-commit gates → re-dump canonical state → commit artifacts back to main. Each phase is idempotent and SQLite-backed; a steady-state run with no new postings costs near $0. The live home page still serves the manually-curated May 2026 corpus (443 JDs). The automated output is previewed at /snapshot-pipeline as a staging surface and will be promoted to the live bundle once the daily cron has accumulated enough clean runs to trust unattended."
       />
 
       <section className="mb-12">
-        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">What this corpus is</h2>
+        <h2 id="what-this-corpus-is" className="scroll-mt-24 mb-3 text-xl font-semibold tracking-tight sm:text-2xl">What this corpus is</h2>
         <p className="text-base leading-7 text-zinc-700 dark:text-zinc-300">
           A curated set of approximately 40 AI / AI-adjacent technology
           companies. The companies span frontier AI labs, big-tech AI
@@ -91,7 +137,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">What this corpus is NOT</h2>
+        <h2 id="what-this-corpus-is-not" className="scroll-mt-24 mb-3 text-xl font-semibold tracking-tight sm:text-2xl">What this corpus is NOT</h2>
         <ul className="list-disc space-y-2 pl-6 text-base leading-7 text-zinc-700 dark:text-zinc-300">
           <li>
             <strong>Not the entire AI job market.</strong> 40 companies is
@@ -118,7 +164,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Data sources</h2>
+        <h2 id="data-sources" className="scroll-mt-24 mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Data sources</h2>
         <p className="text-base leading-7 text-zinc-700 dark:text-zinc-300">
           All data comes from <strong>first-party company career pages and
           their ATS providers</strong>. The pipeline currently fetches
@@ -144,7 +190,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Pipeline flow</h2>
+        <h2 id="pipeline-flow" className="scroll-mt-24 mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Pipeline flow</h2>
         <p className="text-base leading-7 text-zinc-700 dark:text-zinc-300">
           Each daily run is a single idempotent chain:
         </p>
@@ -187,7 +233,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">How we deduplicate</h2>
+        <h2 id="how-we-deduplicate" className="scroll-mt-24 mb-3 text-xl font-semibold tracking-tight sm:text-2xl">How we deduplicate</h2>
         <p className="text-base leading-7 text-zinc-700 dark:text-zinc-300">
           Deduplication runs as a layered cascade, cheapest-signals first:
           source URL → content hash → normalized title equality → TF-IDF
@@ -206,7 +252,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">How we strip boilerplate</h2>
+        <h2 id="how-we-strip-boilerplate" className="scroll-mt-24 mb-3 text-xl font-semibold tracking-tight sm:text-2xl">How we strip boilerplate</h2>
         <p className="text-base leading-7 text-zinc-700 dark:text-zinc-300">
           Most companies put a stock "About [Company]" paragraph at the
           top of every JD. Without stripping, the same words inflate skill
@@ -219,7 +265,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">AI relevance classification</h2>
+        <h2 id="ai-relevance-classification" className="scroll-mt-24 mb-3 text-xl font-semibold tracking-tight sm:text-2xl">AI relevance classification</h2>
         <p className="text-base leading-7 text-zinc-700 dark:text-zinc-300">
           A two-stage filter: a cheap keyword pre-filter (high recall,
           loose precision) followed by an LLM classifier that returns a
@@ -233,7 +279,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">What we report and why</h2>
+        <h2 id="what-we-report" className="scroll-mt-24 mb-3 text-xl font-semibold tracking-tight sm:text-2xl">What we report and why</h2>
         <p className="text-base leading-7 text-zinc-700 dark:text-zinc-300">
           <strong>V1 ships snapshot-only.</strong> We report:
         </p>
@@ -273,7 +319,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Public display rules</h2>
+        <h2 id="public-display-rules" className="scroll-mt-24 mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Public display rules</h2>
         <p className="text-base leading-7 text-zinc-700 dark:text-zinc-300">
           We do not republish full job descriptions publicly. Public
           surfaces show <strong>aggregate statistics</strong> (counts,
@@ -287,7 +333,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Human review</h2>
+        <h2 id="human-review" className="scroll-mt-24 mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Human review</h2>
         <p className="text-base leading-7 text-zinc-700 dark:text-zinc-300">
           The classifier returns a categorical decision —{" "}
           <code>include</code>, <code>review</code>, or{" "}
@@ -312,7 +358,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Automation status</h2>
+        <h2 id="automation-status" className="scroll-mt-24 mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Automation status</h2>
         <p className="text-base leading-7 text-zinc-700 dark:text-zinc-300">
           Daily automation is enabled. The pipeline runs unattended on
           GitHub Actions at 06:00 UTC every day, gated by nine pre-commit
@@ -337,7 +383,7 @@ export default function MethodologyPage() {
       </section>
 
       <section className="mb-12">
-        <h2 className="mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Trust signals</h2>
+        <h2 id="trust-signals" className="scroll-mt-24 mb-3 text-xl font-semibold tracking-tight sm:text-2xl">Trust signals</h2>
         <p className="text-base leading-7 text-zinc-700 dark:text-zinc-300">
           Every claim in our snapshot report should be auditable. To that
           end, we publish:
@@ -399,6 +445,8 @@ export default function MethodologyPage() {
           on GitHub.
         </p>
       </footer>
+        </div>
+      </div>
       </main>
       <SiteFooter />
     </PageBackground>

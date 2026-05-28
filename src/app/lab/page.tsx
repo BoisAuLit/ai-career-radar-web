@@ -21,37 +21,39 @@ function scoreCell(value: number, alarm = 0.7) {
   const v = value.toFixed(2);
   if (value < alarm) {
     return (
-      <span className="font-mono font-semibold text-rose-700 dark:text-rose-300">
+      <span className="metric font-semibold text-rose-700 dark:text-rose-300">
         {v}
       </span>
     );
   }
   if (value >= 0.9) {
     return (
-      <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-300">
+      <span className="metric font-semibold text-emerald-700 dark:text-emerald-300">
         {v}
       </span>
     );
   }
-  return <span className="font-mono">{v}</span>;
+  return <span className="metric text-zinc-700 dark:text-zinc-300">{v}</span>;
 }
 
-function CellRow({ c }: { c: MatrixCell }) {
+function CellRow({ c, zebra }: { c: MatrixCell; zebra?: boolean }) {
   const outlier = c.persona === "backend_to_infra" && c.company === "Anthropic";
   return (
     <tr
       className={
         outlier
-          ? "border-b border-zinc-200 bg-rose-50/40 dark:border-zinc-800 dark:bg-rose-950/20"
-          : "border-b border-zinc-200 dark:border-zinc-800"
+          ? "bg-rose-50/40 dark:bg-rose-950/20"
+          : zebra
+            ? "bg-zinc-50/40 dark:bg-zinc-900/40"
+            : ""
       }
     >
-      <td className="py-2 pr-3 font-mono text-xs">{c.persona}</td>
-      <td className="py-2 pr-3">{c.company}</td>
-      <td className="py-2 pr-3 font-mono text-xs">{c.archetype}</td>
-      <td className="py-2 pr-3 text-right">{scoreCell(c.gr)}</td>
-      <td className="py-2 pr-3 text-right">{scoreCell(c.sp)}</td>
-      <td className="py-2 pr-3 text-right">{scoreCell(c.ac)}</td>
+      <td className="px-4 py-2.5 font-mono text-xs">{c.persona}</td>
+      <td className="px-4 py-2.5">{c.company}</td>
+      <td className="px-4 py-2.5 font-mono text-xs">{c.archetype}</td>
+      <td className="px-4 py-2.5 text-right">{scoreCell(c.gr)}</td>
+      <td className="px-4 py-2.5 text-right">{scoreCell(c.sp)}</td>
+      <td className="px-4 py-2.5 text-right">{scoreCell(c.ac)}</td>
     </tr>
   );
 }
@@ -105,21 +107,21 @@ export default function LabPage() {
         <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">
           The matrix (pre-fix)
         </h2>
-        <div className="surface-card overflow-x-auto p-1">
+        <div className="surface-card overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-              <tr className="border-b-2 border-zinc-300 dark:border-zinc-700">
-                <th className="py-2 pr-3 text-left">Persona</th>
-                <th className="py-2 pr-3 text-left">Company</th>
-                <th className="py-2 pr-3 text-left">Target archetype</th>
-                <th className="py-2 pr-3 text-right">Gr</th>
-                <th className="py-2 pr-3 text-right">Sp</th>
-                <th className="py-2 pr-3 text-right">Ac</th>
+            <thead>
+              <tr className="border-b border-zinc-200/80 bg-zinc-50/60 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                <th className="eyebrow px-4 py-3 text-left">Persona</th>
+                <th className="eyebrow px-4 py-3 text-left">Company</th>
+                <th className="eyebrow px-4 py-3 text-left">Target archetype</th>
+                <th className="eyebrow px-4 py-3 text-right">Gr</th>
+                <th className="eyebrow px-4 py-3 text-right">Sp</th>
+                <th className="eyebrow px-4 py-3 text-right">Ac</th>
               </tr>
             </thead>
             <tbody>
               {PRE_FIX_MATRIX.map((c, i) => (
-                <CellRow key={i} c={c} />
+                <CellRow key={i} c={c} zebra={i % 2 === 1} />
               ))}
             </tbody>
           </table>
@@ -171,36 +173,36 @@ export default function LabPage() {
         <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">
           The result · same input, same model, post-fix
         </h2>
-        <div className="surface-card overflow-x-auto p-1">
+        <div className="surface-card overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="text-xs uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-              <tr className="border-b-2 border-zinc-300 dark:border-zinc-700">
-                <th className="py-2 pr-3 text-left">Run</th>
-                <th className="py-2 pr-3 text-right">Gr</th>
-                <th className="py-2 pr-3 text-right">Sp</th>
-                <th className="py-2 pr-3 text-right">Ac</th>
+            <thead>
+              <tr className="border-b border-zinc-200/80 bg-zinc-50/60 dark:border-zinc-800/80 dark:bg-zinc-900/40">
+                <th className="eyebrow px-4 py-3 text-left">Run</th>
+                <th className="eyebrow px-4 py-3 text-right">Gr</th>
+                <th className="eyebrow px-4 py-3 text-right">Sp</th>
+                <th className="eyebrow px-4 py-3 text-right">Ac</th>
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b border-zinc-200 dark:border-zinc-800">
-                <td className="py-2 pr-3">Pre-fix backend × Anthropic</td>
-                <td className="py-2 pr-3 text-right">{scoreCell(PRE_FIX_MATRIX[3].gr)}</td>
-                <td className="py-2 pr-3 text-right">{scoreCell(PRE_FIX_MATRIX[3].sp)}</td>
-                <td className="py-2 pr-3 text-right">{scoreCell(PRE_FIX_MATRIX[3].ac)}</td>
+              <tr>
+                <td className="px-4 py-2.5">Pre-fix backend × Anthropic</td>
+                <td className="px-4 py-2.5 text-right">{scoreCell(PRE_FIX_MATRIX[3].gr)}</td>
+                <td className="px-4 py-2.5 text-right">{scoreCell(PRE_FIX_MATRIX[3].sp)}</td>
+                <td className="px-4 py-2.5 text-right">{scoreCell(PRE_FIX_MATRIX[3].ac)}</td>
               </tr>
-              <tr className="border-b border-zinc-200 bg-emerald-50/40 dark:border-zinc-800 dark:bg-emerald-950/20">
-                <td className="py-2 pr-3">Post-fix backend × Anthropic</td>
-                <td className="py-2 pr-3 text-right">{scoreCell(POST_FIX_BACKEND_ANTHROPIC.gr)}</td>
-                <td className="py-2 pr-3 text-right">{scoreCell(POST_FIX_BACKEND_ANTHROPIC.sp)}</td>
-                <td className="py-2 pr-3 text-right">{scoreCell(POST_FIX_BACKEND_ANTHROPIC.ac)}</td>
+              <tr className="bg-emerald-50/40 dark:bg-emerald-950/20">
+                <td className="px-4 py-2.5 font-medium">Post-fix backend × Anthropic</td>
+                <td className="px-4 py-2.5 text-right">{scoreCell(POST_FIX_BACKEND_ANTHROPIC.gr)}</td>
+                <td className="px-4 py-2.5 text-right">{scoreCell(POST_FIX_BACKEND_ANTHROPIC.sp)}</td>
+                <td className="px-4 py-2.5 text-right">{scoreCell(POST_FIX_BACKEND_ANTHROPIC.ac)}</td>
               </tr>
-              <tr className="font-semibold">
-                <td className="py-2 pr-3">Δ</td>
-                <td className="py-2 pr-3 text-right text-emerald-700 dark:text-emerald-300">
+              <tr className="border-t border-zinc-200/80 dark:border-zinc-800/80">
+                <td className="eyebrow px-4 py-3">Δ</td>
+                <td className="metric px-4 py-3 text-right font-semibold text-emerald-700 dark:text-emerald-300">
                   +{(POST_FIX_BACKEND_ANTHROPIC.gr - PRE_FIX_MATRIX[3].gr).toFixed(2)}
                 </td>
-                <td className="py-2 pr-3 text-right text-zinc-500">0</td>
-                <td className="py-2 pr-3 text-right text-zinc-500">0</td>
+                <td className="metric px-4 py-3 text-right text-zinc-400">0.00</td>
+                <td className="metric px-4 py-3 text-right text-zinc-400">0.00</td>
               </tr>
             </tbody>
           </table>
