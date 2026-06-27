@@ -1,0 +1,118 @@
+# TASK · <one-line title>
+
+> Fill every field. Empty fields mean "not yet decided" — surface them in the
+> RUN_REPORT instead of guessing.
+
+## Metadata
+
+- **task_id**: `YYYY-MM-DD_run_XX`
+- **date**: `YYYY-MM-DD`
+- **run_number**: `XX` (zero-padded sequence within the day)
+- **title**: <short human-readable title>
+- **repo**: `/Users/bohaoli/Desktop/ai-career-radar-web` (or pipeline repo path)
+
+## Objective
+
+<1-3 sentences describing what should be true at the end of this task. Outcome-focused, not step-list.>
+
+## Background
+
+<Context the executor needs: what motivates this task, what prior runs / decisions feed into it, links to relevant reports.>
+
+## Allowed files
+
+> Paths the executor MAY edit. Glob patterns OK. If a path is not on this
+> list AND not on `forbidden_files`, executor must ask before editing.
+
+- `src/app/...`
+- `...`
+
+## Forbidden files
+
+> Paths the executor MUST NOT edit, even if it seems useful. Glob patterns OK.
+
+- `.github/workflows/*`
+- `src/lib/prompts.ts`
+- `src/data/web_bundle.json`
+- `package.json` (unless adding/removing deps was the explicit objective)
+- `.env*`
+- `**/secrets*`
+- any pipeline repo files
+
+## Risk level
+
+`green` | `yellow` | `red`
+
+> See `.agent/policies/agent_policy.md` §2 for definitions. Red tasks require
+> a prior approval reference (see `requires_human_approval`).
+
+## Constraints
+
+> Hard rules for this specific task. Anything beyond the global policy.
+
+- No new dependencies.
+- No prompt / classifier / extractor edits.
+- No model selection changes.
+- No deploy.
+- No push to `main`.
+
+## Acceptance criteria
+
+> Checklist that the RUN_REPORT must demonstrate as satisfied.
+
+- [ ] <criterion 1, observable>
+- [ ] <criterion 2>
+- [ ] `npm run build` passes (if web change)
+- [ ] No forbidden files modified
+- [ ] All changed files listed in RUN_REPORT
+
+## Validation commands
+
+> Exact commands the executor should run to validate. Copy-paste-able.
+
+```bash
+cd /Users/bohaoli/Desktop/ai-career-radar-web
+git status
+npm run build
+# (additional commands as needed)
+git status
+```
+
+## Expected output
+
+<What the RUN_REPORT must include beyond the standard template: e.g. specific screenshots, specific diffs, specific numbers.>
+
+## Rollback plan
+
+> How to undo this task if the DECISION is `request_changes` or `stop`.
+
+- Branch name: `agent/<task_id>` (executor creates this; never works on `main`)
+- Discard locally: `git checkout main && git branch -D agent/<task_id>`
+- If already pushed: <plan>
+
+## Requires human approval
+
+`yes` | `no`
+
+> `yes` is mandatory for Red tasks. If `yes`, reference the prior message,
+> issue, or DECISION file that contains the approval:
+>
+> > Approved by: <"Bohao msg 2026-MM-DD HH:MM" | ".agent/decisions/YYYY-MM-DD_run_XX_DECISION.md">
+
+## Max runtime minutes
+
+<integer, e.g. 30> — executor stops and surfaces in RUN_REPORT if exceeded.
+
+## Max token budget hint
+
+<integer or `unset`> — optional, advisory only.
+
+## Stop conditions
+
+> Beyond the global policy (`.agent/policies/agent_policy.md` §3), task-specific
+> stop conditions.
+
+- Stop if a red-zone file appears in `git status`.
+- Stop if `npm run build` fails.
+- Stop if more than `<N>` files modified.
+- Stop if any test in `<test path>` regresses.

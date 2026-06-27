@@ -1,0 +1,178 @@
+# Agent Policy
+
+Operating rules for the AgentOps file protocol. Read by humans and (in later
+phases) by the OpenAI API reviewer. **All actors must defer to this document.**
+
+If a TASK contradicts this policy, the TASK is invalid. Stop and surface the
+conflict in the RUN_REPORT.
+
+---
+
+## 1. Roles
+
+### H · Human (Bohao)
+- Product owner.
+- **Final approver for risky actions.**
+- Decides: merge, deploy, cron changes, prompt changes, model selection changes.
+- Reviews major product quality.
+
+### ChatGPT (Desktop / Web)
+- High-level advisor.
+- Workflow designer.
+- Architecture reviewer.
+- Manual reviewer when needed (writes DECISION files by hand).
+- **Not** the unattended automation engine. ChatGPT does not run autonomously
+  in the background.
+
+### OpenAI API *(future, not enabled in AgentOps-0)*
+- Planner / reviewer automation engine.
+- Reads TASK, RUN_REPORT, and this policy.
+- Writes DECISION.
+- May generate the next TASK in later phases.
+- **Not enabled in AgentOps-0.** All DECISIONs are currently human-or-ChatGPT-authored.
+
+### Claude Code
+- Executor.
+- Reads TASK files.
+- Edits code, runs build/tests, captures screenshots.
+- Writes RUN_REPORT.
+- Commits on a branch.
+- **Not** the final decision-maker. Never merges to `main` without explicit human approval.
+
+### GitHub repo
+- Shared memory.
+- Audit trail.
+- Stores TASK, RUN_REPORT, DECISION, and daily summaries under `.agent/`.
+
+---
+
+## 2. Risk levels
+
+Every TASK must declare a `risk_level`. Risk level governs which safety rules apply.
+
+### 🟢 Green tasks — branch-only, low blast radius
+- Docs.
+- Visual polish.
+- Static pages.
+- Sample report page edits.
+- Copy / wording changes.
+- Local build / test runs.
+- Screenshot generation.
+- Branch-only commits (no merge to `main` without approval).
+
+### 🟡 Yellow tasks — explicit spec + build pass required
+- Report UI changes.
+- localStorage persistence work.
+- Snapshot page improvements.
+- Non-critical refactor.
+- Small API/UI integration changes.
+- Changes to `.agent/` policy or templates (yes — protocol changes are Yellow,
+  never Green).
+
+### 🔴 Red tasks — explicit human approval required before execution
+- Cron changes.
+- GitHub Actions changes.
+- `sources.yaml` changes (in either repo).
+- Classifier or extractor prompt changes.
+- `src/lib/prompts.ts` changes.
+- Model selection changes.
+- Secrets / env changes.
+- Push to `main`.
+- Production deploy.
+- Auth, payment, or database schema changes.
+- Deletion of `corpus/state/*` files.
+- Live web-bundle promotion (`corpus/web_bundle.json` swap).
+
+---
+
+## 3. Safety rules
+
+These apply to **every** TASK regardless of risk level, with stricter gating
+for Yellow and Red.
+
+| Rule | Green | Yellow | Red |
+|------|:---:|:---:|:---:|
+| May execute on a branch | ✓ | ✓ | (only after explicit human approval) |
+| Requires explicit task spec | ✓ | ✓ | ✓ |
+| Build must pass before commit | ✓ | ✓ (mandatory) | ✓ (mandatory) |
+| Requires explicit human approval before execution | — | — | ✓ |
+| Push to `main` without explicit user instruction | ✗ | ✗ | ✗ |
+| Manual deploy without explicit user instruction | ✗ | ✗ | ✗ |
+| Show `git status` before and after | ✓ | ✓ | ✓ |
+| List all changed files in RUN_REPORT | ✓ | ✓ | ✓ |
+| Run `npm run build` for web changes | ✓ | ✓ | ✓ |
+| Preserve a rollback path (commit on a branch, no destructive ops) | ✓ | ✓ | ✓ |
+
+### Hard stops (stop immediately and surface in RUN_REPORT)
+
+- A red-zone file was changed without explicit human approval.
+- The build fails.
+- More than **3 tasks** executed within a single batch.
+- More than **3 commits** created within a single batch.
+- More than **2 hours** elapsed in a single batch (unless the user explicitly
+  extended the batch in writing).
+- A `git push --force` / `git reset --hard` / `rm -rf` / `--no-verify` style
+  operation was requested but not separately approved.
+
+---
+
+## 4. Red-zone file list
+
+Any path matching the patterns below is **Red**. A TASK that touches one of
+these requires `risk_level: red` and explicit human approval in the prior
+DECISION (or in a direct message from the human).
+
+```
+.github/workflows/*
+sources.yaml                          # in either web repo or pipeline repo
+src/lib/prompts.ts
+**/classifier*.py
+**/extraction*.py                     # extractor prompt
+**/*prompt*.{ts,js,py,md,json}       # any prompt file
+.env
+.env.*
+**/secrets*
+src/data/web_bundle.json
+corpus/state/*
+corpus/canonical_dump.json
+package.json                          # only Red when adding/removing dependencies
+package-lock.json                     # only Red when adding/removing dependencies
+**/deploy.{yml,yaml,sh,json}
+**/vercel.json
+**/wrangler.toml
+```
+
+Adjacent rules:
+
+- `package.json` and `package-lock.json` are **Yellow** for benign edits (e.g.
+  npm scripts), **Red** when dependencies are added or removed.
+- Touching a file in this list with `git mv` / `git rm` is treated the same as
+  editing it.
+- If a tool autogenerated changes to a red-zone file as a side effect, stop
+  and surface it. Do not silently revert; let the human see the diff first.
+
+---
+
+## 5. RUN_REPORT must affirm
+
+Every RUN_REPORT must explicitly answer:
+
+- `constraints_checked`: did the executor verify each `forbidden_files` entry was untouched? (yes/no list)
+- `red_zone_check`: did the executor verify no red-zone path was changed without prior approval? (yes/no + list)
+- `build_result`: pass / fail (mandatory for web changes)
+- `requires_human_decision`: does this RUN_REPORT need human approval before the next TASK?
+
+Any "no" or "fail" answer escalates the RUN_REPORT to require a human DECISION.
+
+---
+
+## 6. Versioning of this policy
+
+When this file changes, update the `Last updated:` line at the bottom and
+mention the change in the corresponding RUN_REPORT. Old RUN_REPORTs remain
+governed by the policy version that was in effect at the time they were
+written — git history is the source of truth.
+
+---
+
+Last updated: 2026-06-26 (AgentOps-0 initial version)
