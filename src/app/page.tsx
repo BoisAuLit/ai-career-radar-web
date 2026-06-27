@@ -1280,44 +1280,45 @@ export default function Page() {
                 {report || "..."}
               </ReactMarkdown>
             </div>
-          </section>
 
-          {stage === "done" && (
-            <section className="mt-4 flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-              >
-                {copied ? "✓ Copied" : "📋 Copy report"}
-              </button>
-              <button
-                type="button"
-                onClick={handleDownload}
-                className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-              >
-                ⬇️ Download .md
-              </button>
-              {!evalResult && (
+            {/* Action bar — visually attached to the report shell as its footer */}
+            {stage === "done" && (
+              <div className="flex flex-wrap items-center gap-2 border-t border-zinc-200/70 bg-zinc-50/60 px-7 py-4 sm:px-10 dark:border-zinc-800/70 dark:bg-zinc-900/40">
                 <button
                   type="button"
-                  onClick={handleRunEval}
-                  disabled={evalRunning}
-                  className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                  onClick={handleCopy}
+                  className="rounded-full bg-white px-3 py-1.5 text-xs font-medium shadow-sm ring-1 ring-zinc-200 transition hover:ring-zinc-300 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:ring-zinc-700"
                 >
-                  {evalRunning ? "Scoring (3 parallel judges)..." : "📊 Eval this report"}
+                  {copied ? "✓ Copied" : "📋 Copy report"}
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={handleStartOver}
-                className="ml-auto rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                title="Clear the report and inputs to start over"
-              >
-                ↺ Start over
-              </button>
-            </section>
-          )}
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  className="rounded-full bg-white px-3 py-1.5 text-xs font-medium shadow-sm ring-1 ring-zinc-200 transition hover:ring-zinc-300 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:ring-zinc-700"
+                >
+                  ⬇️ Download .md
+                </button>
+                {!evalResult && (
+                  <button
+                    type="button"
+                    onClick={handleRunEval}
+                    disabled={evalRunning}
+                    className="rounded-full bg-white px-3 py-1.5 text-xs font-medium shadow-sm ring-1 ring-zinc-200 transition hover:ring-zinc-300 disabled:opacity-40 dark:bg-zinc-900 dark:ring-zinc-800 dark:hover:ring-zinc-700"
+                  >
+                    {evalRunning ? "Scoring (3 parallel judges)..." : "📊 Eval this report"}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleStartOver}
+                  className="ml-auto rounded-full px-3 py-1.5 text-xs font-medium text-zinc-500 transition hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  title="Clear the report and inputs to start over"
+                >
+                  ↺ Start over
+                </button>
+              </div>
+            )}
+          </section>
 
           {evalErr && (
             <section className="mt-4 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
