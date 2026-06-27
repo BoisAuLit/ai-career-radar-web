@@ -742,7 +742,7 @@ export default function Page() {
             {/* Header strip */}
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-zinc-200/70 pb-5 dark:border-zinc-800/70">
               <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">Sample report · static</div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">Sample report · fictional preview</div>
                 <div className="mt-1.5 text-2xl font-semibold tracking-tight sm:text-3xl">
                   Applied AI Engineer
                 </div>
@@ -815,6 +815,18 @@ export default function Page() {
                 </div>
               </div>
             </div>
+            </div>
+            {/* Attribution strip — mirrors the live report's footer band */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-zinc-200/70 bg-zinc-50/60 px-8 py-3 text-[11px] text-zinc-500 sm:px-12 dark:border-zinc-800/70 dark:bg-zinc-900/40">
+              <span className="font-mono uppercase tracking-wider">Grounded in</span>
+              <span><span className="font-semibold text-zinc-700 dark:text-zinc-300">92</span> applied_ai JDs</span>
+              <span aria-hidden>·</span>
+              <span><span className="font-semibold text-zinc-700 dark:text-zinc-300">5</span> evidence quotes</span>
+              <span aria-hidden>·</span>
+              <span>Five-section report</span>
+              <Link href="/sample-report" className="ml-auto inline-flex items-center gap-1 font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white">
+                See full sample <span aria-hidden>→</span>
+              </Link>
             </div>
           </div>
         </div>
@@ -992,11 +1004,18 @@ export default function Page() {
           />
         </div>
 
+        {/* Soft divider before the optional refinements (company deep-dive + privacy) */}
+        {eligibleCompanies.length > 0 && (
+          <div className="pt-2">
+            <div className="eyebrow mb-3 text-zinc-400">Optional refinements</div>
+          </div>
+        )}
+
         {/* Phase 5 #3 · Optional per-company deep dive */}
         {eligibleCompanies.length > 0 && (
           <div>
-            <label className="mb-1 block text-sm font-medium" htmlFor="company">
-              Focus on a specific company? <span className="font-normal text-zinc-500">(optional — deep-dive mode)</span>
+            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="company">
+              Focus on a specific company? <span className="font-normal text-zinc-500">(deep-dive mode)</span>
             </label>
             <select
               id="company"
@@ -1037,9 +1056,9 @@ export default function Page() {
         )}
 
         {/* Privacy & trust — short version near the action button so it's read before submitting */}
-        <details className="rounded-xl border border-zinc-200 bg-zinc-50/60 text-xs dark:border-zinc-800 dark:bg-zinc-900/40">
-          <summary className="cursor-pointer select-none px-3 py-2 font-medium text-zinc-700 dark:text-zinc-300">
-            🔒 What happens to my resume? (1-min read)
+        <details className="rounded-xl border border-zinc-200/70 bg-zinc-50/40 text-xs dark:border-zinc-800/70 dark:bg-zinc-900/30">
+          <summary className="cursor-pointer select-none px-3 py-2 font-medium text-zinc-600 dark:text-zinc-400">
+            🔒 What happens to my resume? <span className="font-normal text-zinc-500">(1-min read)</span>
           </summary>
           <div className="space-y-2 border-t border-zinc-200 px-3 py-3 leading-relaxed text-zinc-700 dark:border-zinc-800 dark:text-zinc-300">
             <p>
@@ -1077,7 +1096,7 @@ export default function Page() {
           </div>
         </details>
 
-        <div className="flex flex-wrap items-center gap-3 border-t border-zinc-200 pt-5 dark:border-zinc-800">
+        <div className="border-t border-zinc-200 pt-6 dark:border-zinc-800">
           <button
             type="button"
             onClick={handleSubmit}
@@ -1093,7 +1112,15 @@ export default function Page() {
               : "Generate gap report"}
             {stage !== "classifying" && stage !== "generating" && <span aria-hidden>→</span>}
           </button>
-          <span className="text-xs text-zinc-500">~$0.05 · ~60s · two LLM calls</span>
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500">
+            <span>~$0.05</span>
+            <span aria-hidden>·</span>
+            <span>~60 seconds</span>
+            <span aria-hidden>·</span>
+            <span>Two LLM calls (Sonnet 4.6 + Haiku 4.5)</span>
+            <span aria-hidden>·</span>
+            <span>Streams to your browser</span>
+          </div>
         </div>
           </div>
           {/* Right-side: What your report includes (static explanatory panel) */}
