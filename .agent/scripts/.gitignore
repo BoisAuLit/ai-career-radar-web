@@ -1,0 +1,5 @@
+# Python bytecode cache. The .agent/scripts/ directory is the only place
+# Python runs in this repo; scoping the rule here keeps the repo-root
+# .gitignore untouched.
+__pycache__/
+*.pyc
