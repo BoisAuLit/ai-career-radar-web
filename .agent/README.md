@@ -73,7 +73,10 @@ End-of-day:
 │  ├─ 2026-06-27_run_01_RUN_REPORT.example.md
 │  └─ 2026-06-27_run_01_DECISION.example.md
 ├─ scripts/
-│  └─ new_task.py                    ← scaffolds the next TASK file (see "Helper scripts")
+│  ├─ new_task.py                    ← scaffolds the next TASK file
+│  ├─ new_run_report.py              ← scaffolds the matching RUN_REPORT
+│  ├─ new_decision.py                ← scaffolds the matching DECISION
+│  └─ _common.py                     ← shared arg-resolution helper (not a CLI)
 ├─ tasks/                            ← real tasks land here
 ├─ run_reports/                      ← real run reports land here
 ├─ decisions/                        ← real decisions land here
@@ -119,6 +122,50 @@ when the TASK is ready for execution.
 By default the run number auto-increments — bare reruns just create
 `run_02`, `run_03`, etc. Use `--run NN` if you want the script to
 refuse on collision instead.
+
+### `new_run_report.py` — scaffold the matching RUN_REPORT file
+
+Generates `.agent/run_reports/YYYY-MM-DD_run_XX_RUN_REPORT.md` from
+`templates/run_report_template.md`, with the metadata block (`task_id`,
+`date`, `run_number`, `branch`) auto-substituted. Refuses to overwrite
+an existing file. Prints the created path on stdout.
+
+```bash
+# pass the task_id directly (preferred form)
+python .agent/scripts/new_run_report.py --task-id 2026-06-28_run_01
+
+# or pass date + run separately
+python .agent/scripts/new_run_report.py --date 2026-06-28 --run 1
+
+# --help for the full flag list
+python .agent/scripts/new_run_report.py --help
+```
+
+### `new_decision.py` — scaffold the matching DECISION file
+
+Generates `.agent/decisions/YYYY-MM-DD_run_XX_DECISION.md` from
+`templates/decision_template.md`, with `decision_id` and
+`based_on_run_report` auto-substituted (the latter points at the
+conventional `.agent/run_reports/{task_id}_RUN_REPORT.md` location).
+Refuses to overwrite. Prints the created path on stdout.
+
+```bash
+# pass the task_id directly (preferred form)
+python .agent/scripts/new_decision.py --task-id 2026-06-28_run_01
+
+# or pass date + run separately
+python .agent/scripts/new_decision.py --date 2026-06-28 --run 1
+
+# --help for the full flag list
+python .agent/scripts/new_decision.py --help
+```
+
+### Shared internals
+
+`new_run_report.py` and `new_decision.py` share their argument-parsing
+helper via `.agent/scripts/_common.py` (single underscore prefix → not
+invoked as a CLI itself). All three files stay standard-library-only
+and never spawn external processes.
 
 ## What is intentionally NOT in AgentOps-0
 
