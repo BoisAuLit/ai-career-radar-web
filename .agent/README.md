@@ -72,11 +72,53 @@ End-of-day:
 │  ├─ 2026-06-27_run_01_TASK.example.md
 │  ├─ 2026-06-27_run_01_RUN_REPORT.example.md
 │  └─ 2026-06-27_run_01_DECISION.example.md
+├─ scripts/
+│  └─ new_task.py                    ← scaffolds the next TASK file (see "Helper scripts")
 ├─ tasks/                            ← real tasks land here
 ├─ run_reports/                      ← real run reports land here
 ├─ decisions/                        ← real decisions land here
 └─ daily_summaries/                  ← end-of-day rollups
 ```
+
+## Helper scripts
+
+Small local utilities to remove manual ritual at the start of a TASK.
+All helpers are **Python standard library only**, **local-only**, and
+**never invoke** git / npm / vercel / gh / Claude / OpenAI / HTTP /
+external commands. They write files only; the human commits.
+
+### `new_task.py` — scaffold the next TASK file
+
+Generates `.agent/tasks/YYYY-MM-DD_run_XX_TASK.md` from
+`templates/task_template.md`, auto-incrementing the run number for the
+given date. Refuses to overwrite an existing file. Prints the created
+path on stdout.
+
+```bash
+# next TASK for today
+python .agent/scripts/new_task.py
+
+# pick a specific date
+python .agent/scripts/new_task.py --date 2026-06-27
+
+# pre-fill the title and risk fields
+python .agent/scripts/new_task.py --date 2026-06-27 \
+    --title "P1.8 report shell cleanup" --risk yellow
+
+# pin to a specific run number — refuses if that slot already exists
+python .agent/scripts/new_task.py --date 2026-06-27 --run 5
+
+# --help for the full flag list
+python .agent/scripts/new_task.py --help
+```
+
+The script never auto-commits. Once it prints a path, open that file,
+fill in the remaining `<placeholder>` fields, then `git add` + commit
+when the TASK is ready for execution.
+
+By default the run number auto-increments — bare reruns just create
+`run_02`, `run_03`, etc. Use `--run NN` if you want the script to
+refuse on collision instead.
 
 ## What is intentionally NOT in AgentOps-0
 
