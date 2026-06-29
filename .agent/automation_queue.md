@@ -151,11 +151,15 @@ final TASK / RUN_REPORT / DECISION IDs are recorded under it.
   real Automation Window is opened.
 - **validation**: report parses as plain markdown; all required
   sections present; safety audit checklist all checked
-- **status**: `candidate`
-- **next_action**: after AgentOps-2a is merged, the human (or Codex)
-  drafts one example report against a recent real day's work (e.g.
-  today, 2026-06-28). This validates the contract end-to-end without
-  any actual automation needing to exist yet.
+- **status**: `in_review`
+- **next_action**: report drafted at
+  `.agent/automation_runs/2026-06-29_MANUAL_DRY_RUN_REPORT.md` under
+  TASK `2026-06-29_run_01`; pending Human + ChatGPT review.
+  Transition to `done` ONLY after the matching DECISION verdict is
+  `approve`; revert to `candidate` if DECISION is
+  `request_changes`. Do NOT lift any blocker as part of this review.
+- **TASK / RUN_REPORT / DECISION**: `2026-06-29_run_01_TASK.md` /
+  `2026-06-29_run_01_RUN_REPORT.md` (forthcoming) / pending
 
 ---
 
