@@ -151,15 +151,28 @@ final TASK / RUN_REPORT / DECISION IDs are recorded under it.
   real Automation Window is opened.
 - **validation**: report parses as plain markdown; all required
   sections present; safety audit checklist all checked
-- **status**: `in_review`
-- **next_action**: report drafted at
-  `.agent/automation_runs/2026-06-29_MANUAL_DRY_RUN_REPORT.md` under
-  TASK `2026-06-29_run_01`; pending Human + ChatGPT review.
-  Transition to `done` ONLY after the matching DECISION verdict is
-  `approve`; revert to `candidate` if DECISION is
-  `request_changes`. Do NOT lift any blocker as part of this review.
+- **status**: `done`
+- **next_action**: none. Report is live on `origin/main` of the web
+  repo at
+  `.agent/automation_runs/2026-06-29_MANUAL_DRY_RUN_REPORT.md`,
+  reviewed and approved. Next safe queue item is **either** a
+  small yellow `.agent/templates/` TASK to add an Executive Digest
+  section to `automation_window_report_template.md` (per DECISION
+  follow-up #3) **or** an AgentOps-2b **design memo** (yellow,
+  `.agent/design_memos/` only — NOT implementation). Runner
+  implementation, real Automation Window opening, G2.1d, and OpenAI
+  API all remain blocked.
 - **TASK / RUN_REPORT / DECISION**: `2026-06-29_run_01_TASK.md` /
-  `2026-06-29_run_01_RUN_REPORT.md` (forthcoming) / pending
+  `2026-06-29_run_01_RUN_REPORT.md` /
+  `2026-06-29_run_01_DECISION.md` (verdict `approve`)
+- **completion_note**: QUEUE-0006 MANUAL_DRY_RUN report promoted to
+  `origin/main` on 2026-06-29. Web commits: `6ade132` (MANUAL_DRY_RUN
+  report — TASK + report + this queue's prior `in_review`
+  transition), `2f67f0e` (RUN_REPORT), `475b116` (DECISION). DECISION
+  verdict `approve`; `human_approval_needed` remains `yes` for all
+  downstream actions (AgentOps-2b runner scoping / implementation,
+  real Automation Window opening, G2.1d, OpenAI API, lifting any
+  of BLK-0001 / BLK-0002 / BLK-0003).
 
 ---
 
@@ -169,6 +182,13 @@ final TASK / RUN_REPORT / DECISION IDs are recorded under it.
   Verdict `approve`. Web commits `798bf69` (impl) / `de662a3`
   (RUN_REPORT) / `f1bab0f` (DECISION), all on `origin/main`.
   Pipeline repo unchanged. See QUEUE-0001 above for full record.
+- **QUEUE-0006 · MANUAL_DRY_RUN automation report** — completed
+  2026-06-29. Verdict `approve`. Web commits `6ade132`
+  (MANUAL_DRY_RUN report — TASK + report + queue `candidate` →
+  `in_review`) / `2f67f0e` (RUN_REPORT) / `475b116` (DECISION), all
+  on `origin/main`. Pipeline repo unchanged. Report lives at
+  `.agent/automation_runs/2026-06-29_MANUAL_DRY_RUN_REPORT.md`. No
+  blocker lifted. See QUEUE-0006 above for full record.
 
 ---
 
