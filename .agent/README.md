@@ -62,12 +62,14 @@ End-of-day:
 .agent/
 ├─ README.md                         ← this file
 ├─ policies/
-│  └─ agent_policy.md                ← roles, risk levels, safety rules, red-zone files
+│  ├─ agent_policy.md                ← roles, risk levels, safety rules, red-zone files
+│  └─ automation_policy.md           ← Codex CLI + Claude Code automation contract (AgentOps-2a)
 ├─ templates/
 │  ├─ task_template.md
 │  ├─ run_report_template.md
 │  ├─ decision_template.md
-│  └─ daily_summary_template.md
+│  ├─ daily_summary_template.md
+│  └─ automation_window_report_template.md  ← per-window report shape
 ├─ examples/
 │  ├─ 2026-06-27_run_01_TASK.example.md
 │  ├─ 2026-06-27_run_01_RUN_REPORT.example.md
@@ -77,10 +79,14 @@ End-of-day:
 │  ├─ new_run_report.py              ← scaffolds the matching RUN_REPORT
 │  ├─ new_decision.py                ← scaffolds the matching DECISION
 │  └─ _common.py                     ← shared arg-resolution helper (not a CLI)
+├─ design_memos/                     ← longer design docs (G2.1a, future Gs)
 ├─ tasks/                            ← real tasks land here
 ├─ run_reports/                      ← real run reports land here
 ├─ decisions/                        ← real decisions land here
-└─ daily_summaries/                  ← end-of-day rollups
+├─ daily_summaries/                  ← end-of-day rollups
+├─ automation_runs/                  ← per-window automation reports (created lazily)
+├─ automation_queue.md               ← Codex CLI work backlog
+└─ blockers.md                       ← items waiting for human + ChatGPT review
 ```
 
 ## Helper scripts
@@ -166,6 +172,22 @@ python .agent/scripts/new_decision.py --help
 helper via `.agent/scripts/_common.py` (single underscore prefix → not
 invoked as a CLI itself). All three files stay standard-library-only
 and never spawn external processes.
+
+## Automation policy (AgentOps-2a)
+
+The future Codex CLI + Claude Code automation model is governed by:
+
+- [`policies/automation_policy.md`](policies/automation_policy.md) —
+  load-bearing contract (A/B time model, roles, Green/Yellow/Red,
+  stop conditions, non-goals).
+- [`templates/automation_window_report_template.md`](templates/automation_window_report_template.md)
+  — shape every automation window report must follow.
+- [`automation_queue.md`](automation_queue.md) — Codex CLI's backlog.
+- [`blockers.md`](blockers.md) — items waiting on human + ChatGPT review.
+
+Per-window reports land in `.agent/automation_runs/YYYY-MM-DD_<WINDOW>_REPORT.md`.
+No runner exists yet — these files describe the rules a runner must
+follow once one is built.
 
 ## What is intentionally NOT in AgentOps-0
 
