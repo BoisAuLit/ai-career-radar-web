@@ -41,11 +41,21 @@ final TASK / RUN_REPORT / DECISION IDs are recorded under it.
 - **forbidden_files**: `src/**` / `package.json` / `.env*` / `.github/workflows/**` / `vercel.json` / `.vercel/**` / pipeline repo files / Codex+Claude config / OpenAI API setup
 - **expected_output**: the 5 `.agent/` files above; this very queue file is one of them
 - **validation**: all 5 files exist; no forbidden file diffs; `git diff --stat` shows only `.agent/` paths
-- **status**: `in_progress`
-- **next_action**: finish writing the 5 files in this implementation
-  step (current TASK `2026-06-28_run_04`); then RUN_REPORT; then
-  human DECISION; then push.
-- **TASK / RUN_REPORT / DECISION**: `2026-06-28_run_04_TASK.md` / `2026-06-28_run_04_RUN_REPORT.md` (forthcoming) / pending
+- **status**: `done`
+- **next_action**: none. Policy / docs are live on `origin/main` of
+  the web repo. Next safe queue item is **QUEUE-0006**
+  (MANUAL_DRY_RUN report). AgentOps-2b runner remains unscoped and
+  awaits explicit human approval, gated on MANUAL_DRY_RUN review +
+  BLK-0002 resolution.
+- **TASK / RUN_REPORT / DECISION**: `2026-06-28_run_04_TASK.md` /
+  `2026-06-28_run_04_RUN_REPORT.md` /
+  `2026-06-28_run_04_DECISION.md` (verdict `approve`)
+- **completion_note**: AgentOps-2a promoted to `origin/main` on
+  2026-06-28. Web commits: `798bf69` (impl, 5 files +896/−3),
+  `de662a3` (RUN_REPORT), `f1bab0f` (DECISION). DECISION verdict
+  `approve`; `human_approval_needed` remains `yes` for downstream
+  actions (MANUAL_DRY_RUN, AgentOps-2b runner, G2.1d, full
+  automation activation, OpenAI API, lifting any of BLK-0001/0002/0003).
 
 ### QUEUE-0002 · G2.1d classifier prompt rewrite + scoring dry-run
 
@@ -151,7 +161,10 @@ final TASK / RUN_REPORT / DECISION IDs are recorded under it.
 
 ## Done queue
 
-*(empty — first day of the queue)*
+- **QUEUE-0001 · AgentOps-2a implementation** — completed 2026-06-28.
+  Verdict `approve`. Web commits `798bf69` (impl) / `de662a3`
+  (RUN_REPORT) / `f1bab0f` (DECISION), all on `origin/main`.
+  Pipeline repo unchanged. See QUEUE-0001 above for full record.
 
 ---
 
