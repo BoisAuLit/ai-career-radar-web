@@ -6,7 +6,8 @@
 > a runner must follow once one is built. No runner, daemon, scheduler,
 > cron, or workflow exists today.
 > **Authored under TASK** `2026-06-28_run_04` (AgentOps-2a).
-> **Version**: 1 (initial).
+> **Version**: 1.1 (2026-06-29: §7 extended to require Executive
+> Digest as a top section; TASK `2026-06-29_run_02`).
 
 ---
 
@@ -227,6 +228,9 @@ report must include, at minimum:
 
 - metadata (report_id / date / window_name / window_type / time_range
   / generated_by / reviewed_by / status)
+- **Executive Digest** — a ≤10-line numbered top section sized for
+  fast Human + ChatGPT Non-Automation Time review (added 2026-06-29
+  per TASK `2026-06-29_run_02`; see template for the 10 required fields)
 - goals selected by Codex
 - tasks attempted
 - tasks completed

@@ -23,6 +23,25 @@
   review (`bohao`, `bohao + chatgpt`, etc.)
 - **status**: `in_progress` / `ready_for_review` / `reviewed_approved` / `reviewed_changes_requested` / `aborted`
 
+## Executive Digest
+
+> **Required top section.** 10 numbered bullets, one per field. Aim
+> for ≤10 lines total so Human + ChatGPT Chat can skim the whole
+> window verdict during Non-Automation Time in under 30 seconds and
+> decide whether to dive into the body. Anything that doesn't fit a
+> single line belongs in the matching section below — not here.
+
+1. **Window verdict:** `ready_for_review` / `reviewed_approved` / `reviewed_changes_requested` / `blocked` / `aborted`
+2. **Main outcome:** one sentence — what actually shipped (or didn't), in plain language
+3. **Tasks completed:** `<N>` of `<M>` attempted (link to "Tasks completed" table below if >0)
+4. **Commits created:** `<N>` total · `<W>` web · `<P>` pipeline · push status `pushed` / `local-only`
+5. **Repos touched:** `web` / `pipeline` / `both` / `none`
+6. **Validation:** `pass` / `fail` / `partial` · `<F>` failed validations (link to "Failed validations" below if >0)
+7. **Red-zone / forbidden audit:** `0 encounters` / `<N> encounters` (link to "Red-zone encounters" below if >0); forbidden-files diff `empty` / `<N> files`
+8. **Open blockers:** count + IDs (`BLK-0001` / `BLK-0002` / …); `<N> new this window`
+9. **Human decisions needed:** `<N>` items (link to "Human decisions requested" below)
+10. **Safest next action:** one sentence — what should run next OR what should NOT run next
+
 ## Executive summary
 
 > 3-5 sentences a human can read in 30 seconds. What was attempted,
