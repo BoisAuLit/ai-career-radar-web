@@ -136,6 +136,46 @@ final TASK / RUN_REPORT / DECISION IDs are recorded under it.
 - **next_action**: only build this once a missing-file incident
   actually happens. Premature otherwise.
 
+### QUEUE-0007 · AgentOps-2b automation runner **design memo only**
+
+- **priority**: med
+- **risk**: yellow
+- **target_repo**: web
+- **allowed_files**:
+  - `.agent/design_memos/2026-06-29_AgentOps-2b_automation_runner_design.md` (new)
+- **forbidden_files**: everything else, especially anything that
+  resembles an executable runner / daemon / scheduler / cron /
+  GitHub Actions workflow / Codex CLI config / Claude Code config
+  / OpenAI API setup / app code / pipeline file. Memo only.
+- **expected_output**: a single design memo that scopes a future
+  Codex CLI + Claude Code automation runner, describes Codex /
+  Claude / Human-ChatGPT roles, defines the window report
+  contract (referencing the Executive Digest), lists ≥4
+  implementation options (A no-runner / B supervised dry-run /
+  C orchestrator with hard gates / D GH Actions or cron — D
+  explicitly NOT recommended), and recommends a next step that
+  is NOT a runner implementation.
+- **validation**: memo exists; `status: draft_for_human_chatgpt_review`;
+  16 H2 sections; explicit non-goals enumerated; BLK-0001 /
+  BLK-0002 / BLK-0003 cited as `open`; QUEUE-0002 cited as
+  `blocked_pending_human`.
+- **status**: `in_review`
+- **next_action**: memo drafted at
+  `.agent/design_memos/2026-06-29_AgentOps-2b_automation_runner_design.md`
+  under TASK `2026-06-29_run_03`; pending Human + ChatGPT
+  review. Transition to `done` ONLY after the matching DECISION
+  verdict is `approve`; revert to `candidate` if DECISION is
+  `request_changes`. **Do NOT** transition to a "runner" or
+  "implementation" item — runner implementation is a separate
+  later queue item that does not yet exist and requires its own
+  scope-and-approve loop.
+- **TASK / RUN_REPORT / DECISION**: `2026-06-29_run_03_TASK.md` /
+  `2026-06-29_run_03_RUN_REPORT.md` (forthcoming) / pending
+- **explicit non-goal**: this queue item does NOT authorize
+  AgentOps-2b runner implementation, opening any real
+  Automation Window, lifting BLK-0001 / BLK-0002 / BLK-0003, or
+  starting G2.1d.
+
 ### QUEUE-0006 · MANUAL_DRY_RUN automation report
 
 - **priority**: med
