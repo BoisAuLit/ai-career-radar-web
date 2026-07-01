@@ -5,6 +5,7 @@ import Link from "next/link";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Classification } from "@/lib/types";
+import { WEB_BUNDLE_STATS } from "@/lib/web-bundle-stats";
 import { BrandMark } from "@/components/SiteChrome";
 
 // ─── Local types (avoid server-only imports in client component) ─────────────
@@ -761,7 +762,7 @@ export default function Page() {
                 <span className="font-semibold text-zinc-900 dark:text-zinc-100">Strong baseline · 5 leverage gaps</span>
               </div>
               <div className="ml-auto text-zinc-500">
-                Based on <span className="font-semibold text-zinc-700 dark:text-zinc-300">92</span> applied_ai JDs
+                Based on <span className="font-semibold text-zinc-700 dark:text-zinc-300">{WEB_BUNDLE_STATS.appliedAiJds}</span> applied_ai JDs
               </div>
             </div>
 
@@ -819,9 +820,9 @@ export default function Page() {
             {/* Attribution strip — mirrors the live report's footer band */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-zinc-200/70 bg-zinc-50/60 px-8 py-3 text-[11px] text-zinc-500 sm:px-12 dark:border-zinc-800/70 dark:bg-zinc-900/40">
               <span className="font-mono uppercase tracking-wider">Grounded in</span>
-              <span><span className="font-semibold text-zinc-700 dark:text-zinc-300">92</span> applied_ai JDs</span>
+              <span><span className="font-semibold text-zinc-700 dark:text-zinc-300">{WEB_BUNDLE_STATS.appliedAiJds}</span> applied_ai JDs</span>
               <span aria-hidden>·</span>
-              <span><span className="font-semibold text-zinc-700 dark:text-zinc-300">5</span> evidence quotes</span>
+              <span><span className="font-semibold text-zinc-700 dark:text-zinc-300">{WEB_BUNDLE_STATS.evidenceQuotesPerReport}</span> evidence quotes</span>
               <span aria-hidden>·</span>
               <span>Five-section report</span>
               <Link href="/sample-report" className="ml-auto inline-flex items-center gap-1 font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white">
@@ -846,8 +847,9 @@ export default function Page() {
             </div>
             <h3 className="text-xl font-semibold tracking-tight">Grounded in real jobs</h3>
             <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              Built from 443 tracked AI engineering job posts, not generic
-              career advice. Every claim traces back to a real posting.
+              Built from {WEB_BUNDLE_STATS.totalJds} tracked AI engineering job posts
+              across {WEB_BUNDLE_STATS.trackedCompanies} companies, not generic career
+              advice. Every claim traces back to a real posting.
             </p>
           </div>
           <div className="group surface-card rounded-3xl p-8 transition-shadow duration-300 hover:shadow-lg hover:shadow-zinc-200/60 sm:p-10 dark:hover:shadow-black/40">
