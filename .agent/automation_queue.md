@@ -159,22 +159,109 @@ final TASK / RUN_REPORT / DECISION IDs are recorded under it.
   16 H2 sections; explicit non-goals enumerated; BLK-0001 /
   BLK-0002 / BLK-0003 cited as `open`; QUEUE-0002 cited as
   `blocked_pending_human`.
-- **status**: `in_review`
-- **next_action**: memo drafted at
-  `.agent/design_memos/2026-06-29_AgentOps-2b_automation_runner_design.md`
-  under TASK `2026-06-29_run_03`; pending Human + ChatGPT
-  review. Transition to `done` ONLY after the matching DECISION
-  verdict is `approve`; revert to `candidate` if DECISION is
-  `request_changes`. **Do NOT** transition to a "runner" or
-  "implementation" item — runner implementation is a separate
-  later queue item that does not yet exist and requires its own
-  scope-and-approve loop.
+- **status**: `done`
+- **next_action**: none. Memo is live on `origin/main` of the
+  web repo at
+  `.agent/design_memos/2026-06-29_AgentOps-2b_automation_runner_design.md`,
+  reviewed and approved. The natural follow-up is QUEUE-0008
+  AgentOps-2c (blocked pending human), which scopes Option B's
+  internal loop before any code. **Runner implementation, real
+  Automation Window opening, G2.1d, and OpenAI API in any
+  blocked sense (per Q7) all remain blocked.**
 - **TASK / RUN_REPORT / DECISION**: `2026-06-29_run_03_TASK.md` /
-  `2026-06-29_run_03_RUN_REPORT.md` (forthcoming) / pending
+  `2026-06-29_run_03_RUN_REPORT.md` /
+  `2026-06-29_run_03_DECISION.md` (verdict `approve`)
+- **completion_note**: AgentOps-2b design memo promoted to
+  `origin/main` on 2026-06-30. Web commits: `00a98b2` (impl —
+  TASK + memo + this queue's prior `in_review` transition),
+  `70cc6d9` (RUN_REPORT), `baf2781` (DECISION). DECISION verdict
+  `approve`; `human_approval_needed` remains `yes` for all
+  downstream actions. **Q1 decision**: chosen path = Option B
+  (Local supervised runner, dry-run only) as next
+  automation-infra direction — NOT implementation approval.
+  **Q7 decision**: Codex CLI via ChatGPT sign-in does NOT
+  trigger BLK-0003; OpenAI API usage in the API-key / SDK /
+  HTTP / automation-token / CI-secret / import / background-
+  API-token senses remains blocked.
 - **explicit non-goal**: this queue item does NOT authorize
   AgentOps-2b runner implementation, opening any real
   Automation Window, lifting BLK-0001 / BLK-0002 / BLK-0003, or
   starting G2.1d.
+
+### QUEUE-0008 · AgentOps-2c supervised runner dry-run design memo
+
+- **priority**: med
+- **risk**: yellow
+- **target_repo**: web
+- **allowed_files**:
+  - `.agent/tasks/**` (a new TASK when approved)
+  - `.agent/design_memos/**` (the AgentOps-2c memo itself, path
+    TBD when the TASK is drafted)
+  - `.agent/run_reports/**` (matching RUN_REPORT)
+  - `.agent/decisions/**` (matching DECISION)
+  - `.agent/automation_queue.md` (to record this item's status
+    transitions and any AgentOps-2c-derived follow-up items)
+- **forbidden_files**:
+  - **Any runner implementation** — no executable file that
+    performs automation. Design memo describes; nothing runs.
+  - `.agent/scripts/**` executable changes unless separately
+    approved in their own TASK + DECISION.
+  - `src/**` (all app code) / `src/lib/prompts.ts` /
+    `src/lib/anthropic.ts` / `src/data/web_bundle.json` /
+    `package.json` / `package-lock.json` / `.env*` /
+    `vercel.json` / `.vercel/**`
+  - Pipeline repo (any file — read-only sanity only)
+  - `.github/workflows/**` — no GitHub Actions edit
+  - Cron / systemd / launchd / any scheduler file
+  - OpenAI API in any blocked sense per Q7 (SDK, `OPENAI_API_KEY`,
+    HTTP to `api.openai.com`, imports of `openai`, CI secret,
+    background API token)
+  - `~/.codex/config.toml` and any Codex CLI config
+  - `~/.claude/settings.json` and any Claude Code config
+  - `.agent/policies/**` (policy stays at v1.1; AgentOps-2c may
+    surface follow-up policy edits as separate TASKs)
+  - `.agent/templates/**` (templates frozen; AgentOps-2c cites
+    the Executive Digest but does NOT amend)
+- **non-goals**:
+  - **No runner implementation** in any form.
+  - No automation activation.
+  - No code execution.
+  - No push or deploy triggered by AgentOps-2c.
+  - No OpenAI API introduction.
+  - No blocker resolution as a side effect.
+  - No G2.1d work.
+- **expected_output**: a design memo at
+  `.agent/design_memos/YYYY-MM-DD_AgentOps-2c_supervised_dry_run_design.md`
+  (path TBD when TASK is drafted) that drills into Option B's
+  internal loop: which file the runner reads first, how it
+  writes a proposed TASK without invoking `new_task.py` (or by
+  re-using it), what a proposed window report (with Executive
+  Digest) looks like *before* any tool runs, how Bohao rejects
+  a proposal cleanly. The memo is authored (not implemented);
+  its own approval loop feeds a *separate* future
+  implementation TASK.
+- **validation**: memo exists; `status: draft_for_human_chatgpt_review`;
+  16+ H2 sections; explicit non-goals enumerated; BLK-0001 /
+  BLK-0002 / BLK-0003 cited as `open`; Q1 (Option B) and Q7
+  (Codex CLI vs BLK-0003) cited and honored; no executable file
+  created; queue selection rules from AgentOps-2b honored;
+  quota budget field defined (per AgentOps-2b DECISION risk #5).
+- **status**: `blocked_pending_human`
+- **next_action**: **Wait for explicit human "start
+  AgentOps-2c" instruction before creating any TASK file.**
+  Do NOT scaffold the TASK proactively. When the instruction
+  arrives, use
+  `python .agent/scripts/new_task.py --date YYYY-MM-DD --title "AgentOps-2c supervised runner dry-run design memo" --risk yellow`
+  and follow the same TASK → memo → RUN_REPORT → DECISION →
+  human-approved push pattern that AgentOps-2b used.
+- **TASK / RUN_REPORT / DECISION**: pending / pending / pending
+- **explicit non-goal**: this queue item, if approved, does
+  NOT authorize runner implementation, real Automation Window
+  opening, OpenAI API introduction in any blocked sense,
+  lifting BLK-0001 / BLK-0002 / BLK-0003, or starting G2.1d.
+  Approval of AgentOps-2c only authorizes authoring the memo;
+  implementation is a further downstream TASK with its own
+  scope-and-approve loop.
 
 ### QUEUE-0006 · MANUAL_DRY_RUN automation report
 
@@ -229,6 +316,19 @@ final TASK / RUN_REPORT / DECISION IDs are recorded under it.
   on `origin/main`. Pipeline repo unchanged. Report lives at
   `.agent/automation_runs/2026-06-29_MANUAL_DRY_RUN_REPORT.md`. No
   blocker lifted. See QUEUE-0006 above for full record.
+- **QUEUE-0007 · AgentOps-2b automation runner design memo only**
+  — completed 2026-06-30 (memo authored 2026-06-29; pushed and
+  cleaned up 2026-06-30). Verdict `approve`. Web commits
+  `00a98b2` (impl — TASK + memo + this queue's prior `in_review`
+  transition) / `70cc6d9` (RUN_REPORT) / `baf2781` (DECISION),
+  all on `origin/main`. Pipeline repo unchanged. Memo lives at
+  `.agent/design_memos/2026-06-29_AgentOps-2b_automation_runner_design.md`.
+  Q1 = Option B (Local supervised runner, dry-run only) as next
+  automation-infra direction — NOT implementation approval. Q7
+  = Codex CLI via ChatGPT sign-in does NOT trigger BLK-0003;
+  API-key / SDK / HTTP / automation-token OpenAI usage remains
+  blocked. No blocker lifted. See QUEUE-0007 above for full
+  record.
 
 ---
 
