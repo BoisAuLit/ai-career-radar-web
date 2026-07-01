@@ -246,15 +246,20 @@ final TASK / RUN_REPORT / DECISION IDs are recorded under it.
   (Codex CLI vs BLK-0003) cited and honored; no executable file
   created; queue selection rules from AgentOps-2b honored;
   quota budget field defined (per AgentOps-2b DECISION risk #5).
-- **status**: `blocked_pending_human`
-- **next_action**: **Wait for explicit human "start
-  AgentOps-2c" instruction before creating any TASK file.**
-  Do NOT scaffold the TASK proactively. When the instruction
-  arrives, use
-  `python .agent/scripts/new_task.py --date YYYY-MM-DD --title "AgentOps-2c supervised runner dry-run design memo" --risk yellow`
-  and follow the same TASK → memo → RUN_REPORT → DECISION →
-  human-approved push pattern that AgentOps-2b used.
-- **TASK / RUN_REPORT / DECISION**: pending / pending / pending
+- **status**: `in_review`
+- **next_action**: memo drafted at
+  `.agent/design_memos/2026-06-30_AgentOps-2c_supervised_runner_dry_run_design.md`
+  under TASK `2026-06-30_run_01` (Human explicitly approved
+  starting AgentOps-2c in the turn's instruction). Pending
+  Human + ChatGPT review. Transition to `done` ONLY after
+  the matching DECISION verdict is `approve`; revert to
+  `candidate` if DECISION is `request_changes`. **Do NOT**
+  transition to a "runner" or "implementation" item —
+  Shape B (or any other shape) implementation is a separate
+  later queue item that does not yet exist and requires its
+  own scope-and-approve loop.
+- **TASK / RUN_REPORT / DECISION**: `2026-06-30_run_01_TASK.md` /
+  `2026-06-30_run_01_RUN_REPORT.md` (forthcoming) / pending
 - **explicit non-goal**: this queue item, if approved, does
   NOT authorize runner implementation, real Automation Window
   opening, OpenAI API introduction in any blocked sense,
