@@ -246,20 +246,37 @@ final TASK / RUN_REPORT / DECISION IDs are recorded under it.
   (Codex CLI vs BLK-0003) cited and honored; no executable file
   created; queue selection rules from AgentOps-2b honored;
   quota budget field defined (per AgentOps-2b DECISION risk #5).
-- **status**: `in_review`
-- **next_action**: memo drafted at
-  `.agent/design_memos/2026-06-30_AgentOps-2c_supervised_runner_dry_run_design.md`
-  under TASK `2026-06-30_run_01` (Human explicitly approved
-  starting AgentOps-2c in the turn's instruction). Pending
-  Human + ChatGPT review. Transition to `done` ONLY after
-  the matching DECISION verdict is `approve`; revert to
-  `candidate` if DECISION is `request_changes`. **Do NOT**
-  transition to a "runner" or "implementation" item —
-  Shape B (or any other shape) implementation is a separate
-  later queue item that does not yet exist and requires its
-  own scope-and-approve loop.
+- **status**: `done`
+- **next_action**: none. Memo is live on `origin/main` of
+  the web repo at
+  `.agent/design_memos/2026-06-30_AgentOps-2c_supervised_runner_dry_run_design.md`,
+  reviewed and approved. Per **Q10 = return to product
+  work**, the next task is **P1.7b hero mock numbers** (or
+  P1.7c model-string SSOT). **Shape B implementation** is
+  a deferred future queue item that does NOT exist yet
+  and requires its own scope-and-approve loop; it is NOT
+  added to this queue by this DECISION's cleanup.
 - **TASK / RUN_REPORT / DECISION**: `2026-06-30_run_01_TASK.md` /
-  `2026-06-30_run_01_RUN_REPORT.md` (forthcoming) / pending
+  `2026-06-30_run_01_RUN_REPORT.md` /
+  `2026-06-30_run_01_DECISION.md` (verdict `approve`)
+- **completion_note**: AgentOps-2c supervised runner
+  dry-run design memo promoted to `origin/main` on
+  2026-06-30. Web commits: `e24042f` (impl — TASK + memo +
+  this queue's prior `blocked_pending_human` → `in_review`
+  transition) / `45345ce` (RUN_REPORT) / `c5ac0c8`
+  (DECISION). DECISION verdict `approve`;
+  `human_approval_needed` remains `yes` for all
+  downstream actions. **Q1 decision**: chosen future
+  direction = Shape B (Non-executing local planner
+  dry-run) — NOT implementation approval. **Q3-Q8
+  decision**: first Shape B prototype allowed autonomy
+  is extremely narrow (report-only, non-executing, no
+  auto Codex / Claude / commit / push / product touch /
+  `.agent/scripts/**` mod / OpenAI). **Q10 decision**:
+  pause automation-infra expansion; return to product
+  work (P1.7b or P1.7c preferred). **No runner
+  implementation queue item added** to this queue as
+  part of this DECISION's cleanup.
 - **explicit non-goal**: this queue item, if approved, does
   NOT authorize runner implementation, real Automation Window
   opening, OpenAI API introduction in any blocked sense,
@@ -334,6 +351,22 @@ final TASK / RUN_REPORT / DECISION IDs are recorded under it.
   API-key / SDK / HTTP / automation-token OpenAI usage remains
   blocked. No blocker lifted. See QUEUE-0007 above for full
   record.
+- **QUEUE-0008 · AgentOps-2c supervised runner dry-run design
+  memo** — completed 2026-06-30. Verdict `approve`. Web commits
+  `e24042f` (impl — TASK + memo + this queue's prior
+  `blocked_pending_human` → `in_review` transition) /
+  `45345ce` (RUN_REPORT) / `c5ac0c8` (DECISION), all on
+  `origin/main`. Pipeline repo unchanged. Memo lives at
+  `.agent/design_memos/2026-06-30_AgentOps-2c_supervised_runner_dry_run_design.md`.
+  Q1 = Shape B (Non-executing local planner dry-run) as
+  future direction — NOT implementation approval. Q3-Q8 =
+  first Shape B prototype envelope is extremely narrow
+  (report-only, non-executing, no auto Codex/Claude/commit/push,
+  no `.agent/scripts/**` mod, no product/pipeline touch, no
+  OpenAI). Q10 = pause automation-infra expansion, return to
+  product work (P1.7b / P1.7c). **No runner implementation
+  queue item added** as part of this DECISION's cleanup. No
+  blocker lifted. See QUEUE-0008 above for full record.
 
 ---
 
