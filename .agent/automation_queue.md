@@ -98,24 +98,52 @@ final TASK / RUN_REPORT / DECISION IDs are recorded under it.
 ### QUEUE-0004 · P1.7c — model-string single source of truth
 
 - **priority**: med
-- **risk**: **yellow / red — must confirm before starting**
+- **risk**: **yellow** (confirmed after implementation; no
+  runtime-selection touch was required, so the yellow branch of
+  the original "yellow / red — must confirm before starting"
+  classification held)
 - **target_repo**: web
-- **allowed_files** (tentative):
-  - new `src/lib/models-display.ts` (display constants only)
-  - `src/app/page.tsx` (read from the new module)
-- **forbidden_files**: `src/lib/prompts.ts` / `src/lib/anthropic.ts`
-  model selection logic / any prompt / pipeline / `package.json` / `.github/workflows/**`
-- **expected_output**: homepage caption reads
-  `MODELS_DISPLAY.generation` / `.eval` instead of hardcoded "Sonnet 4.6 + Haiku 4.5"
-- **validation**: `npm run build` passes; spot-check no prompt /
-  model-selection file edited; `git diff --stat` confined to the two
-  display-only paths
-- **status**: `candidate`
-- **next_action**: Codex must **classify risk before drafting TASK**.
-  If the implementation can stay in display-only modules without
-  touching `src/lib/anthropic.ts` or any prompt, this is yellow. If
-  it can't, escalate to red and write a blocker. **Default: assume
-  yellow only after inspection.**
+- **allowed_files** (as implemented):
+  - `src/lib/models-display.ts` (new, 34 lines, display-only
+    primitive constants; no SDK / prompt / corpus / api/**
+    import; no fetch; no module-scope await)
+  - `src/app/page.tsx` (3 substitutions in the hero-adjacent
+    model-disclosure copy blocks)
+  - `src/app/lab/page.tsx` (1 substitution in the methodology
+    footer)
+- **forbidden_files** (all respected): `src/lib/prompts.ts` /
+  `src/lib/anthropic.ts` (does not exist in this repo) /
+  `src/app/api/**` runtime model selection / any prompt /
+  pipeline / `package.json` / `.github/workflows/**`
+- **expected_output** (met): homepage + lab-page copy read
+  from `MODELS_DISPLAY` instead of hardcoded `Sonnet 4.6` /
+  `Haiku 4.5` / `Claude Sonnet 4.6` / `Claude Haiku 4.5`
+- **validation** (met): `npm run build` passes (14/14 static
+  routes, TypeScript clean); no prompt / model-selection file
+  edited; `git diff --stat` confined to display-only paths;
+  rendered characters byte-identical to before
+- **status**: `done`
+- **next_action**: none. Implementation is live on `origin/main`
+  of the web repo at commit `db21844`. **No follow-up runtime
+  changes needed** — display SSOT is deliberately decoupled
+  from runtime API-route model selection.
+- **TASK / RUN_REPORT / DECISION**: `2026-07-05_run_01_TASK.md`
+  / `2026-07-05_run_01_RUN_REPORT.md` /
+  `2026-07-05_run_01_DECISION.md` (verdict `approve`)
+- **completion_note**: P1.7c model-string SSOT promoted to
+  `origin/main` on 2026-07-05. Web commits: `c0a0df3` (impl —
+  TASK + helper + 2 UI edits) / `4cbbd83` (RUN_REPORT) /
+  `db21844` (DECISION verdict `approve`). Vercel auto-deploy
+  triggered by Git push; **no manual `vercel deploy`
+  invoked**. Rendered UI characters byte-identical
+  (developer-facing consolidation only). Display SSOT ≠
+  runtime model-selection SSOT — the runtime models remain
+  chosen inside `src/app/api/**` routes. `.agent/scripts/**`
+  empty diff across full 3-commit loop (hard rule per
+  AgentOps-2c DECISION Q3-Q8 upheld). No blocker lifted.
+  BLK-0001 / BLK-0002 / BLK-0003 all still `open`; QUEUE-0002
+  G2.1d still `blocked_pending_human`. **Eleventh full
+  dogfood loop of the helper triple.**
 
 ### QUEUE-0005 · `check_loop.py` audit helper
 
@@ -367,6 +395,22 @@ final TASK / RUN_REPORT / DECISION IDs are recorded under it.
   product work (P1.7b / P1.7c). **No runner implementation
   queue item added** as part of this DECISION's cleanup. No
   blocker lifted. See QUEUE-0008 above for full record.
+- **QUEUE-0004 · P1.7c — model-string single source of truth**
+  — completed 2026-07-05. Verdict `approve`. Web commits
+  `c0a0df3` (impl — TASK + `src/lib/models-display.ts` new
+  helper + surgical edits to `src/app/page.tsx` and
+  `src/app/lab/page.tsx`) / `4cbbd83` (RUN_REPORT) / `db21844`
+  (DECISION), all on `origin/main`. Pipeline repo unchanged.
+  Helper lives at `.agent/../src/lib/models-display.ts` (34
+  lines, primitive constants only). Vercel auto-deploy
+  triggered by Git push; rendered UI characters
+  byte-identical (developer-facing consolidation only). No
+  runtime model-selection change, no prompt change,
+  `src/app/api/**` empty diff, `src/lib/prompts.ts` empty
+  diff, `.agent/scripts/**` empty diff (hard rule).
+  BLK-0001 / BLK-0002 / BLK-0003 all still `open`; QUEUE-0002
+  G2.1d still `blocked_pending_human`. See QUEUE-0004 above
+  for full record.
 
 ---
 
