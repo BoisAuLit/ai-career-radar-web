@@ -10,6 +10,7 @@ import {
   type MatrixCell,
 } from "@/data/lab/eval_matrix";
 import { PageBackground, SiteHeader, SiteFooter } from "@/components/SiteChrome";
+import { MODELS_DISPLAY } from "@/lib/models-display";
 
 export const metadata = {
   title: "Lab — Eval Matrix · AI Career Radar",
@@ -242,7 +243,7 @@ export default function LabPage() {
 
       <footer className="mt-12 border-t border-zinc-200 pt-4 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
         <p>
-          Methodology: 3-metric LLM-as-judge (Claude Haiku 4.5) over each
+          Methodology: 3-metric LLM-as-judge ({MODELS_DISPLAY.evalModel}) over each
           generated report.{" "}
           <a
             className="underline"

@@ -6,6 +6,7 @@ import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Classification } from "@/lib/types";
 import { WEB_BUNDLE_STATS } from "@/lib/web-bundle-stats";
+import { MODELS_DISPLAY } from "@/lib/models-display";
 import { BrandMark } from "@/components/SiteChrome";
 
 // ─── Local types (avoid server-only imports in client component) ─────────────
@@ -1064,8 +1065,8 @@ export default function Page() {
           </summary>
           <div className="space-y-2 border-t border-zinc-200 px-3 py-3 leading-relaxed text-zinc-700 dark:border-zinc-800 dark:text-zinc-300">
             <p>
-              <strong>Sent to:</strong> Anthropic&apos;s API (Claude Sonnet 4.6 for
-              generation, Haiku 4.5 if you run the eval). Nothing else.
+              <strong>Sent to:</strong> {MODELS_DISPLAY.provider}&apos;s API ({MODELS_DISPLAY.generationModel} for
+              generation, {MODELS_DISPLAY.evalModelShort} if you run the eval). Nothing else.
             </p>
             <p>
               <strong>Saved on this server:</strong> nothing. The request is
@@ -1119,7 +1120,7 @@ export default function Page() {
             <span aria-hidden>·</span>
             <span>~60 seconds</span>
             <span aria-hidden>·</span>
-            <span>Two LLM calls (Sonnet 4.6 + Haiku 4.5)</span>
+            <span>Two LLM calls ({MODELS_DISPLAY.generationModelShort} + {MODELS_DISPLAY.evalModelShort})</span>
             <span aria-hidden>·</span>
             <span>Streams to your browser</span>
           </div>
@@ -1636,7 +1637,7 @@ export default function Page() {
             <span>For senior engineers pivoting into AI</span>
           </div>
           <div className="mt-2 text-[11px] text-zinc-500">
-            Claude Sonnet 4.6 (generation) · Haiku 4.5 (eval) · Single-shot, evidence-grounded.
+            {MODELS_DISPLAY.generationModel} (generation) · {MODELS_DISPLAY.evalModelShort} (eval) · Single-shot, evidence-grounded.
           </div>
         </div>
       </footer>
