@@ -8,6 +8,7 @@
 
 import Link from "next/link";
 import { BrandMark } from "@/components/SiteChrome";
+import { WEB_BUNDLE_STATS } from "@/lib/web-bundle-stats";
 
 export const metadata = {
   title: "Sample report — AI Career Radar",
@@ -29,7 +30,7 @@ export default function SampleReportPage() {
             </span>
             <span className="text-sm font-semibold tracking-tight">AI Career Radar</span>
             <span className="hidden rounded-full border border-zinc-300 bg-zinc-50 px-2 py-0.5 text-[10px] font-medium text-zinc-600 sm:inline-block dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-              443 real JDs
+              {WEB_BUNDLE_STATS.totalJds} tracked JDs
             </span>
           </Link>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
@@ -60,7 +61,7 @@ export default function SampleReportPage() {
           </span>
           <span className="text-amber-900 dark:text-amber-200">
             Every name, percentage, and quote on this page is fiction. The real
-            tool reads your actual resume and the live JD corpus.
+            tool reads your actual resume and the tracked JD corpus.
           </span>
         </div>
 
@@ -90,7 +91,7 @@ export default function SampleReportPage() {
                 5 leverage gaps
               </span>
               <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                Based on 92 applied_ai JDs
+                Based on {WEB_BUNDLE_STATS.appliedAiJds} applied_ai JDs
               </span>
             </div>
           </div>
@@ -339,10 +340,10 @@ export default function SampleReportPage() {
             <section className="rounded-2xl bg-zinc-50/60 px-5 py-4 text-sm leading-relaxed text-zinc-600 ring-1 ring-zinc-200/60 dark:bg-zinc-900/40 dark:text-zinc-400 dark:ring-zinc-800/60">
               <strong className="text-zinc-800 dark:text-zinc-200">Honest note · </strong>
               This is a static fictional report. The real product reads your
-              actual resume, classifies your stated target into one of 8
-              archetypes, then grounds every claim in real percentages from the
-              JD corpus and quotes five evidence JDs by ID. The structure you
-              see here is representative of the real output.
+              actual resume, classifies your stated target into an archetype,
+              then grounds every claim in real percentages from the tracked JD
+              corpus and quotes five evidence JDs by ID. The structure you see
+              here is representative of the real output.
             </section>
           </div>
         </article>
