@@ -10,6 +10,7 @@
 
 import Link from "next/link";
 import { PageBackground, SiteHeader, SiteFooter } from "@/components/SiteChrome";
+import { WEB_BUNDLE_STATS } from "@/lib/web-bundle-stats";
 
 const SECTIONS = [
   { id: "what-this-corpus-is", title: "What this corpus is" },
@@ -114,8 +115,8 @@ export default function MethodologyPage() {
       <section className="mb-12">
         <h2 id="what-this-corpus-is" className="scroll-mt-24 mb-3 text-xl font-semibold tracking-tight sm:text-2xl">What this corpus is</h2>
         <p className="text-base leading-7 text-zinc-700 dark:text-zinc-300">
-          A curated set of approximately 40 AI / AI-adjacent technology
-          companies. The companies span frontier AI labs, big-tech AI
+          A curated set of {WEB_BUNDLE_STATS.trackedCompanies} AI / AI-adjacent
+          technology companies. The companies span frontier AI labs, big-tech AI
           teams, AI-native scaleups, AI infrastructure platforms, and AI
           tooling / evaluation / observability vendors. Most postings are
           based in the US and EU. The live home page currently serves the
@@ -140,8 +141,9 @@ export default function MethodologyPage() {
         <h2 id="what-this-corpus-is-not" className="scroll-mt-24 mb-3 text-xl font-semibold tracking-tight sm:text-2xl">What this corpus is NOT</h2>
         <ul className="list-disc space-y-2 pl-6 text-base leading-7 text-zinc-700 dark:text-zinc-300">
           <li>
-            <strong>Not the entire AI job market.</strong> 40 companies is
-            a curated sample, not a census. We do not claim "the AI market
+            <strong>Not the entire AI job market.</strong>{" "}
+            {WEB_BUNDLE_STATS.trackedCompanies} companies is a curated sample,
+            not a census. We do not claim "the AI market
             is doing X." We claim "in the curated companies we follow, the
             visible composition is X."
           </li>
@@ -306,8 +308,9 @@ export default function MethodologyPage() {
             V1's data accumulation level.
           </li>
           <li>
-            Universal market claims. Our corpus is 40 curated companies,
-            not a market census.
+            Universal market claims. Our corpus is{" "}
+            {WEB_BUNDLE_STATS.trackedCompanies} curated companies, not a market
+            census.
           </li>
           <li>
             Salary statistics. Salary disclosure laws differ by US state
