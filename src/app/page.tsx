@@ -826,6 +826,8 @@ export default function Page() {
               <span><span className="font-semibold text-zinc-700 dark:text-zinc-300">{WEB_BUNDLE_STATS.evidenceQuotesPerReport}</span> evidence quotes</span>
               <span aria-hidden>·</span>
               <span>Five-section report</span>
+              <span aria-hidden>·</span>
+              <span>Corpus snapshot: <span className="font-semibold text-zinc-700 dark:text-zinc-300">{WEB_BUNDLE_STATS.corpusSnapshotDate}</span></span>
               <Link href="/sample-report" className="ml-auto inline-flex items-center gap-1 font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white">
                 See full sample <span aria-hidden>→</span>
               </Link>

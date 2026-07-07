@@ -26,4 +26,17 @@ export const WEB_BUNDLE_STATS = {
    * one place.
    */
   evidenceQuotesPerReport: 5,
+  /**
+   * Bundle `generated_at` as-is from `web_bundle.json`. Kept
+   * as a display string so UI can render without pulling the
+   * JSON at runtime and without a `new Date()` parse. Refresh
+   * when the served bundle is regenerated.
+   */
+  corpusGeneratedAt: "2026-05-14T02:17:04+00:00",
+  /**
+   * Human-readable label derived by hand from `corpusGeneratedAt`
+   * above. Used for the visible "Corpus snapshot: …" disclosure
+   * in product UI. Refresh alongside `corpusGeneratedAt`.
+   */
+  corpusSnapshotDate: "May 14, 2026",
 } as const;
