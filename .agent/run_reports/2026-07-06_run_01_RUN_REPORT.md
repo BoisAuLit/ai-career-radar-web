@@ -44,13 +44,12 @@ n_records: 443
 ```
 
 - `generated_at` = **`2026-05-14T02:17:04.783793+00:00`**
-  matches TASK acceptance criterion 1. The stored
-  ISO string has microseconds; we render the
-  seconds-precision form in the helper for
-  cleanliness (`"2026-05-14T02:17:04+00:00"`) as a
-  display-only string. This matches the helper's
-  existing docstring which already declared
-  `2026-05-14T02:17:04+00:00`.
+  matches TASK acceptance criterion 1. After the
+  post-review correction below, the helper's
+  `corpusGeneratedAt` mirrors this **exact** string
+  (fractional-second precision preserved) so any
+  diagnostic tooling comparing helper ↔ bundle
+  sees byte-identical values.
 - `n_records` = **443** matches
   `WEB_BUNDLE_STATS.totalJds`.
 - Bundle was NOT modified. Read via `json.load` on a
@@ -80,7 +79,7 @@ import at runtime):
  * JSON at runtime and without a `new Date()` parse. Refresh
  * when the served bundle is regenerated.
  */
-corpusGeneratedAt: "2026-05-14T02:17:04+00:00",
+corpusGeneratedAt: "2026-05-14T02:17:04.783793+00:00",
 /**
  * Human-readable label derived by hand from `corpusGeneratedAt`
  * above. Used for the visible "Corpus snapshot: …" disclosure
@@ -419,3 +418,55 @@ Suggested DECISION verdict shape: `approve`,
 push, which will produce a user-visible change
 this time — the homepage attribution strip gains
 one new chip). Standard yellow-loop cadence.
+
+## Post-review correction (2026-07-07)
+
+ChatGPT review of this RUN_REPORT found that the
+initial `corpusGeneratedAt` helper value had been
+truncated at the seconds place
+(`"2026-05-14T02:17:04+00:00"`) even though the
+field's docstring describes it as an ISO string
+suitable for diagnostic tooling. Because
+diagnostic tooling may compare the helper value
+byte-for-byte against
+`web_bundle.json.generated_at`, that truncation
+would produce spurious diffs.
+
+Fixed via a small follow-up commit that only
+touched:
+
+- `src/lib/web-bundle-stats.ts` — `corpusGeneratedAt`
+  changed from
+  `"2026-05-14T02:17:04+00:00"` to
+  **`"2026-05-14T02:17:04.783793+00:00"`** —
+  now byte-identical to
+  `src/data/web_bundle.json.generated_at`.
+- `.agent/run_reports/2026-07-06_run_01_RUN_REPORT.md`
+  — this file, updated to reflect the corrected
+  value.
+
+Explicitly NOT changed:
+
+- `corpusSnapshotDate` — still
+  `"May 14, 2026"` (user-visible chip is
+  unchanged).
+- `src/app/page.tsx` — no edit; the rendered
+  homepage chip still reads exactly
+  `Corpus snapshot: May 14, 2026`.
+- `src/data/web_bundle.json` — untouched.
+- Any other file.
+- No pipeline modification.
+- No collector run.
+- No corpus refresh.
+- No push. No deploy.
+
+Validation after the fix:
+
+- `npm run build` re-run — PASS (see fix commit's
+  validation log).
+- `npm run lint` — baseline unchanged (37
+  pre-existing errors, no new class introduced by
+  a one-character-in-a-string change).
+- Screenshot NOT re-run because the rendered UI
+  did not change (chip text depends on
+  `corpusSnapshotDate`, which was not modified).

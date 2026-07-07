@@ -32,7 +32,7 @@ export const WEB_BUNDLE_STATS = {
    * JSON at runtime and without a `new Date()` parse. Refresh
    * when the served bundle is regenerated.
    */
-  corpusGeneratedAt: "2026-05-14T02:17:04+00:00",
+  corpusGeneratedAt: "2026-05-14T02:17:04.783793+00:00",
   /**
    * Human-readable label derived by hand from `corpusGeneratedAt`
    * above. Used for the visible "Corpus snapshot: …" disclosure
