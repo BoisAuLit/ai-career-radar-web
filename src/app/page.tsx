@@ -419,6 +419,17 @@ const REF_STORAGE_KEY = "acr:ref";
 const STREAM_COMPLETE_SENTINEL =
   "\n\n<!-- AI_CAREER_RADAR_STREAM_COMPLETE -->";
 
+// Minimum trimmed characters we accept from a PDF extraction before
+// treating it as a real resume. Scanned/image-only PDFs typically return
+// <50 chars of header metadata via `unpdf`; a real resume's extraction is
+// several thousand characters. 300 is a conservative floor that keeps
+// legitimate short resumes in bounds while catching the "silent empty
+// PDF" trust-gap called out by P2.1a.
+const MIN_EXTRACTED_RESUME_CHARS = 300;
+
+const EMPTY_PDF_WARNING =
+  "This PDF produced very little readable text. It may be scanned or image-only. Please paste your resume text manually or upload a text-selectable PDF before generating a report.";
+
 export default function Page() {
   const [resume, setResume] = useState("");
   const [target, setTarget] = useState("");
@@ -432,6 +443,7 @@ export default function Page() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pdfUploading, setPdfUploading] = useState(false);
   const [pdfErr, setPdfErr] = useState("");
+  const [pdfExtractionWarning, setPdfExtractionWarning] = useState("");
   const [pdfFilename, setPdfFilename] = useState<string | null>(null);
 
   // Eval
@@ -496,13 +508,23 @@ export default function Page() {
   async function handlePdfUpload(file: File) {
     setPdfUploading(true);
     setPdfErr("");
+    setPdfExtractionWarning("");
     try {
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch("/api/extract-pdf", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || `extract failed (${res.status})`);
-      setResume(data.text);
+      const extractedText = (data.text ?? "").trim();
+      if (extractedText.length < MIN_EXTRACTED_RESUME_CHARS) {
+        // Below threshold: don't overwrite an existing resume or set a
+        // filename that would make this look like a successful upload.
+        // The warning banner is the dominant signal; user pastes text or
+        // uploads a text-selectable PDF instead.
+        setPdfExtractionWarning(EMPTY_PDF_WARNING);
+        return;
+      }
+      setResume(extractedText);
       setPdfFilename(data.filename);
     } catch (e) {
       setPdfErr(e instanceof Error ? e.message : String(e));
@@ -517,6 +539,7 @@ export default function Page() {
     setClassification(null);
     setReport("");
     setReportIncomplete(false);
+    setPdfExtractionWarning("");
     setErrMsg("");
     setEvalResult(null);
     setEvalErr("");
@@ -592,6 +615,7 @@ export default function Page() {
     setTarget(persona.target);
     setPdfFilename(null);
     setPdfErr("");
+    setPdfExtractionWarning("");
     setErrMsg("");
     setReport("");
     setReportIncomplete(false);
@@ -608,6 +632,7 @@ export default function Page() {
     setClassification(null);
     setReport("");
     setReportIncomplete(false);
+    setPdfExtractionWarning("");
     setErrMsg("");
     setEvalResult(null);
     setEvalErr("");
@@ -993,10 +1018,25 @@ export default function Page() {
               {pdfErr}
             </div>
           )}
+          {pdfExtractionWarning && (
+            <div className="mb-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
+              <span aria-hidden className="mr-1.5">⚠</span>
+              {pdfExtractionWarning}
+            </div>
+          )}
           <textarea
             id="resume"
             value={resume}
-            onChange={(e) => setResume(e.target.value)}
+            onChange={(e) => {
+              const next = e.target.value;
+              setResume(next);
+              if (
+                pdfExtractionWarning &&
+                next.trim().length >= MIN_EXTRACTED_RESUME_CHARS
+              ) {
+                setPdfExtractionWarning("");
+              }
+            }}
             placeholder={EXAMPLE_RESUME}
             rows={12}
             className="w-full resize-y rounded-2xl border-0 bg-white px-4 py-3 font-mono text-sm shadow-sm ring-1 ring-zinc-200 transition placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900 dark:bg-zinc-900 dark:ring-zinc-800 dark:focus:ring-zinc-100"
