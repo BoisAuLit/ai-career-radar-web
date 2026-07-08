@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "screenshot": "node scripts/screenshot.mjs"
+    "screenshot": "node scripts/screenshot.mjs",
+    "check:web-bundle-stats": "node scripts/check-web-bundle-stats.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.77",
