@@ -16,6 +16,17 @@ export const maxDuration = 60;
 
 const MODEL = "claude-sonnet-4-6";
 
+/**
+ * Application-level end-of-stream marker. Emitted by the server AFTER the
+ * model's text stream completes normally. The client
+ * (`src/app/page.tsx` — search for STREAM_COMPLETE_SENTINEL) strips this
+ * before rendering and treats its absence as "the stream ended
+ * unexpectedly, warn the user". Never included in the prompt; never
+ * emitted by the model. Change both sites together.
+ */
+const STREAM_COMPLETE_SENTINEL =
+  "\n\n<!-- AI_CAREER_RADAR_STREAM_COMPLETE -->";
+
 const VALID_ARCHETYPES: Archetype[] = [
   "applied_ai",
   "agent_engineering",
@@ -97,5 +108,27 @@ export async function POST(req: Request): Promise<Response> {
     messages: [{ role: "user", content: userMessage }],
   });
 
-  return result.toTextStreamResponse();
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        for await (const chunk of result.textStream) {
+          controller.enqueue(encoder.encode(chunk));
+        }
+        // Model stream ended normally — append the sentinel so the client
+        // can distinguish a clean finish from a mid-stream disconnect.
+        controller.enqueue(encoder.encode(STREAM_COMPLETE_SENTINEL));
+        controller.close();
+      } catch (err) {
+        // Propagate errors instead of emitting the sentinel; the client's
+        // existing catch flips to `stage === "error"` and shows the
+        // categorized error panel.
+        controller.error(err);
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
 }

@@ -410,12 +410,22 @@ const FEEDBACK_EMAIL =
 
 const REF_STORAGE_KEY = "acr:ref";
 
+// Application-level end-of-stream marker emitted by
+// `src/app/api/generate-report/route.ts` after the model stream completes
+// normally. Its presence in `accumulated` means the server saw a clean
+// finish; its absence when the reader closes means the connection dropped
+// mid-stream and the report may be truncated. Not part of the prompt.
+// Change both sites together.
+const STREAM_COMPLETE_SENTINEL =
+  "\n\n<!-- AI_CAREER_RADAR_STREAM_COMPLETE -->";
+
 export default function Page() {
   const [resume, setResume] = useState("");
   const [target, setTarget] = useState("");
   const [stage, setStage] = useState<Stage>("idle");
   const [classification, setClassification] = useState<Classification | null>(null);
   const [report, setReport] = useState("");
+  const [reportIncomplete, setReportIncomplete] = useState(false);
   const [errMsg, setErrMsg] = useState("");
 
   // PDF upload
@@ -506,6 +516,7 @@ export default function Page() {
     setStage("classifying");
     setClassification(null);
     setReport("");
+    setReportIncomplete(false);
     setErrMsg("");
     setEvalResult(null);
     setEvalErr("");
@@ -542,12 +553,23 @@ export default function Page() {
       const reader = gRes.body.getReader();
       const decoder = new TextDecoder();
       let accumulated = "";
+      let sentinelSeen = false;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         accumulated += decoder.decode(value, { stream: true });
-        setReport(accumulated);
+        // Check accumulated (not just this chunk) so a sentinel split across
+        // read boundaries is still detected. When found, hide it from the
+        // rendered markdown by trimming at the sentinel offset.
+        const sentinelIdx = accumulated.indexOf(STREAM_COMPLETE_SENTINEL);
+        if (sentinelIdx >= 0) {
+          sentinelSeen = true;
+          setReport(accumulated.slice(0, sentinelIdx));
+        } else {
+          setReport(accumulated);
+        }
       }
+      setReportIncomplete(!sentinelSeen);
       setStage("done");
     } catch (e) {
       setErrMsg(e instanceof Error ? e.message : String(e));
@@ -572,6 +594,7 @@ export default function Page() {
     setPdfErr("");
     setErrMsg("");
     setReport("");
+    setReportIncomplete(false);
     setClassification(null);
     setEvalResult(null);
     setEvalErr("");
@@ -584,6 +607,7 @@ export default function Page() {
     setStage("idle");
     setClassification(null);
     setReport("");
+    setReportIncomplete(false);
     setErrMsg("");
     setEvalResult(null);
     setEvalErr("");
@@ -1281,6 +1305,14 @@ export default function Page() {
               </div>
             )}
             <div className="px-7 py-7 sm:px-10 sm:py-10">
+              {stage === "done" && reportIncomplete && (
+                <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
+                  <span aria-hidden className="mr-1.5">⚠</span>
+                  This report may be incomplete because the generation
+                  stream ended unexpectedly. You can retry generation
+                  before relying on it.
+                </div>
+              )}
               <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                 {report || "..."}
               </ReactMarkdown>
