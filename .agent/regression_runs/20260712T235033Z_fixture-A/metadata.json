@@ -1,0 +1,33 @@
+{
+  "run_id": "20260712T235033Z_fixture-A",
+  "fixture_id": "A",
+  "fixture_version": "1",
+  "base_url": "http://localhost:3000",
+  "started_at": "2026-07-12T23:50:33.252Z",
+  "finished_at": "2026-07-12T23:51:46.641Z",
+  "duration_ms": 73389,
+  "git_commit_sha": "9e9f420eaa5114293c06c339df4f146dd11b8543",
+  "corpus_snapshot_date": "May 14, 2026",
+  "model_display": "Claude Sonnet 4.6",
+  "report_char_count": 17181,
+  "verdict": "amber",
+  "exit_code": 2,
+  "cost_measured": false,
+  "cost_cap_enforced_by": "single_generation_limit",
+  "artifact_policy": {
+    "committed": [
+      "metadata.json",
+      "structural_checks.json",
+      "verdict.md"
+    ],
+    "local_scratchpad": [
+      "report.md",
+      "report.png"
+    ]
+  },
+  "scratch_paths": {
+    "report_md": "/var/folders/xx/ypnl5f2n0y7b48w_pgxyhqt80000gn/T/acr-regression-runs/20260712T235033Z_fixture-A/report.md",
+    "screenshot_png": "/var/folders/xx/ypnl5f2n0y7b48w_pgxyhqt80000gn/T/acr-regression-runs/20260712T235033Z_fixture-A/report.png"
+  },
+  "console_errors": []
+}
