@@ -53,6 +53,38 @@ const HARD_LATENCY_MS = 240_000;
 const REPORT_LEN_SOFT_MIN = 1500;
 const REPORT_LEN_SOFT_MAX = 6000;
 
+// Required section markers used to score capture candidates and
+// (separately) to run structural section checks. Same list on both
+// sides so a candidate that passes scoring is also the candidate that
+// gets structurally checked.
+const REPORT_SECTION_MARKERS = [
+  "Target role",
+  "What you already have",
+  "Top 5 gaps",
+  "Over-prioritizing",
+  "Highest-leverage next action",
+];
+const EVIDENCE_APPENDIX_RE = /evidence appendix|## evidence/i;
+
+// Candidate selectors, ordered from most likely to contain only the
+// report region to least likely. `extractReportText` enumerates each
+// selector's matches, scores by marker coverage, and picks the shortest
+// fully-qualified candidate. Falls back to `body` only if nothing
+// qualifies — in that case verdict is forced to at least AMBER via
+// the `report_capture_scope_not_body` check.
+const CANDIDATE_SELECTORS = [
+  "[data-testid*='report']",
+  "[data-report]",
+  "article",
+  "main section",
+  "main",
+  "section",
+  "div[class*='prose']",
+  "div[class*='markdown']",
+  "div[class*='report']",
+];
+const MIN_CANDIDATE_LENGTH = 500;
+
 // UTC timestamp in YYYYMMDDTHHMMSSZ form.
 function utcRunStamp() {
   const iso = new Date().toISOString();
@@ -190,6 +222,122 @@ function anyTokenHit(haystack, phrase) {
   return null;
 }
 
+// Given a Playwright `page`, enumerate CANDIDATE_SELECTORS, score each
+// match by presence of the required section markers + Evidence Appendix,
+// and return the shortest fully-qualified candidate (all 5 markers +
+// evidence). Falls back to `body.innerText()` if none qualify.
+//
+// Returns:
+//   {
+//     text,                          // the extracted report text
+//     scope,                         // e.g. "section", or "body_fallback"
+//     strategy,                      // "shortest-qualified-candidate" | "body-fallback"
+//     candidateCount,                // total DOM nodes scanned
+//     qualifiedCount,                // how many had all 5 markers + evidence
+//     selectedLength,                // chars of chosen text
+//     selectedMarkerHits,            // 0..REPORT_SECTION_MARKERS.length
+//     selectedHasEvidence,           // bool
+//     pageBodyCharCount,             // body.innerText() length (for observability)
+//     fallbackUsed,                  // true iff strategy === "body-fallback"
+//     debugTop3,                     // small array for RUN_REPORT / debugging
+//   }
+async function extractReportText(page) {
+  const bodyText = await page.locator("body").innerText();
+  const pageBodyCharCount = bodyText.length;
+
+  const seen = new Set();
+  const candidates = [];
+
+  for (const selector of CANDIDATE_SELECTORS) {
+    let handles;
+    try {
+      handles = await page.locator(selector).all();
+    } catch {
+      continue;
+    }
+    for (const handle of handles) {
+      let text;
+      try {
+        text = await handle.innerText();
+      } catch {
+        continue;
+      }
+      if (!text || text.length < MIN_CANDIDATE_LENGTH) continue;
+      // Skip near-duplicates keyed by (length, prefix).
+      const key = `${text.length}:${text.slice(0, 64)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      const lower = text.toLowerCase();
+      const markerHits = REPORT_SECTION_MARKERS.filter((m) =>
+        lower.includes(m.toLowerCase()),
+      ).length;
+      const hasEvidence = EVIDENCE_APPENDIX_RE.test(text);
+      candidates.push({
+        selector,
+        text,
+        length: text.length,
+        markerHits,
+        hasEvidence,
+      });
+    }
+  }
+
+  const qualified = candidates.filter(
+    (c) => c.markerHits === REPORT_SECTION_MARKERS.length && c.hasEvidence,
+  );
+
+  const debugTop3 = candidates
+    .slice()
+    .sort((a, b) => b.markerHits - a.markerHits || a.length - b.length)
+    .slice(0, 3)
+    .map((c) => ({
+      selector: c.selector,
+      length: c.length,
+      markerHits: c.markerHits,
+      hasEvidence: c.hasEvidence,
+    }));
+
+  if (qualified.length > 0) {
+    qualified.sort((a, b) => a.length - b.length);
+    const chosen = qualified[0];
+    return {
+      text: chosen.text,
+      scope: chosen.selector,
+      strategy: "shortest-qualified-candidate",
+      candidateCount: candidates.length,
+      qualifiedCount: qualified.length,
+      selectedLength: chosen.length,
+      selectedMarkerHits: chosen.markerHits,
+      selectedHasEvidence: chosen.hasEvidence,
+      pageBodyCharCount,
+      fallbackUsed: false,
+      debugTop3,
+    };
+  }
+
+  // Fallback: no candidate contained all 5 markers + evidence. Return
+  // body text so downstream section checks can still run, but flag the
+  // fallback so `report_capture_scope_not_body` fires amber.
+  const lowerBody = bodyText.toLowerCase();
+  const bodyMarkerHits = REPORT_SECTION_MARKERS.filter((m) =>
+    lowerBody.includes(m.toLowerCase()),
+  ).length;
+  return {
+    text: bodyText,
+    scope: "body_fallback",
+    strategy: "body-fallback",
+    candidateCount: candidates.length,
+    qualifiedCount: 0,
+    selectedLength: bodyText.length,
+    selectedMarkerHits: bodyMarkerHits,
+    selectedHasEvidence: EVIDENCE_APPENDIX_RE.test(bodyText),
+    pageBodyCharCount,
+    fallbackUsed: true,
+    debugTop3,
+  };
+}
+
 function classify(checks) {
   const red = [];
   const amber = [];
@@ -250,6 +398,19 @@ async function main() {
   let incompleteBannerVisible = false;
   let reportText = "";
   let reportCharCount = 0;
+  let capture = {
+    text: "",
+    scope: "unset",
+    strategy: "unset",
+    candidateCount: 0,
+    qualifiedCount: 0,
+    selectedLength: 0,
+    selectedMarkerHits: 0,
+    selectedHasEvidence: false,
+    pageBodyCharCount: 0,
+    fallbackUsed: false,
+    debugTop3: [],
+  };
 
   try {
     // page loaded ─────────────────────────────────────────────────────
@@ -293,11 +454,13 @@ async function main() {
         .catch(() => false);
     }
 
-    // Capture report text.
+    // Capture report text — marker-scored candidate strategy. See
+    // `extractReportText` for the algorithm. Falls back to body only
+    // when no candidate contains all 5 section markers + evidence.
     if (doneReached) {
-      const bodyText = await page.locator("body").innerText();
-      reportText = bodyText;
-      reportCharCount = bodyText.length;
+      capture = await extractReportText(page);
+      reportText = capture.text;
+      reportCharCount = capture.selectedLength;
     }
   } catch (err) {
     consoleErrors.push(`fatal: ${err.message}`);
@@ -360,6 +523,26 @@ async function main() {
     bucket: "structural",
     level: "red",
     pass: reportCharCount > 0,
+  });
+
+  // Capture-scope observability. `report_text_capture_success` is red
+  // if we could not extract any text at all. `report_capture_scope_not_body`
+  // is amber and fires when we had to fall back to body — the report
+  // itself is still there, but the length/section metrics below are then
+  // measured against the whole page, which is why we force at least AMBER.
+  checks.push({
+    key: "report_text_capture_success",
+    bucket: "structural",
+    level: "red",
+    pass: capture.selectedLength > 0,
+    detail: `scope=${capture.scope} strategy=${capture.strategy} candidates=${capture.candidateCount} qualified=${capture.qualifiedCount}`,
+  });
+  checks.push({
+    key: "report_capture_scope_not_body",
+    bucket: "structural",
+    level: "amber",
+    pass: !capture.fallbackUsed,
+    detail: `scope=${capture.scope} fallback_used=${capture.fallbackUsed} page_body_chars=${capture.pageBodyCharCount}`,
   });
 
   const sectionHeaders = [
@@ -517,6 +700,16 @@ async function main() {
     corpus_snapshot_date: corpusSnapshot,
     model_display: modelDisplay,
     report_char_count: reportCharCount,
+    page_body_char_count: capture.pageBodyCharCount,
+    capture_scope: capture.scope,
+    capture_strategy: capture.strategy,
+    candidate_count: capture.candidateCount,
+    qualified_candidate_count: capture.qualifiedCount,
+    selected_candidate_char_count: capture.selectedLength,
+    selected_candidate_marker_count: capture.selectedMarkerHits,
+    selected_candidate_has_evidence: capture.selectedHasEvidence,
+    fallback_used: capture.fallbackUsed,
+    capture_debug_top3: capture.debugTop3,
     verdict: classification.verdict,
     exit_code: classification.exit,
     cost_measured: false,
@@ -558,7 +751,10 @@ async function main() {
     `- **Exit code**: ${classification.exit}`,
     `- **Fixture**: ${metadata.fixture_id} (v${metadata.fixture_version})`,
     `- **Duration**: ${durationMs} ms`,
-    `- **Report length**: ${reportCharCount} chars`,
+    `- **Capture scope**: \`${capture.scope}\` (strategy=\`${capture.strategy}\`, fallback=${capture.fallbackUsed})`,
+    `- **Report length (selected scope)**: ${reportCharCount} chars`,
+    `- **Page body length**: ${capture.pageBodyCharCount} chars`,
+    `- **Candidates scanned / qualified**: ${capture.candidateCount} / ${capture.qualifiedCount}`,
     `- **Commit**: ${gitSha ?? "unknown"}`,
     `- **Corpus snapshot**: ${corpusSnapshot ?? "unknown"}`,
     `- **Model**: ${modelDisplay ?? "unknown"}`,
@@ -598,7 +794,7 @@ async function main() {
 
   // ─── Summary line ─────────────────────────────────────────────────────
   console.log(
-    `report-regression-local · run_id=${runId} fixture=A verdict=${classification.verdict.toUpperCase()} exit=${classification.exit} chars=${reportCharCount} duration_ms=${durationMs}`,
+    `report-regression-local · run_id=${runId} fixture=A verdict=${classification.verdict.toUpperCase()} exit=${classification.exit} scope=${capture.scope} chars=${reportCharCount} body_chars=${capture.pageBodyCharCount} candidates=${capture.candidateCount}/${capture.qualifiedCount} duration_ms=${durationMs}`,
   );
   if (classification.red.length) {
     console.log(
