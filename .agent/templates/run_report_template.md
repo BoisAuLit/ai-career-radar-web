@@ -34,6 +34,46 @@
 <3-6 sentences describing what was done, what worked, what didn't. Plain
 language; specifics over hand-waving.>
 
+## Regression verdict
+
+> Introduced by AgentOps-3f (2026-07-12). Every RUN_REPORT includes this
+> section. For non-report-affecting tasks, set `regression_required: no`
+> and explain why. Field-level guidance:
+> `.agent/templates/regression_verdict_section.md`. Full protocol:
+> `.agent/design_memos/2026-07-12_AgentOps-3f_regression_verdict_integration.md`.
+
+- **regression_required**: `yes` | `no`
+- **reason_required_or_not**: <1-3 sentences>
+- **harness_used**: `yes` | `no`
+- **harness_command**: `node scripts/report-regression-local.mjs` (or exact command)
+- **fixture_ids**: `A` (or comma-separated list)
+- **target_environment**: `http://localhost:3000` (never production)
+- **latest_run_id**: `YYYYMMDDTHHMMSSZ_fixture-<X>` (or `n/a`)
+- **verdict**: `green` | `amber` | `red` | `unavailable` | `not_required` | `skipped_with_reason`
+- **exit_code**: 0 (green) | 1 (red) | 2 (amber) | `n/a`
+- **artifact_paths**: `.agent/regression_runs/<run-id>/{metadata,structural_checks,verdict}.*`
+- **report_char_count**: <integer> or `n/a`
+- **capture_scope**: e.g. `main section` | `body_fallback` | `n/a`
+- **fallback_used**: `true` | `false` | `n/a`
+- **red_checks_failed**: <count>
+- **amber_checks_failed**: <count>
+- **cost_measured**: `yes` | `no`
+- **estimated_cost**: e.g. `≈ $0.05` or `n/a`
+- **duration_ms**: <integer> or `n/a`
+- **baseline_promoted**: `yes` | `no` (default `no` while baseline promotion deferred)
+- **production_target_used**: `yes` | `no` (must be `no` for the harness)
+- **reviewer_action_required**: e.g. `human + ChatGPT review of amber` | `none` | `fix red before push`
+- **push_implication**: `push eligible after human approval` | `no push until reviewed` | `no push; fix/revert first` | `no automatic push; human decides` | `normal process` | `conditional on approved skip`
+
+> **Push implication rules** (do not edit; identical to §7 of the 3f memo):
+>
+> - `required_green` + no other blockers → push eligible after human approval.
+> - `required_amber` → no push until reviewed.
+> - `required_red` → no push; fix/revert first.
+> - `unavailable` → no automatic push; human decides.
+> - `not_required` → normal process (explain reason above).
+> - `skipped_with_reason` → only if human explicitly approved skip.
+
 ## Constraints checked
 
 > Walk through the TASK's `forbidden_files` list and explicitly affirm or deny.
