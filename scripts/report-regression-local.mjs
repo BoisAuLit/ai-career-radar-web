@@ -51,7 +51,14 @@ const ALLOWED_HOSTS = new Set(["localhost", "127.0.0.1"]);
 const SOFT_LATENCY_MS = 120_000;
 const HARD_LATENCY_MS = 240_000;
 const REPORT_LEN_SOFT_MIN = 1500;
-const REPORT_LEN_SOFT_MAX = 6000;
+// Widened from 6000 to 14000 in AgentOps-3e-tune-2 (2026-07-12_run_05).
+// The 6000 upper bound was calibrated for whole-body capture (~17k chars).
+// After AgentOps-3e-tune narrowed capture to a report-specific candidate
+// (`main section` scope, ~11k chars for Fixture A), the 6000 max produced
+// a false AMBER on `report_length_in_soft_band`. 14000 gives headroom for
+// natural variance in report length while still catching runaway or empty
+// outputs.
+const REPORT_LEN_SOFT_MAX = 14000;
 
 // Required section markers used to score capture candidates and
 // (separately) to run structural section checks. Same list on both
@@ -700,6 +707,8 @@ async function main() {
     corpus_snapshot_date: corpusSnapshot,
     model_display: modelDisplay,
     report_char_count: reportCharCount,
+    report_length_soft_min: REPORT_LEN_SOFT_MIN,
+    report_length_soft_max: REPORT_LEN_SOFT_MAX,
     page_body_char_count: capture.pageBodyCharCount,
     capture_scope: capture.scope,
     capture_strategy: capture.strategy,
