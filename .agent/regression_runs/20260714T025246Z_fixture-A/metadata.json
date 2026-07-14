@@ -1,0 +1,64 @@
+{
+  "run_id": "20260714T025246Z_fixture-A",
+  "fixture_id": "A",
+  "fixture_version": "1",
+  "base_url": "http://localhost:3000",
+  "started_at": "2026-07-14T02:52:46.581Z",
+  "finished_at": "2026-07-14T02:53:53.191Z",
+  "duration_ms": 66610,
+  "git_commit_sha": "451bb7fc0ef0c4835ab22e76ff82d304e02d4f78",
+  "corpus_snapshot_date": "May 14, 2026",
+  "model_display": "Claude Sonnet 4.6",
+  "report_char_count": 9837,
+  "report_length_soft_min": 1500,
+  "report_length_soft_max": 14000,
+  "page_body_char_count": 16569,
+  "capture_scope": "main section",
+  "capture_strategy": "shortest-qualified-candidate",
+  "candidate_count": 9,
+  "qualified_candidate_count": 2,
+  "selected_candidate_char_count": 9837,
+  "selected_candidate_marker_count": 5,
+  "selected_candidate_has_evidence": true,
+  "fallback_used": false,
+  "capture_debug_top3": [
+    {
+      "selector": "main section",
+      "length": 9837,
+      "markerHits": 5,
+      "hasEvidence": true
+    },
+    {
+      "selector": "main",
+      "length": 16234,
+      "markerHits": 5,
+      "hasEvidence": true
+    },
+    {
+      "selector": "main section",
+      "length": 790,
+      "markerHits": 3,
+      "hasEvidence": false
+    }
+  ],
+  "verdict": "green",
+  "exit_code": 0,
+  "cost_measured": false,
+  "cost_cap_enforced_by": "single_generation_limit",
+  "artifact_policy": {
+    "committed": [
+      "metadata.json",
+      "structural_checks.json",
+      "verdict.md"
+    ],
+    "local_scratchpad": [
+      "report.md",
+      "report.png"
+    ]
+  },
+  "scratch_paths": {
+    "report_md": "/var/folders/xx/ypnl5f2n0y7b48w_pgxyhqt80000gn/T/acr-regression-runs/20260714T025246Z_fixture-A/report.md",
+    "screenshot_png": "/var/folders/xx/ypnl5f2n0y7b48w_pgxyhqt80000gn/T/acr-regression-runs/20260714T025246Z_fixture-A/report.png"
+  },
+  "console_errors": []
+}
