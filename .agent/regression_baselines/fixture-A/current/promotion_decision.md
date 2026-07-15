@@ -1,52 +1,62 @@
-# Promotion Decision Pointer · fixture-A_20260714T025246Z_current
-
-> This file is a **pending pointer**, not a fake approval. It exists so
-> readers of the baseline directory can find the authoritative DECISION
-> file once it lands. Do NOT treat this as human-approved baseline
-> before that DECISION is committed.
+# Promotion Decision · fixture-A_20260714T025246Z_current
 
 ## Status
 
-**PENDING DECISION** at the time this file was written.
+**APPROVED** by DECISION.
 
-## Proposal
+## Decision reference
 
-- **Baseline promotion candidate**: `20260714T025246Z_fixture-A`
-- **Proposed baseline path**:
+- **Approval DECISION**:
+  `.agent/decisions/2026-07-12_run_09_DECISION.md`
+- **Approver**: Bohao (per-turn human approval recorded in the
+  DECISION file)
+- **Approval scope**: this specific baseline
+  (`fixture-A_20260714T025246Z_current`) only
+
+## What is now official
+
+- **Baseline ID**: `fixture-A_20260714T025246Z_current`
+- **Baseline path**:
   `.agent/regression_baselines/fixture-A/current/`
-- **Proposed baseline_id**:
-  `fixture-A_20260714T025246Z_current`
-- **Proposed baseline_status**: `current`
-- **Proposed supersedes**: `null` (first Fixture A baseline)
+- **Baseline status**: `current`
+- **Source run**: `20260714T025246Z_fixture-A`
+- **Fixture**: `A` (v1 · synthetic ·
+  `benchmark_A_backend_to_applied_ai.md`)
 
-## Proposer
+This baseline becomes the current official Fixture A baseline **once
+this DECISION and the baseline files are pushed to `origin/main`**.
+Until push, it is a locally-approved baseline candidate.
 
-- Proposed by: this loop's TASK
-  (`.agent/tasks/2026-07-12_run_09_TASK.md`).
-- Executor: Claude Code (checkpoint mode).
+## Scope this DECISION does NOT approve
 
-## Approval requirement
+- **Not a B-E baseline.** Fixtures B, C, D, E remain without any
+  baseline. Each of those fixtures would need its own explicit
+  promotion loop (per AgentOps-3g memo §13).
+- **Not a production baseline.** The harness hard-rejects
+  non-localhost hosts (per AgentOps-3g memo §14). Production
+  regression / smoke coverage requires a separate explicit DECISION.
+- **Not semantic equivalence.** v1 comparison is
+  metadata/structure-only (per AgentOps-3g memo §11). No LLM-judge
+  diff, no embedding similarity, no exact text diff.
+- **Not a quote integrity gate.** Quote integrity is a deferred
+  later quality upgrade (per AgentOps-3g memo §16 item 6).
 
-Final approval requires the DECISION file at:
-`.agent/decisions/2026-07-12_run_09_DECISION.md`
+## Demotion authority
 
-with `verdict = approve` and Bohao's explicit per-turn acknowledgement.
+Only Bohao may demote this baseline, via an explicit new DECISION
+(per AgentOps-3g memo §10 and AgentOps-3f skip-approval discipline).
+Claude/Codex may recommend demotion but cannot approve it.
 
-Until that DECISION is committed and pushed, this is a **pending
-baseline promotion artifact**, not a human-approved baseline.
+## Related documents
 
-## Do NOT
-
-- Do NOT treat this file as human-approved baseline before DECISION.
-- Do NOT flip `promoted_by` in `baseline_metadata.json` to a name that
-  implies human approval before DECISION lands.
-- Do NOT bundle promotion approval with any other loop.
-
-## What lands after DECISION
-
-Once `.agent/decisions/2026-07-12_run_09_DECISION.md` is committed with
-`verdict = approve`, this file should be understood alongside that
-DECISION as the paired promotion record. `baseline_metadata.json`'s
-`promoted_by` may be updated (in a separate acknowledgement loop) from
-`"Bohao pending DECISION"` to `"Bohao"` with the DECISION timestamp,
-if desired.
+- **Approval DECISION**:
+  `.agent/decisions/2026-07-12_run_09_DECISION.md`
+- **RUN_REPORT**:
+  `.agent/run_reports/2026-07-12_run_09_RUN_REPORT.md`
+- **TASK**: `.agent/tasks/2026-07-12_run_09_TASK.md`
+- **Baseline design memo**:
+  `.agent/design_memos/2026-07-12_AgentOps-3g_baseline_promotion_design.md`
+- **Stability re-run DECISION**:
+  `.agent/decisions/2026-07-12_run_08_DECISION.md`
+- **Verdict protocol integration memo**:
+  `.agent/design_memos/2026-07-12_AgentOps-3f_regression_verdict_integration.md`

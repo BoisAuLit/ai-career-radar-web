@@ -6,7 +6,7 @@
   "source_run_artifact_path": ".agent/regression_runs/20260714T025246Z_fixture-A/",
   "source_commit_sha": "451bb7f",
   "promoted_at": "2026-07-14T00:38:00Z",
-  "promoted_by": "Bohao pending DECISION",
+  "promoted_by": "Bohao via DECISION 2026-07-12_run_09_DECISION",
   "promotion_decision_path": ".agent/decisions/2026-07-12_run_09_DECISION.md",
   "harness_script_path": "scripts/report-regression-local.mjs",
   "harness_script_commit": "d393db9",
@@ -33,7 +33,8 @@
   "stability_duration_delta_ms": -9194,
   "stability_duration_percent_change": "-12.1%",
   "notes": [
-    "First official Fixture A baseline candidate.",
+    "First official Fixture A baseline.",
+    "Approved by DECISION .agent/decisions/2026-07-12_run_09_DECISION.md.",
     "Promoted from second consecutive GREEN local Fixture A run.",
     "No full report.md committed in v1.",
     "No screenshot committed in v1.",

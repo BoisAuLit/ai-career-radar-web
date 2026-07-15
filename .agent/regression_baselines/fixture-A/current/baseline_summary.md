@@ -16,6 +16,16 @@ baseline. Machine-readable data lives in `baseline_metadata.json` and
 - **corpus snapshot at run time**: `May 14, 2026`
 - **model at run time**: `Claude Sonnet 4.6`
 
+## Approval
+
+**APPROVED** by DECISION
+`.agent/decisions/2026-07-12_run_09_DECISION.md`
+(`verdict = approve` · Bohao's explicit per-turn acknowledgement).
+This baseline becomes the current official Fixture A baseline once
+this DECISION and the baseline files are pushed to `origin/main`.
+See `promotion_decision.md` in this directory for the full approval
+record.
+
 ## Provenance
 
 - **Promoted from second consecutive GREEN.**
