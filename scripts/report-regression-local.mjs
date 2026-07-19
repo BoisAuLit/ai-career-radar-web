@@ -40,10 +40,58 @@ const REPO_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "..",
 );
-const FIXTURE_PATH = path.join(
-  REPO_ROOT,
-  ".agent/regression_fixtures/benchmark_A_backend_to_applied_ai.md",
-);
+// Fixture registry. `--fixture A` (default) preserves the AgentOps-3 A behavior
+// exactly. `--fixture B` was added in AgentOps-4a (2026-07-19_run_01) for
+// gradual coverage expansion. Each entry carries its own must-not-happen
+// literal list and recommendation-match keywords so B does not overfit A's
+// gap theme. Capture logic + length thresholds are shared across fixtures.
+const FIXTURE_TABLE = {
+  A: {
+    path: ".agent/regression_fixtures/benchmark_A_backend_to_applied_ai.md",
+    mustNotLiterals: [
+      "learn python",
+      "beginner python",
+      "as an ai language model",
+    ],
+    recommendationKeywords: ["rag", "eval", "retrieval"],
+  },
+  B: {
+    path: ".agent/regression_fixtures/benchmark_B_fullstack_to_ai_product.md",
+    mustNotLiterals: [
+      "learn react",
+      "beginner react",
+      "beginner typescript",
+      "as an ai language model",
+    ],
+    recommendationKeywords: [
+      "agent",
+      "tool call",
+      "tool-call",
+      "eval",
+      "telemetry",
+    ],
+  },
+};
+
+// Tiny CLI arg parser. Only recognizes `--fixture <ID>`. Any other flag is
+// silently ignored (harness has no other CLI surface today). Unknown fixture
+// IDs throw before any browser work happens.
+function parseArgs() {
+  const args = process.argv.slice(2);
+  let fixtureId = "A";
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--fixture" && args[i + 1]) {
+      fixtureId = args[i + 1].toUpperCase();
+      i++;
+    }
+  }
+  if (!FIXTURE_TABLE[fixtureId]) {
+    throw new Error(
+      `Unknown fixture: ${fixtureId}. Supported: ${Object.keys(FIXTURE_TABLE).join(", ")}`,
+    );
+  }
+  return { fixtureId };
+}
 
 const BASE_URL = process.env.REPORT_REGRESSION_BASE_URL || "http://localhost:3000";
 const ALLOWED_HOSTS = new Set(["localhost", "127.0.0.1"]);
@@ -361,10 +409,13 @@ async function main() {
   // ─── Preflight ────────────────────────────────────────────────────────
   assertLocalhost(BASE_URL);
 
-  const fixtureText = await readFile(FIXTURE_PATH, "utf8");
+  const { fixtureId } = parseArgs();
+  const fixtureCfg = FIXTURE_TABLE[fixtureId];
+  const fixturePath = path.join(REPO_ROOT, fixtureCfg.path);
+  const fixtureText = await readFile(fixturePath, "utf8");
   const fixture = parseFixture(fixtureText);
 
-  const runId = `${utcRunStamp()}_fixture-A`;
+  const runId = `${utcRunStamp()}_fixture-${fixtureId}`;
   const runDir = path.join(REPO_ROOT, ".agent/regression_runs", runId);
   await mkdir(runDir, { recursive: true });
 
@@ -627,15 +678,13 @@ async function main() {
   });
 
   // Must-not-happen: distinctive tokens matched against report text.
+  // Literal list is fixture-specific (see FIXTURE_TABLE). We still guard
+  // each literal against the fixture's own `## Must not happen` section so
+  // an accidental broader list cannot force a false red.
   const mustNotHits = [];
+  const mustNotLiterals = fixtureCfg.mustNotLiterals;
   for (const item of fixture.mustNotHappen) {
-    // conservative literal-substring check for a few hand-picked hard rules
-    const literals = [
-      "learn python",
-      "beginner python",
-      "as an ai language model",
-    ];
-    for (const lit of literals) {
+    for (const lit of mustNotLiterals) {
       if (item.toLowerCase().includes(lit) && reportText.toLowerCase().includes(lit)) {
         mustNotHits.push(lit);
       }
@@ -651,18 +700,18 @@ async function main() {
       : "no matches",
   });
 
-  // Recommendation match (heuristic).
-  const recAction = fixture.expectedNextAction.toLowerCase();
-  const recMatch =
-    reportText.toLowerCase().includes("rag") ||
-    reportText.toLowerCase().includes("eval") ||
-    (recAction.includes("rag") && reportText.toLowerCase().includes("retrieval"));
+  // Recommendation match (heuristic). Fixture-specific keyword list keeps A
+  // (RAG/eval/retrieval) untouched and lets B look for agent/tool-call/eval/
+  // telemetry keywords. Conservative: only requires any one keyword.
+  const lowerReport = reportText.toLowerCase();
+  const recKeywords = fixtureCfg.recommendationKeywords;
+  const recHits = recKeywords.filter((k) => lowerReport.includes(k));
   checks.push({
     key: "recommendation_roughly_matches_expected",
     bucket: "fixture",
     level: "amber",
-    pass: recMatch,
-    detail: "heuristic match on RAG/eval/retrieval keywords",
+    pass: recHits.length > 0,
+    detail: `keywords=[${recKeywords.join(",")}] hits=[${recHits.join(",")}]`,
   });
 
   // ─── Operational checks ───────────────────────────────────────────────
@@ -803,7 +852,7 @@ async function main() {
 
   // ─── Summary line ─────────────────────────────────────────────────────
   console.log(
-    `report-regression-local · run_id=${runId} fixture=A verdict=${classification.verdict.toUpperCase()} exit=${classification.exit} scope=${capture.scope} chars=${reportCharCount} body_chars=${capture.pageBodyCharCount} candidates=${capture.candidateCount}/${capture.qualifiedCount} duration_ms=${durationMs}`,
+    `report-regression-local · run_id=${runId} fixture=${fixtureId} verdict=${classification.verdict.toUpperCase()} exit=${classification.exit} scope=${capture.scope} chars=${reportCharCount} body_chars=${capture.pageBodyCharCount} candidates=${capture.candidateCount}/${capture.qualifiedCount} duration_ms=${durationMs}`,
   );
   if (classification.red.length) {
     console.log(
