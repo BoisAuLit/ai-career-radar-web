@@ -80,9 +80,13 @@ _none_
 
 ## Approval status
 
-**Baseline promotion approval is PENDING DECISION** until
-`.agent/decisions/2026-07-19_run_03_DECISION.md` is committed with
-`verdict = approve` and Bohao's explicit acknowledgement. Until that
-DECISION lands, this baseline is proposed, not human-approved. See
-`promotion_decision.md` in this directory for the full approval
+**APPROVED** by DECISION
+`.agent/decisions/2026-07-19_run_03_DECISION.md`
+(`verdict = approve` · Bohao's explicit per-turn acknowledgement).
+See `promotion_decision.md` in this directory for the full approval
 record.
+
+- Source verdict: **GREEN** · exit_code **0** · red = _none_ ·
+  amber = _none_ (unchanged).
+- Full `report.md` is **not committed** in v1 (kept in scratchpad).
+- Screenshot is **not committed** in v1 (kept in scratchpad).

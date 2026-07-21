@@ -18,6 +18,16 @@ directory.
 - **corpus snapshot at run time**: `May 14, 2026`
 - **model at run time**: `Claude Sonnet 4.6`
 
+## Approval
+
+**APPROVED** by DECISION
+`.agent/decisions/2026-07-19_run_03_DECISION.md`
+(`verdict = approve` · Bohao's explicit per-turn acknowledgement).
+This baseline becomes the current official Fixture B baseline once
+this DECISION and the baseline files are pushed to `origin/main`.
+See `promotion_decision.md` in this directory for the full approval
+record. Storage policy and limitations below remain in force.
+
 ## Provenance
 
 - **Promoted from second consecutive GREEN** (mirrors AgentOps-3g-2

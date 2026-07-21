@@ -1,76 +1,74 @@
-# Promotion Decision Pointer · fixture-B_20260719T054151Z_current
-
-> This file is a **pending pointer**, not a fake approval. It exists so
-> readers of the baseline directory can find the authoritative DECISION
-> file once it lands. Do NOT treat this as human-approved baseline
-> before that DECISION is committed.
+# Promotion Decision · fixture-B_20260719T054151Z_current
 
 ## Status
 
-**PENDING DECISION** at the time this file was written.
+**APPROVED** by DECISION.
 
-## Proposal
+## Decision reference
 
-- **Baseline promotion candidate**: `20260719T054151Z_fixture-B`
-- **Proposed baseline path**:
+- **Approval DECISION**:
+  `.agent/decisions/2026-07-19_run_03_DECISION.md`
+- **Approver**: Bohao (per-turn human approval recorded in the
+  DECISION file)
+- **Approval scope**: this specific baseline
+  (`fixture-B_20260719T054151Z_current`) only
+
+## What is now official
+
+- **Baseline ID**: `fixture-B_20260719T054151Z_current`
+- **Baseline path**:
   `.agent/regression_baselines/fixture-B/current/`
-- **Proposed baseline_id**:
-  `fixture-B_20260719T054151Z_current`
-- **Proposed baseline_status**: `current`
-- **Proposed supersedes**: `null` (first Fixture B baseline)
+- **Baseline status**: `current`
+- **Source run**: `20260719T054151Z_fixture-B`
+- **Fixture**: `B` (v1 · synthetic ·
+  `benchmark_B_fullstack_to_ai_product.md`)
 
-## Proposer
+This baseline becomes the current official Fixture B baseline **once
+this DECISION and the baseline files are pushed to `origin/main`**.
+Until push, it is a locally-approved baseline candidate.
 
-- Proposed by: this loop's TASK
-  (`.agent/tasks/2026-07-19_run_03_TASK.md`).
-- Executor: Claude Code (checkpoint mode).
+## Scope this DECISION does NOT approve
 
-## Approval requirement
-
-Final approval requires the DECISION file at:
-`.agent/decisions/2026-07-19_run_03_DECISION.md`
-
-with `verdict = approve` and Bohao's explicit per-turn acknowledgement.
-
-Until that DECISION is committed and pushed, this is a **pending
-baseline promotion artifact**, not a human-approved baseline.
-
-## Scope this promotion does NOT cover
-
-- **Not a Fixture C / D / E baseline.** Only B. Fixtures C, D, E remain
-  without any baseline. Each would need its own explicit promotion loop
-  (per AgentOps-3g memo §13).
-- **Not a production baseline.** The harness hard-rejects non-localhost
-  hosts (per AgentOps-3g memo §14). Production regression / smoke
-  coverage requires a separate explicit DECISION.
-- **Not semantic equivalence.** v1 comparison is metadata/structure-only
-  (per AgentOps-3g memo §11).
-- **Not a quote integrity gate.** Deferred later quality upgrade (per
-  AgentOps-3g memo §16 item 6).
+- **Not a Fixture C / D / E baseline.** Only B. Fixtures C, D, E
+  remain without any baseline. Each of those fixtures would need its
+  own explicit promotion loop (per AgentOps-3g memo §13). Same
+  discipline used for Fixture A → Fixture B expansion.
+- **Not an A-E full-suite baseline.** Only B; A already has its own
+  separate baseline. Full suite would require its own scale-out
+  DECISION.
+- **Not a production baseline.** The harness hard-rejects
+  non-localhost hosts (per AgentOps-3g memo §14). Production
+  regression / smoke coverage requires a separate explicit DECISION.
+- **Not semantic equivalence.** v1 comparison is
+  metadata/structure-only (per AgentOps-3g memo §11). No LLM-judge
+  diff, no embedding similarity, no exact text diff.
+- **Not a quote integrity gate.** Quote integrity is a deferred
+  later quality upgrade (per AgentOps-3g memo §16 item 6).
 - **Does not authorize uploaded PDF ingestion.** The 20 uploaded PDFs
   remain external material; a separate resume-fixture-intake design
-  loop with anonymization + storage policy DECISION is required before
-  any PDF-derived artifact lands in the repo.
-
-## Do NOT
-
-- Do NOT treat this file as human-approved baseline before DECISION.
-- Do NOT flip `promoted_by` in `baseline_metadata.json` to a name that
-  implies human approval before DECISION lands.
-- Do NOT bundle promotion approval with any other loop.
+  loop with anonymization + storage policy DECISION is required
+  before any PDF-derived artifact lands in the repo.
 
 ## Demotion authority
 
-Only Bohao may demote this baseline, via an explicit new DECISION (per
-AgentOps-3g memo §10 and AgentOps-3f skip-approval discipline).
+Only Bohao may demote this baseline, via an explicit new DECISION
+(per AgentOps-3g memo §10 and AgentOps-3f skip-approval discipline).
 Claude/Codex may recommend demotion but cannot approve it.
 
-## What lands after DECISION
+## Related documents
 
-Once `.agent/decisions/2026-07-19_run_03_DECISION.md` is committed with
-`verdict = approve`, this file should be understood alongside that
-DECISION as the paired promotion record. `baseline_metadata.json`'s
-`promoted_by` may be updated (in a separate acknowledgement loop) from
-`"Bohao pending DECISION"` to `"Bohao via DECISION
-2026-07-19_run_03_DECISION"` with the DECISION timestamp — same
-pattern that AgentOps-3g-2 used for Fixture A.
+- **Approval DECISION**:
+  `.agent/decisions/2026-07-19_run_03_DECISION.md`
+- **RUN_REPORT**:
+  `.agent/run_reports/2026-07-19_run_03_RUN_REPORT.md`
+- **TASK**: `.agent/tasks/2026-07-19_run_03_TASK.md`
+- **Baseline design memo**:
+  `.agent/design_memos/2026-07-12_AgentOps-3g_baseline_promotion_design.md`
+- **Fixture B first-run DECISION**:
+  `.agent/decisions/2026-07-19_run_01_DECISION.md`
+- **Fixture B stability DECISION**:
+  `.agent/decisions/2026-07-19_run_02_DECISION.md`
+- **Verdict protocol integration memo**:
+  `.agent/design_memos/2026-07-12_AgentOps-3f_regression_verdict_integration.md`
+- **Fixture A baseline (structure reference · read-only)**:
+  `.agent/regression_baselines/fixture-A/current/`

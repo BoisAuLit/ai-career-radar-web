@@ -6,7 +6,7 @@
   "source_run_artifact_path": ".agent/regression_runs/20260719T054151Z_fixture-B/",
   "source_commit_sha": "0341461",
   "promoted_at": "2026-07-20T21:48:00Z",
-  "promoted_by": "Bohao pending DECISION",
+  "promoted_by": "Bohao via DECISION 2026-07-19_run_03_DECISION",
   "promotion_decision_path": ".agent/decisions/2026-07-19_run_03_DECISION.md",
   "harness_script_path": "scripts/report-regression-local.mjs",
   "harness_script_commit": "0341461",
@@ -40,7 +40,8 @@
     "telemetry"
   ],
   "notes": [
-    "First official Fixture B baseline candidate.",
+    "First official Fixture B baseline.",
+    "Approved by DECISION .agent/decisions/2026-07-19_run_03_DECISION.md.",
     "Promoted from second consecutive GREEN local Fixture B run.",
     "No full report.md committed in v1.",
     "No screenshot committed in v1.",
