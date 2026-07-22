@@ -195,6 +195,66 @@ function matchEllipsisFragments(quote, record) {
   return { status: "unmatched_ellipsis_fragment", fragments: perFrag };
 }
 
+// -------- R2 terminal-punctuation AMBER micro-tier (5c DECISION §Policy decision R2) --------
+// Applies only when ALL 8 strict conditions hold:
+//   1. source id resolves (checked by caller: rec exists)
+//   2. company check passes (checked by caller)
+//   3. role/title check pass or unknown (checked by caller)
+//   4. only unmatched difference is the final punctuation mark
+//   5. rest matches verbatim, normalized, or case-insensitive normalized
+//   6. no word inserted/deleted/reordered/replaced (guaranteed by substring match)
+//   7. quote length >= 40 non-space chars
+//   8. punctuation change preserves meaning:
+//      allowed: source "," / ";" / no-final-punct  → report "."
+//      forbidden: source "?" / "!" / ":"           → report "."
+const R2_MIN_NONSPACE_CHARS = 40;
+
+function isAllowedSourceTerminal(nextChar) {
+  // Report side is "."; source-side must be one of the "meaning-preserving" swaps.
+  if (nextChar === "," || nextChar === ";") return true;
+  // Absent / whitespace / newline / end-of-body counts as "no final punctuation".
+  if (nextChar === "" || /\s/.test(nextChar)) return true;
+  // Forbidden: "?", "!", ":", ".", any other punctuation change of meaning.
+  return false;
+}
+
+function matchTerminalPunctuationOnly(quote, record, companyCheck, roleCheck) {
+  if (!record) return null;
+  // Condition 2/3 gates.
+  if (companyCheck !== "pass") return null;
+  if (roleCheck === "fail") return null;
+  // Condition 7: length >= 40 non-space chars.
+  const nonSpaceLen = quote.replace(/\s+/g, "").length;
+  if (nonSpaceLen < R2_MIN_NONSPACE_CHARS) return null;
+  // Report-side last char must be terminal ".".
+  const trimmed = quote.replace(/\s+$/, "");
+  if (!trimmed.endsWith(".")) return null;
+  const quoteNoLast = trimmed.slice(0, -1).replace(/\s+$/, "");
+  if (!quoteNoLast) return null;
+  const bodyRaw = record.body || "";
+  const bodyNorm = normalize(bodyRaw);
+  const bodyCI = bodyNorm.toLowerCase();
+
+  const attempts = [
+    { sub_tier: "verbatim", body: bodyRaw, needle: quoteNoLast },
+    { sub_tier: "normalized", body: bodyNorm, needle: normalize(quoteNoLast) },
+    { sub_tier: "case_insensitive", body: bodyCI, needle: normalize(quoteNoLast).toLowerCase() },
+  ];
+  for (const a of attempts) {
+    if (!a.needle) continue;
+    const idx = a.body.indexOf(a.needle);
+    if (idx < 0) continue;
+    const endIdx = idx + a.needle.length;
+    const nextChar = a.body[endIdx] || "";
+    // Condition 8: allowed source terminals only.
+    if (!isAllowedSourceTerminal(nextChar)) continue;
+    // Conditions 4/5/6 satisfied: quote[:-1] is a substring of body via chosen tier
+    // (so no word insert/delete/reorder/replace, and only difference is the trailing punctuation).
+    return { status: "terminal_punctuation_only", sub_tier: a.sub_tier, source_terminal_char: nextChar || "" };
+  }
+  return null;
+}
+
 // -------- Company + role checks --------
 function checkCompany(citedCompany, record) {
   if (!record) return "unknown";
@@ -240,6 +300,7 @@ const counts = {
   normalized_matches: 0,
   case_insensitive_matches: 0,
   ellipsis_fragment_matches: 0,
+  terminal_punctuation_only_matches: 0,
   missing_source_id: 0,
   unresolved_source_id: 0,
   wrong_company: 0,
@@ -255,9 +316,20 @@ const sample_items = [];
 
 for (const eq of evidenceQuotes) {
   const rec = byId.get(eq.cited_jd_id);
+  const companyCheck = checkCompany(eq.cited_company, rec);
+  const roleCheck = checkRole(rec);
   let matchRes = matchTiered(eq.quote, rec);
 
-  // Escalate to ellipsis matcher only if we already failed AND quote actually contains ellipsis.
+  // R2 terminal-punctuation-only micro-tier (5c DECISION §Policy decision R2).
+  // Try before ellipsis matcher — R2 requires substring match of quote[:-1] in body,
+  // which cannot succeed for ellipsis-stitched quotes anyway.
+  if (matchRes.status === "unmatched") {
+    const r2 = matchTerminalPunctuationOnly(eq.quote, rec, companyCheck, roleCheck);
+    if (r2) matchRes = r2;
+  }
+
+  // Ellipsis-fragment matcher (5c approved refinement). Fires only when R2 also failed
+  // AND quote actually contains ellipsis.
   if (
     matchRes.status === "unmatched" &&
     (eq.quote.includes("...") || eq.quote.includes("…"))
@@ -265,9 +337,6 @@ for (const eq of evidenceQuotes) {
     const ellRes = matchEllipsisFragments(eq.quote, rec);
     if (ellRes) matchRes = ellRes;
   }
-
-  const companyCheck = checkCompany(eq.cited_company, rec);
-  const roleCheck = checkRole(rec);
 
   if (!rec) {
     counts.unresolved_source_id++;
@@ -288,6 +357,10 @@ for (const eq of evidenceQuotes) {
       case "ellipsis_fragments":
         counts.ellipsis_fragment_matches++;
         amber_reasons.push(`ellipsis-fragment stitched match for ${eq.cited_jd_id}`);
+        break;
+      case "terminal_punctuation_only":
+        counts.terminal_punctuation_only_matches++;
+        amber_reasons.push(`terminal-punctuation-only match for ${eq.cited_jd_id}`);
         break;
       case "unmatched_ellipsis_fragment":
         counts.fabricated_or_unmatched_quotes++;
@@ -317,6 +390,8 @@ for (const eq of evidenceQuotes) {
     corpus_title: rec?.title || null,
     corpus_archetype: rec?.archetype || null,
     ellipsis_fragments: matchRes.fragments || undefined,
+    r2_sub_tier: matchRes.sub_tier || undefined,
+    r2_source_terminal_char: matchRes.source_terminal_char || undefined,
   });
 }
 
@@ -361,10 +436,12 @@ const limitations = [
   "No edit-distance matching (5a DECISION #1).",
   "No LLM judge (5a DECISION #6).",
   "No semantic equivalence in v1.",
+  "R2 tier applies only when all 8 strict conditions hold (5c DECISION §Policy decision R2).",
+  "R1 policy locked: inserted connector word in ellipsis fragment stays RED.",
 ];
 
 const out = {
-  schema_version: "0.2-integration-prototype",
+  schema_version: "0.3-r2-terminal-punctuation",
   status: "integration_prototype",
   fixture_id: args.fixture || null,
   source_run_id: args["source-run-id"] || null,
