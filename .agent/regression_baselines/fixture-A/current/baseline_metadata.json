@@ -42,5 +42,24 @@
     "B-E fixtures not yet baseline-covered.",
     "Production not tested.",
     "Quote integrity not yet a gate."
-  ]
+  ],
+  "quote_integrity": {
+    "evaluation_status": "not_evaluated",
+    "verdict": null,
+    "schema_version": null,
+    "checker_commit": null,
+    "blocking_mode": "telemetry_only",
+    "grandfathered": true,
+    "grandfather_reason": "pre_quote_integrity_baseline",
+    "evaluated_run_id": null,
+    "evaluated_at": null,
+    "summary_path": null,
+    "promotion_eligibility": "requires_review",
+    "promotion_reasons": [
+      "grandfathered_pre_quote_integrity_baseline",
+      "quote_integrity_not_evaluated"
+    ],
+    "reviewed_by": [],
+    "decision_id": "2026-07-23_run_06_DECISION"
+  }
 }
