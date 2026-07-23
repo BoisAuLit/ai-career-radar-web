@@ -1,0 +1,337 @@
+{
+  "schema_version": "0.1-inspection",
+  "loop": "AgentOps-5e-followup-prompt-tune",
+  "generated_by": "AgentOps-5e-followup-prompt-tune (2026-07-23_run_07) · inspection only",
+  "target_job_id": "jd_000201",
+  "corpus_source": {
+    "path": "src/data/web_bundle.json",
+    "record_id": "jd_000201",
+    "company": "NVIDIA",
+    "title": "Senior AI ML Solution Engineer, AI-Native Development",
+    "archetype": "applied_ai",
+    "body_length_chars": 2204,
+    "source_phrase_start_index": 1411,
+    "source_phrase_head_120": "Evaluate and select ML approaches for specific problems: when to use LLM prompting vs. fine-tuning (QLoRA), classical",
+    "source_phrase_note": "source phrase continues to '...ML (random forest, linear regression) vs. reinforcement learning, RAG vs. structured extraction.' (~214 total chars up to sentence-terminating period)"
+  },
+  "occurrences": [
+    {
+      "run_id": "20260721T_AGENTOPS5C_fixture-B",
+      "kind": "quote_integrity_run",
+      "path": ".agent/quote_integrity_runs/20260721T_AGENTOPS5C_fixture-B/quote_integrity_summary.json",
+      "verdict": "red",
+      "schema_version": "0.2-integration-prototype",
+      "quote_snippet_60": "Evaluate and select ML approaches for specific problems: whe",
+      "quote_char_length": 158,
+      "match_status": "unmatched_ellipsis_fragment",
+      "ellipsis_fragments": [
+        {"fragment_len": 120, "tier": "verbatim"},
+        {"fragment_len": 34, "tier": "unmatched"}
+      ],
+      "company_check": "pass",
+      "role_check": "pass"
+    },
+    {
+      "run_id": "20260722T_AGENTOPS5C_INTEGRATE_fixture-B",
+      "kind": "quote_integrity_run",
+      "path": ".agent/quote_integrity_runs/20260722T_AGENTOPS5C_INTEGRATE_fixture-B/quote_integrity_summary.json",
+      "verdict": "red",
+      "schema_version": "0.3-r2-terminal-punctuation",
+      "quote_snippet_60": "Evaluate and select ML approaches for specific problems: whe",
+      "quote_char_length": 158,
+      "match_status": "unmatched_ellipsis_fragment",
+      "ellipsis_fragments": [
+        {"fragment_len": 120, "tier": "verbatim"},
+        {"fragment_len": 34, "tier": "unmatched"}
+      ],
+      "company_check": "pass",
+      "role_check": "pass"
+    },
+    {
+      "run_id": "20260722T_AGENTOPS5D_R2_fixture-B",
+      "kind": "quote_integrity_run",
+      "path": ".agent/quote_integrity_runs/20260722T_AGENTOPS5D_R2_fixture-B/quote_integrity_summary.json",
+      "verdict": "red",
+      "schema_version": "0.3-r2-terminal-punctuation",
+      "quote_snippet_60": "Evaluate and select ML approaches for specific problems: whe",
+      "quote_char_length": 158,
+      "match_status": "unmatched_ellipsis_fragment",
+      "ellipsis_fragments": [
+        {"fragment_len": 120, "tier": "verbatim"},
+        {"fragment_len": 34, "tier": "unmatched"}
+      ],
+      "company_check": "pass",
+      "role_check": "pass"
+    },
+    {
+      "run_id": "20260723T160538Z_fixture-B",
+      "kind": "regression_run",
+      "path": ".agent/regression_runs/20260723T160538Z_fixture-B/quote_integrity_summary.json",
+      "verdict": "red",
+      "schema_version": "0.3-r2-terminal-punctuation",
+      "quote_snippet_60": "Evaluate and select ML approaches for specific problems: whe",
+      "quote_char_length": 179,
+      "match_status": "unmatched",
+      "ellipsis_fragments_absent": true,
+      "company_check": "pass",
+      "role_check": "pass"
+    }
+  ],
+  "occurrence_summary": {
+    "total_committed_occurrences": 4,
+    "red_across_all_occurrences": true,
+    "match_status_variants": ["unmatched_ellipsis_fragment", "unmatched"],
+    "company_role_checks_always_pass": true,
+    "quote_length_variants_chars": [158, 158, 158, 179],
+    "shared_head_60_chars": "Evaluate and select ML approaches for specific problems: whe",
+    "deterministic_across_runs": "same source phrase; consistent 120-char verbatim head when ellipsis present; deterministic RED across 4 runs"
+  },
+  "artifact_safety_note": "quote_snippet_60 is truncated by the checker for safety; full quote text lives only in scratchpad report.md (never committed) — full text is unavailable for this inspection but the head + length + ellipsis-fragment breakdown are sufficient to classify the mechanism.",
+  "mismatch_classification": {
+    "primary": "F_non_contiguous_bridging",
+    "primary_evidence": "3/4 runs show ellipsis-fragment split of 120 verbatim + 34 unmatched; model concatenates a verbatim source span and a non-source tail with '...' between them.",
+    "secondary": "G_semantic_paraphrase_or_A_B_grammar_repair",
+    "secondary_evidence": "1/4 runs shows a 179-char continuous quote (no ellipsis, no fragment split); the tail beyond ~120 chars deviates from source — likely grammar repair, added conjunction, or paraphrase to make the quote read as a complete sentence.",
+    "rejected_categories": {
+      "C_morphological": "no evidence of tense/plurality/possessive change alone",
+      "D_punctuation_only": "would qualify for R2 tier and be AMBER; every occurrence is RED at Tier 1-3 or ellipsis-fragment tier",
+      "E_whitespace_unicode": "checker already normalizes curly quotes, dashes, ellipsis, pipe-newline — mismatch survives normalization",
+      "H_source_selection_mismatch": "company_check pass; role_check pass; cited jd_id = jd_000201; quoted head IS from jd_000201 body",
+      "I_appendix_citation_error": "appendix entry for jd_000201 present and consistent (NVIDIA · Senior AI ML Solution Engineer)"
+    }
+  },
+  "lineage": [
+    {"stage": "source", "path_or_function": "src/data/web_bundle.json records[jd_000201].body", "value_form": "raw scraped text", "mutation_risk": "frozen (corpus snapshot 2026-05-14)"},
+    {"stage": "evidence_selection", "path_or_function": "src/lib/corpus.ts::pickEvidenceJds", "value_form": "JdRecord[] pass-through", "mutation_risk": "none"},
+    {"stage": "prompt_user_message", "path_or_function": "src/lib/prompts.ts::buildReportUserMessage line ~144 '${r.body}'", "value_form": "body inserted verbatim into user message", "mutation_risk": "none"},
+    {"stage": "api_call", "path_or_function": "src/app/api/generate-report/route.ts streamText -> anthropic('claude-sonnet-4-6')", "value_form": "system prompt + user message streamed to Anthropic", "mutation_risk": "none in transport"},
+    {"stage": "model_generation", "path_or_function": "Anthropic Sonnet 4.6", "value_form": "streamed markdown; writes Evidence quote inside double quotes", "mutation_risk": "ROOT-CAUSE STAGE — model paraphrases / bridges non-contiguous spans / adds grammar / omits with ellipsis"},
+    {"stage": "response_stream", "path_or_function": "route.ts ReadableStream", "value_form": "text/plain to client; appends STREAM_COMPLETE_SENTINEL", "mutation_risk": "none (sentinel is HTML comment, stripped client-side)"},
+    {"stage": "report_md_capture", "path_or_function": "scripts/report-regression-local.mjs (harness)", "value_form": "streamed text saved to report.md (scratchpad-only)", "mutation_risk": "none"},
+    {"stage": "checker_extract", "path_or_function": "scripts/quote-integrity-check.mjs::extractEvidenceQuotes regex", "value_form": "extracts quoted string; captures company + jd_id", "mutation_risk": "none"},
+    {"stage": "checker_match", "path_or_function": "matchTiered / matchEllipsisFragments / matchTerminalPunctuationOnly", "value_form": "3-tier + ellipsis + R2 substring match against record.body", "mutation_risk": "no fuzzy; deterministic; no LLM"}
+  ],
+  "lineage_conclusion": "mismatch is introduced EXCLUSIVELY at the model-generation stage; all other stages are pass-through and byte-preserving; checker is faithful.",
+  "prompt_findings": {
+    "prompt_file": "src/lib/prompts.ts::reportSystemPrompt",
+    "quote_contract_present": false,
+    "verbatim_required": false,
+    "no_paraphrase_required": false,
+    "no_grammar_repair_required": false,
+    "self_check_required": false,
+    "shortest_span_preference": false,
+    "fragment_ok_allowance": false,
+    "structural_separation_of_quote_and_interpretation": false,
+    "explicit_quote_wording_in_prompt": [
+      "Line ~79: 'Allowed: quoting language from a specific JD in the evidence list (with the jd_id / company tag), since the user can verify it in the appendix.'",
+      "Line ~95: 'Why it\\'s a gap for THIS user (what\\'s missing from THIS resume — quote a phrase if useful)'",
+      "Line ~97: 'One evidence quote from a real JD (give the company)'"
+    ],
+    "explicit_quote_wording_absent": [
+      "no 'verbatim' requirement",
+      "no 'exact substring' requirement",
+      "no 'do not paraphrase' clause",
+      "no 'do not repair grammar' clause",
+      "no 'quote may be a fragment' allowance",
+      "no 'verify quote appears in supplied text' self-check",
+      "no explicit output shape separating quote token from interpretation"
+    ],
+    "output_format_findings": {
+      "current_shape": "single Markdown bullet under each gap: '- One evidence quote from a real JD (give the company)'",
+      "quote_and_explanation_blur": "quote lives in the same free-form bullet as the surrounding gap prose; no structural boundary forces exact copying"
+    },
+    "checker_side_regex_expectation": "Evidence quote: \"TEXT\" — Company, jd_XXXXXX.",
+    "prompt_side_matches_checker_regex": "checker recognizes this specific pattern; the prompt itself does NOT instruct the model to produce exactly this pattern — it emerges from example-following"
+  },
+  "options": [
+    {
+      "id": "A_stronger_prompt_wording",
+      "summary": "Add an explicit verbatim/no-repair contract to the report system prompt",
+      "faithfulness": "high",
+      "implementation_complexity": "low (~30 lines of prompt text)",
+      "auditability": "high (single-source-of-truth in prompts.ts diff)",
+      "risk_of_concealing_hallucination": "low",
+      "compatibility_with_existing_format": "high (no format change)",
+      "preserves_R1_R2": true,
+      "validation_cost_estimate_usd": 0.10,
+      "migration_risk": "low"
+    },
+    {
+      "id": "B_separate_quote_and_interpretation_fields",
+      "summary": "Instruct model to output distinct 'Quote:' and 'Interpretation:' lines under each gap",
+      "faithfulness": "high",
+      "implementation_complexity": "low prompt + medium checker/UI parser tolerance verification",
+      "auditability": "high",
+      "risk_of_concealing_hallucination": "low",
+      "compatibility_with_existing_format": "medium (Markdown structure changes; checker regex needs to still match)",
+      "preserves_R1_R2": true,
+      "validation_cost_estimate_usd": 0.10,
+      "migration_risk": "medium (parser update if UI/harness relies on current shape)"
+    },
+    {
+      "id": "C_structured_JSON_generation",
+      "summary": "Model emits JSON {job_id, quote, interpretation}; render Markdown separately server-side",
+      "faithfulness": "very high",
+      "implementation_complexity": "high (streaming JSON + server render + client update + harness)",
+      "auditability": "very high",
+      "risk_of_concealing_hallucination": "low",
+      "compatibility_with_existing_format": "low (report shape changes)",
+      "preserves_R1_R2": true,
+      "validation_cost_estimate_usd": 0.30,
+      "migration_risk": "high"
+    },
+    {
+      "id": "D_deterministic_span_selection",
+      "summary": "Model outputs (jd_id, start_index, end_index); server slices exact source text",
+      "faithfulness": "guaranteed",
+      "implementation_complexity": "high (span extraction reliability; model must correctly locate offsets)",
+      "auditability": "very high",
+      "risk_of_concealing_hallucination": "very low (impossible to hallucinate)",
+      "compatibility_with_existing_format": "low",
+      "preserves_R1_R2": true,
+      "validation_cost_estimate_usd": 0.30,
+      "migration_risk": "high"
+    },
+    {
+      "id": "E_post_generation_quote_replacement",
+      "summary": "Best-effort map near-match quotes back to source",
+      "faithfulness": "misleading (masks hallucination)",
+      "implementation_complexity": "medium",
+      "auditability": "low",
+      "risk_of_concealing_hallucination": "HIGH — silently rewrites model output to look faithful",
+      "compatibility_with_existing_format": "high",
+      "preserves_R1_R2": false,
+      "validation_cost_estimate_usd": 0.10,
+      "migration_risk": "high (breaks audit trust)",
+      "recommendation": "REJECT"
+    },
+    {
+      "id": "F_checker_relaxation",
+      "summary": "Loosen R1 to fuzzy / accept the current mismatch shape",
+      "faithfulness": "low",
+      "implementation_complexity": "low",
+      "auditability": "low",
+      "risk_of_concealing_hallucination": "HIGH",
+      "compatibility_with_existing_format": "high",
+      "preserves_R1_R2": false,
+      "validation_cost_estimate_usd": 0,
+      "migration_risk": "very high (undoes 5c/5d/5d-R2 policy)",
+      "recommendation": "REJECT (do not add edit-distance / fuzzy / LLM judge)"
+    }
+  ],
+  "recommended_design": {
+    "primary": "A_stronger_prompt_wording",
+    "secondary_composable": "B_separate_quote_and_interpretation_fields (adopt only if A alone does not close jd_000201 in a paid A/B validation loop)",
+    "rejected": ["E_post_generation_quote_replacement", "F_checker_relaxation"],
+    "deferred_to_future_design_loop": ["C_structured_JSON_generation", "D_deterministic_span_selection"],
+    "rationale": "Smallest surface, highest auditability, zero checker/R1/R2 impact, matches user's minimum-first anti-overengineering preference. If A alone insufficient after paid A/B, escalate to B in a follow-up loop.",
+    "checker_impact": "zero — R1 and R2 remain unchanged; success is measured by RED disappearing at the model output, not by loosened checker",
+    "ui_parser_impact": "zero for A; minor Markdown-format tolerance check for B"
+  },
+  "proposed_prompt_patch": {
+    "target": "src/lib/prompts.ts::reportSystemPrompt",
+    "insertion_point": "immediately after 'company-specific-claim rule' block and before '## Target role' section",
+    "patch_wording": "CRITICAL — evidence-quote-verbatim rule (read twice):\n- Every quoted Evidence span MUST be copied verbatim from ONE contiguous span of the cited job description.\n- Do NOT paraphrase, repair grammar, change tense, change plurality, add or remove articles, add or remove conjunctions, or combine separated fragments inside quotation marks.\n- A quote does not need to be a complete sentence. Grammatical fragments are allowed and preferred over stitched-together spans.\n- If the useful source text is grammatically incomplete, quote the incomplete source text EXACTLY and put your explanation OUTSIDE the quotation marks.\n- If you would need '...' inside a quote to skip source text, do NOT do that; either quote the first contiguous span alone or two separate quotes.\n- Before finalizing the report, verify that every quoted string occurs EXACTLY (character-for-character) in the supplied text for the cited jd_id. If it does not, shorten or replace it with an exact source span.",
+    "output_shape_note": "no Markdown-shape change; existing 'Evidence quote: \"TEXT\" — Company, jd_XXXXXX.' checker regex remains untouched"
+  },
+  "validation_plan": {
+    "kind": "future_paid_ab_validation_loop",
+    "requires_separate_task_and_decision": true,
+    "stages": [
+      "Implement minimal prompt patch in src/lib/prompts.ts (no other file changes)",
+      "Deterministic tests: prompt string assertions (patch text present)",
+      "Run Fixture A exactly once (no retries)",
+      "Run Fixture B exactly once (no retries)",
+      "Compare: legacy verdict · report structure · appendix presence · QI verdict · jd_000201 result · new R1 failures · R2 fires · appendix uncited telemetry"
+    ],
+    "no_retries": true,
+    "estimated_cost_usd": 0.10,
+    "keep_qi_telemetry_only": true,
+    "no_baseline_promotion": true,
+    "no_baseline_mutation": true,
+    "success_criteria": [
+      "jd_000201 no longer R1 RED (either matches verbatim / normalized / case-insensitive, or is replaced by a shorter exact quote)",
+      "no new fabricated / unmatched quotes appear in A or B",
+      "R1 unchanged in checker code",
+      "R2 unchanged in checker code",
+      "legacy 25-check report remains structurally valid (all post-A/B checks pass)",
+      "Evidence Appendix remains present",
+      "no baseline mutation",
+      "no blocking promotion"
+    ],
+    "failure_criteria": [
+      "R1 merely hidden by format/parser change",
+      "quotes become longer or more hallucinated",
+      "evidence loses usefulness (all quotes become 4-word fragments)",
+      "report structure breaks",
+      "checker weakened",
+      "post-processing silently rewrites model output",
+      "new unmatched quotes appear in previously-clean fixtures"
+    ]
+  },
+  "deterministic_tests_available_dollar_0": [
+    "prompt string assertion: 'evidence-quote-verbatim rule' substring exists in reportSystemPrompt output",
+    "output-schema unit test: 'Evidence quote: \"...\" — Company, jd_XXXXXX.' regex still recognized by checker",
+    "known jd_000201 exact-span fixture: source_phrase_head_120 appears in web_bundle.json record body",
+    "negative example (grammar-added article) unit test: 'Evaluate and select ML approaches for THE specific problems' should fail Tier 1-3 (already covered by checker)",
+    "non-contiguous-bridging example: 'phrase A ... phrase B' where A and B come from different source spans should be RED at ellipsis-fragment tier (already covered by 5c checker)",
+    "R2 punctuation-only preservation test: existing R2 fixture stays AMBER",
+    "interpretation-outside-quotes tolerance: bullet with quote followed by free-form text still parses"
+  ],
+  "open_questions": [
+    {
+      "id": "Q1",
+      "question": "prompt-only fix (Option A) OR structured quote/interpretation format (Option B)?",
+      "recommendation": "start with Option A alone; escalate to A+B only if paid A/B validation shows A insufficient — matches minimum-first preference"
+    },
+    {
+      "id": "Q2",
+      "question": "should quote spans favor shortest exact phrase OR full source sentence?",
+      "recommendation": "shortest useful contiguous span; explicitly allow fragments; discourage stitched multi-span quotes"
+    },
+    {
+      "id": "Q3",
+      "question": "should the model perform an explicit self-check before final output?",
+      "recommendation": "yes — one-sentence instruction is cheap and directly addresses the observed non-contiguous bridging"
+    },
+    {
+      "id": "Q4",
+      "question": "should implementation alter only prompt text OR also Markdown structure?",
+      "recommendation": "prompt text only (Option A); preserve existing 'Evidence quote:' Markdown shape so checker regex is untouched"
+    },
+    {
+      "id": "Q5",
+      "question": "should A+B paid validation be required before any promotion-related work?",
+      "recommendation": "yes — do NOT start AgentOps-5f-promote until at least one full paid A+B validation loop shows the patch works without new failures"
+    }
+  ],
+  "boundaries_respected": {
+    "no_generation": true,
+    "no_fixture_execution": true,
+    "no_harness_run": true,
+    "no_playwright": true,
+    "no_dev_server": true,
+    "no_llm_api_call": true,
+    "no_prompt_or_code_change": true,
+    "no_checker_change": true,
+    "no_harness_change": true,
+    "no_R1_relaxation": true,
+    "no_R2_relaxation": true,
+    "no_edit_distance": true,
+    "no_llm_judge": true,
+    "no_fuzzy_matching": true,
+    "no_baseline_mutation": true,
+    "no_baseline_promotion": true,
+    "no_pipeline_change": true,
+    "no_src_change": true,
+    "no_scripts_change": true,
+    "no_agent_scripts_change": true,
+    "no_threshold_change": true,
+    "no_retry_behavior_added": true,
+    "no_pdfs": true,
+    "no_openai_api": true,
+    "quote_integrity_telemetry_only_preserved": true,
+    "no_blocking_promotion": true,
+    "cost_usd": 0
+  }
+}
