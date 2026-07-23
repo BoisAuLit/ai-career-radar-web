@@ -1,0 +1,223 @@
+{
+  "schema_version": "0.1-inspection",
+  "loop": "AgentOps-5e",
+  "generated_by": "AgentOps-5e (2026-07-23_run_05) · inspection only",
+  "fixtures": {
+    "A": {
+      "baseline_dir": ".agent/regression_baselines/fixture-A/current/",
+      "files_present": [
+        "baseline_metadata.json",
+        "baseline_structural_checks.json",
+        "baseline_summary.md",
+        "baseline_verdict.md",
+        "promotion_decision.md",
+        "source_run_id.txt"
+      ],
+      "baseline_id": "fixture-A_20260714T025246Z_current",
+      "source_run_id": "20260719T054151Z_fixture-A · actually source_commit_sha=451bb7f",
+      "source_commit_sha": "451bb7f",
+      "promotion_decision_path": ".agent/decisions/2026-07-12_run_09_DECISION.md",
+      "harness_script_commit": "d393db9",
+      "legacy_verdict": "green",
+      "current_qi_representation": "implicit_prose_note_only",
+      "qi_note_text": "Quote integrity not yet a gate.",
+      "grandfathering_explicit": false,
+      "qi_fields_present_in_metadata": [],
+      "qi_gaps": [
+        "no structured evaluation_status field",
+        "no checker_schema_version field",
+        "no grandfathered boolean",
+        "no blocking_mode field",
+        "no promotion_eligibility field",
+        "QI status only expressible as human-readable note"
+      ]
+    },
+    "B": {
+      "baseline_dir": ".agent/regression_baselines/fixture-B/current/",
+      "files_present": [
+        "baseline_metadata.json",
+        "baseline_structural_checks.json",
+        "baseline_summary.md",
+        "baseline_verdict.md",
+        "promotion_decision.md",
+        "source_run_id.txt"
+      ],
+      "baseline_id": "fixture-B_20260719T054151Z_current",
+      "source_run_id": "20260719T054151Z_fixture-B",
+      "source_commit_sha": "0341461",
+      "promotion_decision_path": ".agent/decisions/2026-07-19_run_03_DECISION.md",
+      "harness_script_commit": "0341461",
+      "legacy_verdict": "green",
+      "current_qi_representation": "implicit_prose_note_only",
+      "qi_note_text": "Quote integrity not yet a gate.",
+      "grandfathering_explicit": false,
+      "qi_fields_present_in_metadata": [],
+      "qi_gaps": [
+        "no structured evaluation_status field",
+        "no checker_schema_version field",
+        "no grandfathered boolean",
+        "no blocking_mode field",
+        "no promotion_eligibility field"
+      ]
+    }
+  },
+  "controlled_run_evidence_2026_07_23": [
+    {
+      "run_id": "20260723T035644Z_fixture-A",
+      "loop": "AgentOps-5d",
+      "legacy_verdict": "green",
+      "exit_code": 0,
+      "qi_verdict": "red",
+      "qi_schema": "0.3-r2-terminal-punctuation",
+      "evidence_entries": 0,
+      "note": "appendix missing (later determined flake)"
+    },
+    {
+      "run_id": "20260723T042627Z_fixture-A",
+      "loop": "AgentOps-5d-stability",
+      "legacy_verdict": "green",
+      "exit_code": 0,
+      "qi_verdict": "amber",
+      "qi_schema": "0.3-r2-terminal-punctuation",
+      "evidence_entries": 5,
+      "note": "appendix present · R2 fired twice · appendix not reproduced missing"
+    },
+    {
+      "run_id": "20260723T035828Z_fixture-B",
+      "loop": "AgentOps-5d",
+      "legacy_verdict": "red",
+      "exit_code": 1,
+      "qi_verdict": "blocked_no_report",
+      "qi_schema": null,
+      "evidence_entries": "n/a",
+      "note": "502 timeout · no report · wrapper blocked_no_report path"
+    },
+    {
+      "run_id": "20260723T042759Z_fixture-B",
+      "loop": "AgentOps-5d-stability",
+      "legacy_verdict": "red",
+      "exit_code": 1,
+      "qi_verdict": "blocked_no_report",
+      "qi_schema": null,
+      "evidence_entries": "n/a",
+      "note": "502 timeout reproduced (2/2)"
+    },
+    {
+      "run_id": "20260723T160538Z_fixture-B",
+      "loop": "AgentOps-5d-b-timeout-diagnostics",
+      "legacy_verdict": "green",
+      "exit_code": 0,
+      "qi_verdict": "red",
+      "qi_schema": "0.3-r2-terminal-punctuation",
+      "evidence_entries": 5,
+      "note": "502 did NOT reproduce · R1 NVIDIA jd_000201 unmatched"
+    }
+  ],
+  "candidate_schema": {
+    "location": "add to baseline_metadata.json as flat quote_integrity block",
+    "backward_compatible": true,
+    "block": {
+      "evaluation_status": "not_evaluated | evaluated | blocked | error",
+      "verdict": "green | amber | red | null",
+      "schema_version": "string | null",
+      "checker_commit": "string | null",
+      "blocking_mode": "telemetry_only | blocking",
+      "grandfathered": true,
+      "grandfather_reason": "pre_quote_integrity_baseline",
+      "evaluated_run_id": "string | null",
+      "evaluated_at": "iso-8601 | null",
+      "summary_path": "string | null",
+      "promotion_eligibility": "eligible | ineligible | requires_review",
+      "promotion_reasons": ["string"],
+      "reviewed_by": ["string"],
+      "decision_id": "string | null"
+    }
+  },
+  "invariants": [
+    {"id": "I1", "level": "must", "text": "evaluation_status=not_evaluated implies verdict=null and schema_version=null and evaluated_run_id=null"},
+    {"id": "I2", "level": "must", "text": "evaluation_status=evaluated requires schema_version and evaluated_run_id and summary_path"},
+    {"id": "I3", "level": "must", "text": "blocked_no_report source run cannot be promoted (promotion_eligibility=ineligible)"},
+    {"id": "I4", "level": "must", "text": "checker_error source run cannot be promoted (promotion_eligibility=ineligible)"},
+    {"id": "I5", "level": "must", "text": "legacy GREEN alone does not imply promotion eligibility · requires evaluated QI"},
+    {"id": "I6", "level": "must", "text": "quote_integrity RED cannot be promoted once blocking_mode=blocking"},
+    {"id": "I7", "level": "recommended", "text": "under telemetry_only, RED baseline candidate requires promotion_eligibility=requires_review with human sign-off"},
+    {"id": "I8", "level": "must", "text": "grandfathered=true requires explicit grandfather_reason"},
+    {"id": "I9", "level": "must", "text": "evaluated baseline must point to immutable committed run artifact + immutable DECISION"},
+    {"id": "I10", "level": "must", "text": "baseline metadata must not claim QI result that was not actually evaluated"},
+    {"id": "I11", "level": "recommended", "text": "checker schema_version change requires either explicit compatibility annotation or re-evaluation"},
+    {"id": "I12", "level": "must", "text": "promotion never silently changes blocking_mode · promotion DECISION must state intended mode"}
+  ],
+  "recommended_architecture": "A",
+  "architecture_option_A_note": "Add flat quote_integrity block directly to baseline_metadata.json (backward compatible · single source of truth per baseline · deprecates the prose note)",
+  "current_A_B_recommendation": "Option-1 retroactive annotation under a later explicit AgentOps-5e-migrate DECISION · records already-known truth (not_evaluated + grandfathered=true) · does NOT re-classify QI · needs explicit exception to 5a grandfathering rule",
+  "promotion_eligibility_model": {
+    "hard_blockers": [
+      "legacy_verdict != green",
+      "evaluation_status in [not_evaluated, blocked, error]",
+      "verdict == red AND blocking_mode == blocking",
+      "source_run_id missing or not committed",
+      "promotion_decision_path missing"
+    ],
+    "review_required": [
+      "verdict == red AND blocking_mode == telemetry_only",
+      "verdict == amber",
+      "schema_version different from current checker schema_version",
+      "grandfathered == true"
+    ],
+    "non_blocking_warnings": [
+      "R2 terminal_punctuation_only present but green-eligible",
+      "appendix_entries_not_cited > 0"
+    ]
+  },
+  "schema_compatibility_policy": {
+    "current_version": "0.3-r2-terminal-punctuation",
+    "rule": "exact match by default · explicit compatibility allowlist per DECISION for cross-version reuse",
+    "drift_handling": "either re-evaluate with new schema or add compatibility_allowed_from_versions field to promotion DECISION",
+    "who_decides": "human + ChatGPT DECISION · not automated"
+  },
+  "source_of_truth_map": {
+    "evaluation_status": "baseline_metadata.quote_integrity (derived from wrapper output at promotion time)",
+    "verdict": "baseline_metadata.quote_integrity.verdict (snapshot at promotion) · source is regression_runs/<runId>/quote_integrity_summary.json",
+    "schema_version": "baseline_metadata.quote_integrity.schema_version (snapshot from source run summary)",
+    "counts": "NOT stored in baseline · always read from source regression_runs/<runId>/quote_integrity_summary.json",
+    "red_reasons + amber_reasons": "NOT stored in baseline · always read from source",
+    "blocking_mode": "baseline_metadata.quote_integrity.blocking_mode + DECISION policy_locked_by_decision reference",
+    "promotion_eligibility": "baseline_metadata.quote_integrity.promotion_eligibility (evaluated by tool + human sign-off)"
+  },
+  "open_questions_with_recommendations": {
+    "Q1_metadata_vs_registry": {
+      "options": ["direct baseline_metadata block", "separate registry file"],
+      "recommendation": "direct baseline_metadata block (single source of truth · lower migration cost · uses existing baseline lifecycle)"
+    },
+    "Q2_retroactive_annotation": {
+      "options": ["retrofit A+B with not_evaluated+grandfathered=true", "leave frozen · new schema for future only"],
+      "recommendation": "retrofit A+B under separate AgentOps-5e-migrate DECISION (records already-known truth · no QI re-classification · needs explicit grandfathering-exception approval)"
+    },
+    "Q3_telemetry_only_red_eligibility": {
+      "options": ["always ineligible if RED", "eligible with human review under telemetry_only"],
+      "recommendation": "requires_review with human sign-off under telemetry_only · always ineligible if blocking_mode=blocking (matches R1 policy locked in 5c DECISION)"
+    },
+    "Q4_schema_compatibility": {
+      "options": ["exact match", "semver compatible", "allowlist per DECISION"],
+      "recommendation": "exact match by default · explicit allowlist per DECISION (avoid silent compatibility assumptions)"
+    },
+    "Q5_prompt_format_prerequisite": {
+      "options": ["require R1 remediation before any promotion", "allow promotion of RED baselines under review + telemetry_only", "case-by-case"],
+      "recommendation": "case-by-case in DECISION · but do NOT auto-promote RED · R1 remediation strongly preferred before 5f-promote"
+    }
+  },
+  "boundaries_respected": {
+    "no_generation": true,
+    "no_harness_run": true,
+    "no_playwright": true,
+    "no_llm_api_call": true,
+    "no_baseline_mutation": true,
+    "no_schema_mutation": true,
+    "no_code_change": true,
+    "no_threshold_change": true,
+    "no_pipeline_change": true,
+    "no_qi_promotion_to_blocking": true,
+    "quote_integrity_telemetry_only_preserved": true,
+    "cost_usd": 0
+  }
+}
