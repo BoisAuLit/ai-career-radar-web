@@ -30,9 +30,9 @@
 
 import { chromium } from "playwright";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { execSync } from "node:child_process";
+import { execSync, spawnSync } from "node:child_process";
 import path from "node:path";
 import os from "node:os";
 
@@ -393,6 +393,84 @@ async function extractReportText(page) {
   };
 }
 
+// AgentOps-5c-integrate: invoke scripts/quote-integrity-check.mjs
+// synchronously against the just-saved scratchpad report + cleaned served
+// corpus. Returns a normalized envelope for metadata / structural_checks /
+// verdict.md. Never throws — failures land in the returned envelope with
+// verdict "blocked_no_report" / "blocked_no_corpus" / "checker_error".
+// Telemetry-only in this loop: does not change the harness exit code.
+function runQuoteIntegrity({
+  repoRoot,
+  reportPath,
+  reportSaved,
+  corpusPath,
+  outPath,
+  fixtureId,
+  runId,
+}) {
+  const summaryRel = path.relative(repoRoot, outPath);
+  const base = {
+    checkerExecuted: false,
+    summaryWritten: false,
+    summary_path: summaryRel,
+    verdict: "unknown",
+    schema_version: null,
+    counts: {},
+    red_reasons: [],
+    amber_reasons: [],
+    blocking_mode: "telemetry_only",
+    errorExcerpt: null,
+  };
+  if (!reportSaved || !existsSync(reportPath)) {
+    return { ...base, verdict: "blocked_no_report" };
+  }
+  if (!existsSync(corpusPath)) {
+    return { ...base, verdict: "blocked_no_corpus" };
+  }
+  let res;
+  try {
+    res = spawnSync(
+      process.execPath,
+      [
+        path.join(repoRoot, "scripts/quote-integrity-check.mjs"),
+        "--report", reportPath,
+        "--corpus", corpusPath,
+        "--out", outPath,
+        "--fixture", fixtureId,
+        "--source-run-id", runId,
+      ],
+      { encoding: "utf8", cwd: repoRoot },
+    );
+  } catch (err) {
+    return { ...base, verdict: "checker_error", errorExcerpt: String(err.message || err).slice(0, 500) };
+  }
+  if (res.status !== 0) {
+    const stderr = (res.stderr || "").slice(0, 500);
+    return { ...base, checkerExecuted: true, verdict: "checker_error", errorExcerpt: stderr };
+  }
+  const summaryWritten = existsSync(outPath);
+  if (!summaryWritten) {
+    return { ...base, checkerExecuted: true, verdict: "checker_error", errorExcerpt: "summary_not_written" };
+  }
+  try {
+    const parsed = JSON.parse(readFileSync(outPath, "utf8"));
+    return {
+      checkerExecuted: true,
+      summaryWritten: true,
+      summary_path: summaryRel,
+      verdict: parsed.verdict || "unknown",
+      schema_version: parsed.schema_version || null,
+      counts: parsed.counts || {},
+      red_reasons: Array.isArray(parsed.red_reasons) ? parsed.red_reasons : [],
+      amber_reasons: Array.isArray(parsed.amber_reasons) ? parsed.amber_reasons : [],
+      blocking_mode: "telemetry_only",
+      errorExcerpt: null,
+    };
+  } catch (err) {
+    return { ...base, checkerExecuted: true, summaryWritten, verdict: "checker_error", errorExcerpt: `parse_error: ${err.message}`.slice(0, 500) };
+  }
+}
+
 function classify(checks) {
   const red = [];
   const amber = [];
@@ -538,6 +616,23 @@ async function main() {
   } catch (err) {
     consoleErrors.push(`artifact-save: ${err.message}`);
   }
+
+  // ─── Quote integrity (AgentOps-5c-integrate · telemetry only) ─────────
+  // Invokes scripts/quote-integrity-check.mjs against the just-saved
+  // scratchpad report.md and the cleaned served corpus. The resulting
+  // quote_integrity_summary.json is committed under the run directory
+  // alongside metadata/structural_checks/verdict. Blocking mode is
+  // "telemetry_only" this loop — a red quote-integrity verdict does NOT
+  // change the harness exit code. R1/R2 policy lives inside the checker.
+  const quoteIntegrity = runQuoteIntegrity({
+    repoRoot: REPO_ROOT,
+    reportPath: scratchReportPath,
+    reportSaved: Boolean(reportText),
+    corpusPath: path.join(REPO_ROOT, "src/data/web_bundle.json"),
+    outPath: path.join(runDir, "quote_integrity_summary.json"),
+    fixtureId,
+    runId,
+  });
 
   // ─── Structural checks ────────────────────────────────────────────────
   checks.push({
@@ -742,6 +837,46 @@ async function main() {
     pass: ALLOWED_HOSTS.has(new URL(BASE_URL).hostname),
   });
 
+  // Quote-integrity telemetry checks (AgentOps-5c-integrate).
+  // All 5 sit in bucket "quote_integrity" at level "amber" so a failure
+  // never escalates to RED via the existing classify() rollup. Promotion
+  // to blocking (level "red") requires a separate DECISION.
+  checks.push({
+    key: "quote_integrity_checker_executed",
+    bucket: "quote_integrity",
+    level: "amber",
+    pass: quoteIntegrity.checkerExecuted,
+    detail: `mode=${quoteIntegrity.blocking_mode} verdict=${quoteIntegrity.verdict}${quoteIntegrity.errorExcerpt ? ` err="${quoteIntegrity.errorExcerpt}"` : ""}`,
+  });
+  checks.push({
+    key: "quote_integrity_summary_written",
+    bucket: "quote_integrity",
+    level: "amber",
+    pass: quoteIntegrity.summaryWritten,
+    detail: quoteIntegrity.summary_path,
+  });
+  checks.push({
+    key: "quote_integrity_verdict_recorded",
+    bucket: "quote_integrity",
+    level: "amber",
+    pass: Boolean(quoteIntegrity.verdict),
+    detail: `verdict=${quoteIntegrity.verdict}`,
+  });
+  checks.push({
+    key: "quote_integrity_red_reasons_count",
+    bucket: "quote_integrity",
+    level: "amber",
+    pass: true,
+    detail: `count=${quoteIntegrity.red_reasons.length}`,
+  });
+  checks.push({
+    key: "quote_integrity_amber_reasons_count",
+    bucket: "quote_integrity",
+    level: "amber",
+    pass: true,
+    detail: `count=${quoteIntegrity.amber_reasons.length}`,
+  });
+
   const classification = classify(checks);
 
   const metadata = {
@@ -777,6 +912,7 @@ async function main() {
         "metadata.json",
         "structural_checks.json",
         "verdict.md",
+        "quote_integrity_summary.json",
       ],
       local_scratchpad: [
         "report.md",
@@ -788,6 +924,17 @@ async function main() {
       screenshot_png: scratchScreenshotPath,
     },
     console_errors: consoleErrors.slice(0, 10),
+    quote_integrity: {
+      enabled: true,
+      checker_path: "scripts/quote-integrity-check.mjs",
+      summary_path: quoteIntegrity.summary_path,
+      verdict: quoteIntegrity.verdict,
+      schema_version: quoteIntegrity.schema_version,
+      counts: quoteIntegrity.counts,
+      red_reasons: quoteIntegrity.red_reasons,
+      amber_reasons: quoteIntegrity.amber_reasons,
+      blocking_mode: quoteIntegrity.blocking_mode,
+    },
   };
 
   await writeFile(
@@ -839,9 +986,17 @@ async function main() {
           )
           .join("\n"),
     "",
+    "## Quote integrity",
+    "",
+    `- **Verdict**: **${(quoteIntegrity.verdict || "unknown").toUpperCase()}**`,
+    `- **Summary**: \`${quoteIntegrity.summary_path}\``,
+    `- **Red reasons**: ${quoteIntegrity.red_reasons.length}`,
+    `- **Amber reasons**: ${quoteIntegrity.amber_reasons.length}`,
+    `- **Blocking mode**: \`${quoteIntegrity.blocking_mode}\` — telemetry only in this integration loop; does not change the report-regression GREEN/AMBER/RED exit code. Promoting to blocking requires a separate DECISION.`,
+    "",
     "## Artifacts",
     "",
-    `- Committed: \`.agent/regression_runs/${runId}/{metadata.json,structural_checks.json,verdict.md}\``,
+    `- Committed: \`.agent/regression_runs/${runId}/{metadata.json,structural_checks.json,verdict.md,quote_integrity_summary.json}\``,
     `- Scratchpad: \`${scratchReportPath}\`, \`${scratchScreenshotPath}\``,
     "",
   ].join("\n");
