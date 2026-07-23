@@ -524,6 +524,108 @@ async function main() {
     if (m.type() === "error") consoleErrors.push(`console.error: ${m.text()}`);
   });
 
+  // ─── Network diagnostics (AgentOps-5d-b-timeout-diagnostics) ─────────
+  // Additive-only observability. Captures `requestfailed` events and any
+  // response with status >= 400, using a strict safe-header allowlist and
+  // sanitized body excerpt. Does NOT touch thresholds, retry logic, or the
+  // app runtime.
+  const SAFE_HEADERS_ALLOWLIST = [
+    "request-id",
+    "x-request-id",
+    "anthropic-request-id",
+    "cf-ray",
+    "traceparent",
+    "x-vercel-id",
+    "x-amzn-trace-id",
+    "retry-after",
+  ];
+  const networkEvents = [];
+  let firstNon2xxUrl = null;
+  let firstNon2xxStatus = null;
+  let firstFailureElapsedMs = null;
+  let generateRouteStatus = null;
+
+  page.on("requestfailed", (request) => {
+    try {
+      networkEvents.push({
+        event_type: "requestfailed",
+        elapsed_ms: Date.now() - t0,
+        url: request.url(),
+        method: request.method(),
+        resource_type: request.resourceType(),
+        failure_reason: request.failure()?.errorText || null,
+      });
+    } catch {
+      /* ignore observability errors */
+    }
+  });
+
+  page.on("response", async (response) => {
+    let status;
+    try {
+      status = response.status();
+    } catch {
+      return;
+    }
+    if (status < 400) return;
+    const url = response.url();
+    const request = response.request();
+    let method = "";
+    let resourceType = "";
+    try {
+      method = request.method();
+      resourceType = request.resourceType();
+    } catch {
+      /* keep empty */
+    }
+    let selectedHeaders = {};
+    try {
+      const raw = response.headers();
+      for (const key of SAFE_HEADERS_ALLOWLIST) {
+        if (raw[key]) selectedHeaders[key] = String(raw[key]).slice(0, 200);
+      }
+    } catch {
+      /* keep empty */
+    }
+    let bodyExcerpt = "";
+    try {
+      const body = await response.text();
+      bodyExcerpt = (body || "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 500);
+    } catch (err) {
+      bodyExcerpt = `body_excerpt_error: ${String(err?.message || err).slice(0, 200)}`;
+    }
+    const elapsed_ms = Date.now() - t0;
+    let statusText = null;
+    try {
+      statusText = response.statusText ? response.statusText() : null;
+    } catch {
+      statusText = null;
+    }
+    networkEvents.push({
+      event_type: "non_2xx_response",
+      elapsed_ms,
+      url,
+      status,
+      status_text: statusText,
+      method,
+      resource_type: resourceType,
+      selected_headers: selectedHeaders,
+      body_excerpt: bodyExcerpt,
+    });
+    if (firstNon2xxUrl === null) {
+      firstNon2xxUrl = url;
+      firstNon2xxStatus = status;
+      firstFailureElapsedMs = elapsed_ms;
+    }
+    if (url.includes("/api/generate-report") && generateRouteStatus === null) {
+      generateRouteStatus = status;
+    }
+  });
+
   const checks = [];
 
   let pageLoaded = false;
@@ -531,6 +633,9 @@ async function main() {
   let targetFilled = false;
   let generateClicked = false;
   let doneReached = false;
+  let completionState = "not_started";
+  let completionElapsedMs = 0;
+  let visibleErrorExcerpt = null;
   let incompleteBannerVisible = false;
   let reportText = "";
   let reportCharCount = 0;
@@ -572,14 +677,55 @@ async function main() {
       .click();
     generateClicked = true;
 
-    // Wait for done state (Copy report button appears in action bar).
-    try {
-      await page.waitForSelector('button:has-text("Copy report")', {
+    // Wait for done state (Copy report button appears in action bar) OR
+    // application error state (Retry button appears in error panel). Race
+    // between the two so an early stage:"error" transition is not masked as
+    // a 240s timeout. Threshold unchanged (HARD_LATENCY_MS still 240s).
+    const waitStart = Date.now();
+    const successPromise = page
+      .waitForSelector('button:has-text("Copy report")', {
         timeout: HARD_LATENCY_MS,
-      });
+      })
+      .then(() => ({ type: "success" }))
+      .catch(() => null);
+    const errorPromise = page
+      .waitForSelector('button:has-text("Retry")', {
+        timeout: HARD_LATENCY_MS,
+      })
+      .then(() => ({ type: "error" }))
+      .catch(() => null);
+    const raceResult = await Promise.race([successPromise, errorPromise]);
+    completionElapsedMs = Date.now() - waitStart;
+    if (raceResult?.type === "success") {
       doneReached = true;
-    } catch (err) {
-      consoleErrors.push(`waitForDoneFailed: ${err.message}`);
+      completionState = "success";
+    } else if (raceResult?.type === "error") {
+      doneReached = false;
+      completionState = "application_error";
+      // Capture a small sanitized excerpt of the visible error panel text.
+      try {
+        const bodyText = await page.locator("body").innerText();
+        const idx = bodyText.indexOf("Retry");
+        if (idx >= 0) {
+          const before = Math.max(0, idx - 400);
+          const after = Math.min(bodyText.length, idx + 60);
+          visibleErrorExcerpt = bodyText
+            .slice(before, after)
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 500);
+        }
+      } catch {
+        /* ignore excerpt errors */
+      }
+      consoleErrors.push(
+        `applicationErrorDetected: retry button visible after ${completionElapsedMs}ms`,
+      );
+    } else {
+      completionState = "hard_timeout";
+      consoleErrors.push(
+        `waitForDoneFailed: neither Copy report nor Retry appeared within ${HARD_LATENCY_MS}ms`,
+      );
     }
 
     // Detect incomplete banner (Candidate 1 sentinel).
@@ -913,6 +1059,7 @@ async function main() {
         "structural_checks.json",
         "verdict.md",
         "quote_integrity_summary.json",
+        "network_diagnostics.json",
       ],
       local_scratchpad: [
         "report.md",
@@ -924,6 +1071,14 @@ async function main() {
       screenshot_png: scratchScreenshotPath,
     },
     console_errors: consoleErrors.slice(0, 10),
+    completion_state: completionState,
+    completion_elapsed_ms: completionElapsedMs,
+    network_diagnostics_path: `.agent/regression_runs/${runId}/network_diagnostics.json`,
+    application_error_detected: completionState === "application_error",
+    application_error_excerpt: visibleErrorExcerpt,
+    first_non_2xx_url: firstNon2xxUrl,
+    first_non_2xx_status: firstNon2xxStatus,
+    first_failure_elapsed_ms: firstFailureElapsedMs,
     quote_integrity: {
       enabled: true,
       checker_path: "scripts/quote-integrity-check.mjs",
@@ -946,6 +1101,43 @@ async function main() {
   await writeFile(
     path.join(runDir, "structural_checks.json"),
     JSON.stringify(checks, null, 2),
+    "utf8",
+  );
+
+  // ─── Network diagnostics artifact (AgentOps-5d-b-timeout-diagnostics) ──
+  const statusesHistogram = {};
+  let requestfailedCount = 0;
+  let non2xxCount = 0;
+  for (const ev of networkEvents) {
+    if (ev.event_type === "requestfailed") {
+      requestfailedCount++;
+    } else if (ev.event_type === "non_2xx_response") {
+      non2xxCount++;
+      const key = String(ev.status);
+      statusesHistogram[key] = (statusesHistogram[key] || 0) + 1;
+    }
+  }
+  const networkDiagnostics = {
+    schema_version: "0.1-b-timeout-diagnostics",
+    fixture_id: fixtureId,
+    run_id: runId,
+    started_at: startedAt,
+    completion_state: completionState,
+    completion_elapsed_ms: completionElapsedMs,
+    error_state_detected: completionState === "application_error",
+    visible_error_excerpt: visibleErrorExcerpt,
+    events: networkEvents,
+    summary: {
+      requestfailed_count: requestfailedCount,
+      non_2xx_count: non2xxCount,
+      statuses: statusesHistogram,
+      first_failure_elapsed_ms: firstFailureElapsedMs,
+      generate_route_status: generateRouteStatus,
+    },
+  };
+  await writeFile(
+    path.join(runDir, "network_diagnostics.json"),
+    JSON.stringify(networkDiagnostics, null, 2),
     "utf8",
   );
 
@@ -994,9 +1186,19 @@ async function main() {
     `- **Amber reasons**: ${quoteIntegrity.amber_reasons.length}`,
     `- **Blocking mode**: \`${quoteIntegrity.blocking_mode}\` — telemetry only in this integration loop; does not change the report-regression GREEN/AMBER/RED exit code. Promoting to blocking requires a separate DECISION.`,
     "",
+    "## Network diagnostics",
+    "",
+    `- **Completion state**: \`${completionState}\``,
+    `- **Elapsed to completion**: ${completionElapsedMs} ms`,
+    `- **Diagnostics**: \`.agent/regression_runs/${runId}/network_diagnostics.json\``,
+    `- **First non-2xx**: ${firstNon2xxUrl ? `\`${firstNon2xxUrl}\` (status ${firstNon2xxStatus}, elapsed_ms=${firstFailureElapsedMs})` : "_none_"}`,
+    `- **Application error detected**: ${completionState === "application_error" ? "yes" : "no"}`,
+    visibleErrorExcerpt ? `- **Visible error excerpt**: \`${visibleErrorExcerpt.replace(/`/g, "'")}\`` : "- **Visible error excerpt**: _none_",
+    `- **Thresholds**: unchanged (\`HARD_LATENCY_MS=${HARD_LATENCY_MS}\`, \`SOFT_LATENCY_MS=${SOFT_LATENCY_MS}\`)`,
+    "",
     "## Artifacts",
     "",
-    `- Committed: \`.agent/regression_runs/${runId}/{metadata.json,structural_checks.json,verdict.md,quote_integrity_summary.json}\``,
+    `- Committed: \`.agent/regression_runs/${runId}/{metadata.json,structural_checks.json,verdict.md,quote_integrity_summary.json,network_diagnostics.json}\``,
     `- Scratchpad: \`${scratchReportPath}\`, \`${scratchScreenshotPath}\``,
     "",
   ].join("\n");
