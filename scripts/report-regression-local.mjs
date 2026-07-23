@@ -73,24 +73,67 @@ const FIXTURE_TABLE = {
   },
 };
 
-// Tiny CLI arg parser. Only recognizes `--fixture <ID>`. Any other flag is
-// silently ignored (harness has no other CLI surface today). Unknown fixture
-// IDs throw before any browser work happens.
+// Strict CLI parser (AgentOps-5d-cosmetic).
+// Runs BEFORE any side effect (assertLocalhost / mkdir / dev-server /
+// browser / API). --help and -h print usage and exit 0. Any unknown flag,
+// missing --fixture value, unsupported fixture id, duplicated --fixture,
+// or unexpected positional argument prints an error, prints usage to
+// stderr, and exits 2. On success returns { fixtureId }.
+function printUsage(stream) {
+  const supported = Object.keys(FIXTURE_TABLE).join(", ");
+  stream.write(
+    [
+      "Usage:",
+      "  node scripts/report-regression-local.mjs [--fixture A|B]",
+      "",
+      "Options:",
+      `  --fixture <id>   Run one supported regression fixture (${supported})`,
+      "  -h, --help       Show this help and exit",
+      "",
+    ].join("\n"),
+  );
+}
+
+function fatalCli(message) {
+  process.stderr.write(`report-regression-local: ${message}\n`);
+  printUsage(process.stderr);
+  process.exit(2);
+}
+
 function parseArgs() {
   const args = process.argv.slice(2);
-  let fixtureId = "A";
+  let fixtureId = null;
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--fixture" && args[i + 1]) {
-      fixtureId = args[i + 1].toUpperCase();
-      i++;
+    const a = args[i];
+    if (a === "--help" || a === "-h") {
+      printUsage(process.stdout);
+      process.exit(0);
     }
+    if (a === "--fixture") {
+      const val = args[i + 1];
+      if (val === undefined || val.startsWith("--")) {
+        return fatalCli(`--fixture requires a value (one of: ${Object.keys(FIXTURE_TABLE).join(", ")})`);
+      }
+      const candidate = val.toUpperCase();
+      if (!FIXTURE_TABLE[candidate]) {
+        return fatalCli(`Unknown fixture: ${val}. Supported: ${Object.keys(FIXTURE_TABLE).join(", ")}`);
+      }
+      if (fixtureId !== null && fixtureId !== candidate) {
+        return fatalCli(`Conflicting --fixture values: ${fixtureId} vs ${candidate}`);
+      }
+      fixtureId = candidate;
+      i++;
+      continue;
+    }
+    if (a.startsWith("--") || a.startsWith("-")) {
+      return fatalCli(`Unknown flag: ${a}`);
+    }
+    return fatalCli(`Unexpected positional argument: ${a}`);
   }
-  if (!FIXTURE_TABLE[fixtureId]) {
-    throw new Error(
-      `Unknown fixture: ${fixtureId}. Supported: ${Object.keys(FIXTURE_TABLE).join(", ")}`,
-    );
-  }
-  return { fixtureId };
+  // Preserve prior contract: no --fixture defaults to A (used by baseline
+  // commits and existing 5c-integrate/5d/5d-stability/5d-b-timeout-diagnostics
+  // documented run pattern).
+  return { fixtureId: fixtureId ?? "A" };
 }
 
 const BASE_URL = process.env.REPORT_REGRESSION_BASE_URL || "http://localhost:3000";
@@ -485,9 +528,12 @@ function classify(checks) {
 
 async function main() {
   // ─── Preflight ────────────────────────────────────────────────────────
-  assertLocalhost(BASE_URL);
-
+  // parseArgs() runs BEFORE any I/O side effect. --help/-h exit 0 here;
+  // invalid CLI arguments exit 2 without creating a run dir, starting a
+  // dev server, launching a browser, or making any API call.
   const { fixtureId } = parseArgs();
+
+  assertLocalhost(BASE_URL);
   const fixtureCfg = FIXTURE_TABLE[fixtureId];
   const fixturePath = path.join(REPO_ROOT, fixtureCfg.path);
   const fixtureText = await readFile(fixturePath, "utf8");
@@ -1198,7 +1244,19 @@ async function main() {
     "",
     "## Artifacts",
     "",
-    `- Committed: \`.agent/regression_runs/${runId}/{metadata.json,structural_checks.json,verdict.md,quote_integrity_summary.json,network_diagnostics.json}\``,
+    `- Committed: \`.agent/regression_runs/${runId}/{${(() => {
+      // AgentOps-5d-cosmetic: list only files actually written for this run.
+      // metadata/structural/verdict are always written before this string is
+      // built. quote_integrity_summary and network_diagnostics are optional.
+      const written = ["metadata.json", "structural_checks.json", "verdict.md"];
+      if (existsSync(path.join(runDir, "quote_integrity_summary.json"))) {
+        written.push("quote_integrity_summary.json");
+      }
+      if (existsSync(path.join(runDir, "network_diagnostics.json"))) {
+        written.push("network_diagnostics.json");
+      }
+      return written.join(",");
+    })()}}\``,
     `- Scratchpad: \`${scratchReportPath}\`, \`${scratchScreenshotPath}\``,
     "",
   ].join("\n");
