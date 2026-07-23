@@ -1,0 +1,96 @@
+{
+  "run_id": "20260723T042627Z_fixture-A",
+  "fixture_id": "A",
+  "fixture_version": "1",
+  "base_url": "http://localhost:3000",
+  "started_at": "2026-07-23T04:26:27.121Z",
+  "finished_at": "2026-07-23T04:27:33.892Z",
+  "duration_ms": 66771,
+  "git_commit_sha": "0678b5b5377c1dd61e630f0490bfbd8cf8898145",
+  "corpus_snapshot_date": "May 14, 2026",
+  "model_display": "Claude Sonnet 4.6",
+  "report_char_count": 10089,
+  "report_length_soft_min": 1500,
+  "report_length_soft_max": 14000,
+  "page_body_char_count": 16770,
+  "capture_scope": "main section",
+  "capture_strategy": "shortest-qualified-candidate",
+  "candidate_count": 9,
+  "qualified_candidate_count": 2,
+  "selected_candidate_char_count": 10089,
+  "selected_candidate_marker_count": 5,
+  "selected_candidate_has_evidence": true,
+  "fallback_used": false,
+  "capture_debug_top3": [
+    {
+      "selector": "main section",
+      "length": 10089,
+      "markerHits": 5,
+      "hasEvidence": true
+    },
+    {
+      "selector": "main",
+      "length": 16435,
+      "markerHits": 5,
+      "hasEvidence": true
+    },
+    {
+      "selector": "main section",
+      "length": 790,
+      "markerHits": 3,
+      "hasEvidence": false
+    }
+  ],
+  "verdict": "green",
+  "exit_code": 0,
+  "cost_measured": false,
+  "cost_cap_enforced_by": "single_generation_limit",
+  "artifact_policy": {
+    "committed": [
+      "metadata.json",
+      "structural_checks.json",
+      "verdict.md",
+      "quote_integrity_summary.json"
+    ],
+    "local_scratchpad": [
+      "report.md",
+      "report.png"
+    ]
+  },
+  "scratch_paths": {
+    "report_md": "/var/folders/xx/ypnl5f2n0y7b48w_pgxyhqt80000gn/T/acr-regression-runs/20260723T042627Z_fixture-A/report.md",
+    "screenshot_png": "/var/folders/xx/ypnl5f2n0y7b48w_pgxyhqt80000gn/T/acr-regression-runs/20260723T042627Z_fixture-A/report.png"
+  },
+  "console_errors": [],
+  "quote_integrity": {
+    "enabled": true,
+    "checker_path": "scripts/quote-integrity-check.mjs",
+    "summary_path": ".agent/regression_runs/20260723T042627Z_fixture-A/quote_integrity_summary.json",
+    "verdict": "amber",
+    "schema_version": "0.3-r2-terminal-punctuation",
+    "counts": {
+      "quote_candidates": 19,
+      "evidence_entries": 5,
+      "evidence_quotes_with_citation": 5,
+      "verbatim_matches": 3,
+      "normalized_matches": 0,
+      "case_insensitive_matches": 0,
+      "ellipsis_fragment_matches": 0,
+      "terminal_punctuation_only_matches": 2,
+      "missing_source_id": 0,
+      "unresolved_source_id": 0,
+      "wrong_company": 0,
+      "wrong_role": 0,
+      "fabricated_or_unmatched_quotes": 0,
+      "duplicates": 0,
+      "appendix_entries_not_cited": 1
+    },
+    "red_reasons": [],
+    "amber_reasons": [
+      "terminal-punctuation-only match for jd_000089",
+      "terminal-punctuation-only match for jd_000173",
+      "in appendix but not cited by any Evidence quote: jd_000310"
+    ],
+    "blocking_mode": "telemetry_only"
+  }
+}

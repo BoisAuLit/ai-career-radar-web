@@ -1,0 +1,197 @@
+[
+  {
+    "key": "page_loaded",
+    "bucket": "structural",
+    "level": "red",
+    "pass": true
+  },
+  {
+    "key": "resume_filled",
+    "bucket": "structural",
+    "level": "red",
+    "pass": true
+  },
+  {
+    "key": "target_filled",
+    "bucket": "structural",
+    "level": "red",
+    "pass": true
+  },
+  {
+    "key": "generate_clicked",
+    "bucket": "structural",
+    "level": "red",
+    "pass": true
+  },
+  {
+    "key": "done_state_reached",
+    "bucket": "structural",
+    "level": "red",
+    "pass": false
+  },
+  {
+    "key": "incomplete_banner_absent",
+    "bucket": "structural",
+    "level": "red",
+    "pass": true
+  },
+  {
+    "key": "report_non_empty",
+    "bucket": "structural",
+    "level": "red",
+    "pass": false
+  },
+  {
+    "key": "report_text_capture_success",
+    "bucket": "structural",
+    "level": "red",
+    "pass": false,
+    "detail": "scope=unset strategy=unset candidates=0 qualified=0"
+  },
+  {
+    "key": "report_capture_scope_not_body",
+    "bucket": "structural",
+    "level": "amber",
+    "pass": true,
+    "detail": "scope=unset fallback_used=false page_body_chars=0"
+  },
+  {
+    "key": "contains_section_target_role",
+    "bucket": "structural",
+    "level": "red",
+    "pass": false
+  },
+  {
+    "key": "contains_section_what_you_already_have",
+    "bucket": "structural",
+    "level": "red",
+    "pass": false
+  },
+  {
+    "key": "contains_section_top_5_gaps",
+    "bucket": "structural",
+    "level": "red",
+    "pass": false
+  },
+  {
+    "key": "contains_section_over-prioritizing",
+    "bucket": "structural",
+    "level": "red",
+    "pass": false
+  },
+  {
+    "key": "contains_section_highest-leverage_next_action",
+    "bucket": "structural",
+    "level": "red",
+    "pass": false
+  },
+  {
+    "key": "contains_evidence_appendix",
+    "bucket": "structural",
+    "level": "red",
+    "pass": false
+  },
+  {
+    "key": "report_length_in_soft_band",
+    "bucket": "structural",
+    "level": "amber",
+    "pass": false,
+    "detail": "chars=0 band=1500-14000"
+  },
+  {
+    "key": "action_bar_buttons_present",
+    "bucket": "structural",
+    "level": "amber",
+    "pass": false,
+    "detail": "Copy report=false; Download=false; Eval this report=false; Start over=true"
+  },
+  {
+    "key": "at_least_2_strengths_reflected",
+    "bucket": "fixture",
+    "level": "amber",
+    "pass": false,
+    "detail": "hits=0/5"
+  },
+  {
+    "key": "at_least_2_gaps_reflected",
+    "bucket": "fixture",
+    "level": "amber",
+    "pass": false,
+    "detail": "hits=0/5"
+  },
+  {
+    "key": "must_not_happen_absent",
+    "bucket": "fixture",
+    "level": "red",
+    "pass": true,
+    "detail": "no matches"
+  },
+  {
+    "key": "recommendation_roughly_matches_expected",
+    "bucket": "fixture",
+    "level": "amber",
+    "pass": false,
+    "detail": "keywords=[agent,tool call,tool-call,eval,telemetry] hits=[]"
+  },
+  {
+    "key": "duration_under_soft_threshold",
+    "bucket": "operational",
+    "level": "amber",
+    "pass": false,
+    "detail": "duration_ms=240992 soft=120000"
+  },
+  {
+    "key": "duration_under_hard_threshold",
+    "bucket": "operational",
+    "level": "red",
+    "pass": false,
+    "detail": "duration_ms=240992 hard=240000"
+  },
+  {
+    "key": "no_fatal_playwright_error",
+    "bucket": "operational",
+    "level": "red",
+    "pass": true
+  },
+  {
+    "key": "no_production_target",
+    "bucket": "operational",
+    "level": "red",
+    "pass": true
+  },
+  {
+    "key": "quote_integrity_checker_executed",
+    "bucket": "quote_integrity",
+    "level": "amber",
+    "pass": false,
+    "detail": "mode=telemetry_only verdict=blocked_no_report"
+  },
+  {
+    "key": "quote_integrity_summary_written",
+    "bucket": "quote_integrity",
+    "level": "amber",
+    "pass": false,
+    "detail": ".agent/regression_runs/20260723T042759Z_fixture-B/quote_integrity_summary.json"
+  },
+  {
+    "key": "quote_integrity_verdict_recorded",
+    "bucket": "quote_integrity",
+    "level": "amber",
+    "pass": true,
+    "detail": "verdict=blocked_no_report"
+  },
+  {
+    "key": "quote_integrity_red_reasons_count",
+    "bucket": "quote_integrity",
+    "level": "amber",
+    "pass": true,
+    "detail": "count=0"
+  },
+  {
+    "key": "quote_integrity_amber_reasons_count",
+    "bucket": "quote_integrity",
+    "level": "amber",
+    "pass": true,
+    "detail": "count=0"
+  }
+]
