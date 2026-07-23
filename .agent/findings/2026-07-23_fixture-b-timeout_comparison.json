@@ -1,0 +1,188 @@
+{
+  "schema": "AgentOps-5d-fixture-b-timeout comparison v0.1",
+  "generated_by": "AgentOps-5d-fixture-b-timeout (2026-07-23_run_02)",
+  "successful_b": {
+    "run_id": "20260719T054151Z_fixture-B",
+    "date": "2026-07-19",
+    "harness_script_commit": "0341461",
+    "legacy_verdict": "green",
+    "exit_code": 0,
+    "duration_ms": 67608,
+    "report_char_count": 10445,
+    "capture_scope": "main section",
+    "fallback_used": false,
+    "console_errors": [],
+    "model_display": "Claude Sonnet 4.6"
+  },
+  "failed_b_1": {
+    "run_id": "20260723T035828Z_fixture-B",
+    "date": "2026-07-23",
+    "loop": "AgentOps-5d",
+    "harness_script_commit": "22b7719+ (5c-integrate)",
+    "legacy_verdict": "red",
+    "exit_code": 1,
+    "duration_ms": 240964,
+    "report_char_count": 0,
+    "capture_scope": "unset",
+    "fallback_used": false,
+    "quote_integrity_verdict": "blocked_no_report",
+    "console_errors": [
+      "console.error: Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+      "waitForDoneFailed: page.waitForSelector: Timeout 240000ms exceeded. waiting for locator('button:has-text(\"Copy report\")') to be visible"
+    ]
+  },
+  "failed_b_2": {
+    "run_id": "20260723T042759Z_fixture-B",
+    "date": "2026-07-23",
+    "loop": "AgentOps-5d-stability",
+    "harness_script_commit": "22b7719+ (5c-integrate)",
+    "legacy_verdict": "red",
+    "exit_code": 1,
+    "duration_ms": 240992,
+    "report_char_count": 0,
+    "capture_scope": "unset",
+    "fallback_used": false,
+    "quote_integrity_verdict": "blocked_no_report",
+    "console_errors": [
+      "console.error: Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+      "waitForDoneFailed: page.waitForSelector: Timeout 240000ms exceeded. waiting for locator('button:has-text(\"Copy report\")') to be visible"
+    ]
+  },
+  "control_a_runs_2026_07_23": [
+    {
+      "run_id": "20260723T035644Z_fixture-A",
+      "duration_ms": 76444,
+      "report_char_count": 11341,
+      "legacy_verdict": "green",
+      "console_errors": []
+    },
+    {
+      "run_id": "20260723T042627Z_fixture-A",
+      "duration_ms": 66771,
+      "report_char_count": 10089,
+      "legacy_verdict": "green",
+      "console_errors": []
+    }
+  ],
+  "git_diff_summary": {
+    "range": "0341461..HEAD",
+    "changed_paths": [
+      "scripts/quote-integrity-check.mjs (new · +469 lines)",
+      "scripts/report-regression-local.mjs (+161 / −3 · 5c-integrate additive wrapper)"
+    ],
+    "unchanged_paths": [
+      "src/**",
+      "package.json",
+      "package-lock.json",
+      ".github/workflows/**",
+      "vercel.json",
+      ".agent/regression_fixtures/**"
+    ],
+    "harness_thresholds_unchanged": {
+      "SOFT_LATENCY_MS": 120000,
+      "HARD_LATENCY_MS": 240000
+    },
+    "harness_wait_selector_unchanged": "button:has-text(\"Copy report\") with timeout=HARD_LATENCY_MS"
+  },
+  "top_hypotheses": [
+    {
+      "id": "H1",
+      "hypothesis": "Anthropic streaming API returns 502 for Fixture B on 2026-07-23",
+      "confidence": "high",
+      "evidence_for": [
+        "Both failed B runs have identical 502 Bad Gateway console error",
+        "Both A runs on same 2026-07-23 session have empty console_errors",
+        "Only Fixture B triggers 502 on same dev server session"
+      ],
+      "next_action": "diagnostics rerun with page.on(response) logging"
+    },
+    {
+      "id": "H2",
+      "hypothesis": "App enters stage='error' — harness cannot detect, waits full 240s",
+      "confidence": "high",
+      "evidence_for": [
+        "action_bar_buttons_present shows Copy report=false, Start over=true — matches stage='error' panel"
+      ],
+      "next_action": "harness fail-fast selector race between Copy report and stage='error' marker"
+    },
+    {
+      "id": "H3",
+      "hypothesis": "Fixture B prompt/output length trips upstream gateway limit",
+      "confidence": "medium",
+      "evidence_for": [
+        "Fixture A works fine same day"
+      ],
+      "evidence_against": [
+        "Baseline B was 10 445 chars in 67 s — length alone cannot explain 502"
+      ]
+    },
+    {
+      "id": "H4",
+      "hypothesis": "Anthropic API side degradation for specific model/account/route",
+      "confidence": "medium",
+      "evidence_for": [
+        "Four days between baseline success and failures"
+      ],
+      "evidence_against": [
+        "Fixture A on 2026-07-23 works fine with same API + model + account"
+      ]
+    },
+    {
+      "id": "H5",
+      "hypothesis": "Local Next.js dev-server compilation error triggered by Fixture B target only",
+      "confidence": "low_medium"
+    },
+    {
+      "id": "H6",
+      "hypothesis": "240s hard threshold too tight for legitimate slow generation",
+      "confidence": "low",
+      "evidence_against": [
+        "Baseline B was 67s, so 240s is 3.5x safety margin"
+      ]
+    },
+    {
+      "id": "H7",
+      "hypothesis": "Quote-integrity integration side-effect",
+      "confidence": "near_zero",
+      "evidence_against": [
+        "QI wrapper runs strictly downstream of wait-for-done + scratchpad-save block"
+      ],
+      "status": "ruled_out"
+    },
+    {
+      "id": "H8",
+      "hypothesis": "Capture selector issue",
+      "confidence": "low",
+      "evidence_against": [
+        "A runs work fine — selector is not the issue"
+      ],
+      "status": "ruled_out"
+    },
+    {
+      "id": "H9",
+      "hypothesis": "Baseline metadata / run comparison artifact mismatch",
+      "confidence": "low",
+      "status": "ruled_out"
+    }
+  ],
+  "recommended_next_loop": {
+    "name": "AgentOps-5d-b-timeout-diagnostics",
+    "scope": "Add minimal additive Playwright diagnostics (page.on requestfailed + page.on response for non-2xx) and error-state fail-fast selector race. One controlled Fixture B rerun. No threshold mutation. No baseline mutation.",
+    "cost_estimate_usd": "0.05",
+    "requires_generation": true,
+    "mutates_code": true,
+    "mutates_baseline": false
+  },
+  "boundaries_respected": {
+    "no_generation": true,
+    "no_harness_run": true,
+    "no_playwright": true,
+    "no_llm_api_call": true,
+    "no_threshold_mutation": true,
+    "no_code_change": true,
+    "no_baseline_mutation": true,
+    "no_baseline_promotion": true,
+    "cost_usd": 0,
+    "quote_integrity_telemetry_only": true
+  }
+}
