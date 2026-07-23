@@ -1,0 +1,60 @@
+{
+  "run_id": "20260723T035828Z_fixture-B",
+  "fixture_id": "B",
+  "fixture_version": "1",
+  "base_url": "http://localhost:3000",
+  "started_at": "2026-07-23T03:58:28.136Z",
+  "finished_at": "2026-07-23T04:02:29.100Z",
+  "duration_ms": 240964,
+  "git_commit_sha": "59185807129ad2d9e5c7e83026edf72be8362bd0",
+  "corpus_snapshot_date": "May 14, 2026",
+  "model_display": "Claude Sonnet 4.6",
+  "report_char_count": 0,
+  "report_length_soft_min": 1500,
+  "report_length_soft_max": 14000,
+  "page_body_char_count": 0,
+  "capture_scope": "unset",
+  "capture_strategy": "unset",
+  "candidate_count": 0,
+  "qualified_candidate_count": 0,
+  "selected_candidate_char_count": 0,
+  "selected_candidate_marker_count": 0,
+  "selected_candidate_has_evidence": false,
+  "fallback_used": false,
+  "capture_debug_top3": [],
+  "verdict": "red",
+  "exit_code": 1,
+  "cost_measured": false,
+  "cost_cap_enforced_by": "single_generation_limit",
+  "artifact_policy": {
+    "committed": [
+      "metadata.json",
+      "structural_checks.json",
+      "verdict.md",
+      "quote_integrity_summary.json"
+    ],
+    "local_scratchpad": [
+      "report.md",
+      "report.png"
+    ]
+  },
+  "scratch_paths": {
+    "report_md": "/var/folders/xx/ypnl5f2n0y7b48w_pgxyhqt80000gn/T/acr-regression-runs/20260723T035828Z_fixture-B/report.md",
+    "screenshot_png": "/var/folders/xx/ypnl5f2n0y7b48w_pgxyhqt80000gn/T/acr-regression-runs/20260723T035828Z_fixture-B/report.png"
+  },
+  "console_errors": [
+    "console.error: Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+    "waitForDoneFailed: page.waitForSelector: Timeout 240000ms exceeded.\nCall log:\n  - waiting for locator('button:has-text(\"Copy report\")') to be visible\n"
+  ],
+  "quote_integrity": {
+    "enabled": true,
+    "checker_path": "scripts/quote-integrity-check.mjs",
+    "summary_path": ".agent/regression_runs/20260723T035828Z_fixture-B/quote_integrity_summary.json",
+    "verdict": "blocked_no_report",
+    "schema_version": null,
+    "counts": {},
+    "red_reasons": [],
+    "amber_reasons": [],
+    "blocking_mode": "telemetry_only"
+  }
+}
