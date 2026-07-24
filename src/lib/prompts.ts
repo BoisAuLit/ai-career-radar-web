@@ -79,6 +79,42 @@ ${deepDiveBlock}CRITICAL — company-specific-claim rule (read three times):
 - Allowed: quoting language from a specific JD in the evidence list (with the jd_id / company tag), since the user can verify it in the appendix.
 - The corpus + the user's resume are the only two sources of fact. Everything else is qualitative.
 
+CRITICAL — mandatory evidence structure AND exact quote faithfulness (read twice, both parts are hard requirements):
+
+Part 1 — Mandatory output structure (never omit):
+- The report MUST contain exactly 5 numbered ranked gaps.
+- Each ranked gap MUST contain exactly ONE supporting Evidence quote line under it — so the report MUST contain at least 5 parser-recognized Evidence quote lines total, one per gap (never fewer, never all clumped in one gap).
+- Every Evidence quote line MUST use exactly this shape, character-for-character: \`Evidence quote: "TEXT" — Company, jd_XXXXXX.\` (straight double quotes, em-dash \`—\`, then \`Company, jd_XXXXXX.\`).
+- The report MUST end with a section headed exactly \`## Evidence Appendix\` listing every cited jd_id once, tab-separated in the shape \`jd_id\\tcompany\\ttitle\` (one row per cited job, de-duplicated).
+- **Omission of any of the above is INVALID output.** Never omit an Evidence quote line, never omit the Evidence Appendix, never skip a gap's citation — even if you cannot find a polished long quote for that gap.
+
+Part 2 — Exact quote faithfulness (never fake to satisfy structure):
+- Text inside quotation marks MUST be copied verbatim from ONE contiguous span of the cited JD body.
+- Do NOT paraphrase, repair grammar, change tense, change plurality, add or remove articles or conjunctions, or add or remove any word inside quotation marks.
+- Do NOT combine separated source fragments and do NOT use ellipsis (\`...\` or \`…\`) inside a quote to bridge them.
+- Put all interpretation and grammatical framing OUTSIDE the quotation marks.
+
+Part 3 — Short-fragment fallback (use this instead of omission):
+- A quote does NOT need to be a complete sentence. Short, grammatically incomplete source fragments are valid AND preferred over stitched-together spans.
+- If a complete sentence cannot be quoted exactly, use a shorter exact fragment from the same JD. A 5-word exact fragment beats a 20-word paraphrase AND beats omission.
+
+Part 4 — Final self-check (in this order, structure first):
+Before finalizing, verify ALL of:
+1. Structure: exactly 5 numbered ranked gaps exist; each gap has one Evidence quote line under it; at least 5 parser-recognized Evidence quote lines exist total; \`## Evidence Appendix\` section exists.
+2. Exactness: every quoted string appears character-for-character in the supplied body text for its cited jd_id; no ellipsis inside quotes; no grammar-repair inside quotes.
+3. Citation validity: every cited jd_id exists in the supplied EVIDENCE JDs list; every cited jd_id appears once in the Evidence Appendix.
+If any check fails, add or shorten quotes until all three pass. Omission is NOT a valid way to pass exactness.
+
+Positive example (synthetic — do not copy the wording, just the shape):
+Under gap 3, the model should write:
+\`Evidence quote: "agentic RAG at scale" — ExampleCo, jd_999999.\`
+Then, OUTSIDE the quote, the model writes its own interpretation, e.g.: "This phrase shows the target archetype expects hands-on production retrieval-plus-tool-use, not just prompt engineering."
+In the Appendix, the row appears once as: \`jd_999999\\tExampleCo\\tSenior AI Engineer\`.
+
+Negative examples (do NOT do these):
+1. Ellipsis bridging (invalid): \`Evidence quote: "agentic RAG at scale ... hands-on production" — ExampleCo, jd_999999.\` — this combines two non-contiguous source spans.
+2. Omission (invalid): under gap 3, no Evidence quote line at all, or Evidence Appendix missing entirely — this fails the mandatory structure even if every remaining quote is exact.
+
 Output is Markdown only. No prose outside the report sections.
 
 The report has exactly these 5 sections, in order:
