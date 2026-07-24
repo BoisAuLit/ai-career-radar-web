@@ -1,0 +1,449 @@
+{
+  "schema_version": "0.1-design",
+  "loop": "AgentOps-5e-followup-baseline-lint-integrate-phase3-design",
+  "generated_by": "AgentOps-5e-followup-baseline-lint-integrate-phase3-design (2026-07-24_run_08) · inspection only",
+  "parent_loop": "AgentOps-5e-followup-baseline-lint-integrate-implement (2026-07-24_run_07)",
+  "authorizing_decision": ".agent/decisions/2026-07-24_run_07_DECISION.md",
+
+  "objective": {
+    "primary_question": "Does the integrated harness correctly produce and display legacy regression verdict, quote-integrity telemetry, structural-evidence telemetry, and combined telemetry on two fresh controlled reports without altering legacy verdict or process exit?",
+    "phase_3_type": "controlled A/B integration validation on Phase 2 harness",
+    "phase_3_scope": "integration correctness on the emitted telemetry paths — NOT a model-quality benchmark",
+    "design_only_this_loop": true,
+    "design_cost_this_loop_usd": 0,
+    "requires_separate_cost_approval_for_execution": true
+  },
+
+  "run_count": {
+    "total_paid_generations": 2,
+    "fixture_A_runs": 1,
+    "fixture_B_runs": 1,
+    "retries_allowed": 0,
+    "auto_retries_allowed": 0,
+    "additional_fixtures": 0,
+    "additional_debug_generations": 0,
+    "third_validation_run_in_same_approval": false,
+    "notes": "Exactly two paid generations, one per fixture, no retries."
+  },
+
+  "fixtures": {
+    "A": {
+      "id": "A",
+      "path": ".agent/regression_fixtures/benchmark_A_backend_to_applied_ai.md",
+      "role": "primary — Backend engineer → Applied AI pivot",
+      "must_not_literals": ["learn python", "beginner python", "as an ai language model"],
+      "recommendation_keywords": ["rag", "eval", "retrieval"]
+    },
+    "B": {
+      "id": "B",
+      "path": ".agent/regression_fixtures/benchmark_B_fullstack_to_ai_product.md",
+      "role": "secondary — Fullstack engineer → AI product",
+      "must_not_literals": ["learn react", "beginner react", "beginner typescript", "as an ai language model"],
+      "recommendation_keywords": ["agent", "tool call", "tool-call", "eval", "telemetry"]
+    },
+    "excluded_from_phase3": ["C", "D", "E"]
+  },
+
+  "commands": {
+    "prereq_dev_server": {
+      "command": "npm run dev",
+      "run_in": "separate terminal / background before invoking harness",
+      "must_be_local": "http://localhost:3000 only",
+      "must_be_ready": "wait for `Ready in Xms` line before Run A"
+    },
+    "run_A": {
+      "command": "node scripts/report-regression-local.mjs --fixture A",
+      "cwd": "/Users/bohaoli/Desktop/ai-career-radar-web",
+      "target_environment": "http://localhost:3000",
+      "expected_run_dir": ".agent/regression_runs/<UTC-YYYYMMDDTHHMMSSZ>_fixture-A/",
+      "expected_scratch_dir": "$TMPDIR/acr-regression-runs/<run-id>/",
+      "timeout_semantics": {
+        "HARD_LATENCY_MS": 240000,
+        "SOFT_LATENCY_MS": 120000,
+        "generation_timeout_change": false
+      },
+      "expected_process_exit": "0 (green) or 2 (amber) or 1 (red) — driven solely by classify(legacy checks)",
+      "no_retry": true,
+      "no_third_run": true,
+      "structural_telemetry": "automatically enabled since Phase 2 (bc246d3 · f7710b6) landed on main",
+      "quote_integrity_telemetry": "automatically enabled since 5c-integrate"
+    },
+    "run_B": {
+      "command": "node scripts/report-regression-local.mjs --fixture B",
+      "cwd": "/Users/bohaoli/Desktop/ai-career-radar-web",
+      "target_environment": "http://localhost:3000",
+      "expected_run_dir": ".agent/regression_runs/<UTC-YYYYMMDDTHHMMSSZ>_fixture-B/",
+      "expected_scratch_dir": "$TMPDIR/acr-regression-runs/<run-id>/",
+      "no_retry": true,
+      "no_third_run": true,
+      "note": "Only run B after A completes successfully AND after checking stop conditions."
+    },
+    "no_new_flags": true,
+    "no_env_var_toggles": true,
+    "no_custom_output_paths": true
+  },
+
+  "cost_envelope": {
+    "expected_total_usd": 0.10,
+    "per_run_estimate_usd": 0.05,
+    "hard_cap_total_usd": 0.15,
+    "hard_cap_per_run_usd": 0.075,
+    "no_paid_debug_calls": true,
+    "no_openai_api": true,
+    "no_new_provider": true,
+    "provider": "existing approved Anthropic API path via app runtime (Sonnet 4.6)",
+    "action_on_cap_exceeded": "stop · report actual usage · do NOT continue to B · do NOT retry",
+    "cost_measurement_source": "runtime cost accounting emitted by the existing app path where available; otherwise external ledger entry with justification"
+  },
+
+  "stop_conditions": [
+    "stop after A if generation completion_state !== 'success' AND cause is external (provider outage, browser crash) — B would not add new signal",
+    "stop after A if harness legacy checks[] shape changed",
+    "stop after A if structural result appears in classify() input checks[]",
+    "stop after A if process.exit(classification.exit) semantics changed",
+    "stop after A if baseline files under .agent/regression_baselines/** changed",
+    "stop after A if the validator or QI rewrites the captured report.md",
+    "stop after A if unexpected paid retry begins (any auto-retry)",
+    "stop after A if measured cost exceeds hard_cap_per_run (0.075 USD)",
+    "stop after A if measured cost + projected B cost exceeds hard_cap_total (0.15 USD)",
+    "stop after A if provider returns 4xx/5xx with paid metering AND cost accounting cannot confirm sub-cap",
+    "stop after A if structural summary schema fails validation",
+    "stop after A if metadata.combined_telemetry field is missing or malformed",
+    "stop after B if any of the above triggers after B completes (still stop; do NOT retry)",
+    "stop immediately if ANY forbidden file changes (src/**, prompts, QI checker, baselines, .agent/scripts/**, package/lock/workflow/env/vercel, pipeline)"
+  ],
+
+  "expected_artifacts": [
+    {
+      "artifact": ".agent/regression_runs/<run-id>/metadata.json",
+      "required": true,
+      "committed": true,
+      "notes": "must contain metadata.structural_evidence AND metadata.combined_telemetry blocks"
+    },
+    {
+      "artifact": ".agent/regression_runs/<run-id>/verdict.md",
+      "required": true,
+      "committed": true,
+      "notes": "must contain four sibling sections: Legacy · QI · Structural · Combined"
+    },
+    {
+      "artifact": ".agent/regression_runs/<run-id>/structural_checks.json",
+      "required": true,
+      "committed": true,
+      "notes": "legacy 25-check list only — MUST NOT include structural evidence entries"
+    },
+    {
+      "artifact": ".agent/regression_runs/<run-id>/quote_integrity_summary.json",
+      "required": true,
+      "committed": true
+    },
+    {
+      "artifact": ".agent/regression_runs/<run-id>/structural_evidence_summary.json",
+      "required": true,
+      "committed": true,
+      "notes": "produced by Phase 2 integration; schema_version 0.1-phase1"
+    },
+    {
+      "artifact": ".agent/regression_runs/<run-id>/structural_evidence_context.json",
+      "required": true,
+      "committed": true,
+      "notes": "sanitized capture context; schema_version 0.1-phase2"
+    },
+    {
+      "artifact": ".agent/regression_runs/<run-id>/network_diagnostics.json",
+      "required": true,
+      "committed": true,
+      "notes": "emitted by 5d-b-timeout-diagnostics"
+    },
+    {
+      "artifact": "$TMPDIR/acr-regression-runs/<run-id>/report.md",
+      "required": true,
+      "committed": false,
+      "notes": "scratchpad ONLY — MUST NOT be committed"
+    },
+    {
+      "artifact": "$TMPDIR/acr-regression-runs/<run-id>/report.png",
+      "required": true,
+      "committed": false,
+      "notes": "scratchpad ONLY — MUST NOT be committed"
+    }
+  ],
+
+  "acceptance_criteria": {
+    "legacy": {
+      "requirements": [
+        "legacy verdict is whatever classify(checks) returns",
+        "legacy checks[] count and set unchanged vs Phase 2 baseline (25 legacy structural + 5 QI + fixture + operational checks)",
+        "process.exit(classification.exit) corresponds solely to legacy classification",
+        "no structural or combined telemetry inserted into checks[]"
+      ]
+    },
+    "quote_integrity": {
+      "requirements": [
+        "quote_integrity_summary.json exists",
+        "QI verdict recorded in metadata.quote_integrity",
+        "blocking_mode = telemetry_only",
+        "R1 and R2 unchanged",
+        "QI does NOT affect legacy verdict"
+      ]
+    },
+    "structural_evidence": {
+      "requirements": [
+        "structural_evidence_summary.json exists",
+        "structural_evidence_context.json exists with schema_version '0.1-phase2'",
+        "checker_hash matches /^sha256:[a-f0-9]{64}$/",
+        "verdict in {green, amber, red, not_evaluable, null}",
+        "exit_code in {0, 1, 2, null}",
+        "exit 0 => verdict in {green, amber, not_evaluable}",
+        "exit 1 => verdict == red",
+        "exit 2 => evaluation_status == tool_error (verdict null)",
+        "blocking_mode = telemetry_only",
+        "affected_legacy_verdict = false",
+        "structural result does NOT affect legacy verdict or process exit"
+      ]
+    },
+    "combined_telemetry": {
+      "requirements": [
+        "metadata.combined_telemetry present",
+        "precedence: tool_error > red > amber > not_evaluable > green",
+        "display_only = true",
+        "affected_legacy_verdict = false",
+        "affected_process_exit = false",
+        "never inserted into checks[]",
+        "verdict.md does not describe overall run as GREEN when telemetry contains RED"
+      ]
+    },
+    "integration": {
+      "pass_requires_both_runs": [
+        "required artifacts written",
+        "no tool_error unless caused by a documented external failure",
+        "context fields reflect harness capture-mechanism facts (category A)",
+        "complete capture is evaluable",
+        "incomplete capture is not_evaluable",
+        "QI and structural summaries consistent with metadata blocks",
+        "combined telemetry follows precedence",
+        "verdict.md displays all four sibling sections",
+        "legacy verdict unchanged path",
+        "process exit unchanged path",
+        "no baseline changes",
+        "no automatic retry",
+        "no report rewriting",
+        "no unexpected cost escalation"
+      ],
+      "integration_failure_conditions": [
+        "structural result appears in checks[]",
+        "process exit changes due to telemetry",
+        "context marks a fully captured report as incomplete (regression of run_07 fix)",
+        "context marks a truly truncated capture as complete",
+        "artifact missing after validator exit 0 or 1",
+        "malformed metadata block",
+        "telemetry hidden behind legacy verdict",
+        "any baseline mutation",
+        "any automatic retry",
+        "cost cap exceeded",
+        "report body rewritten by validator or helper"
+      ]
+    }
+  },
+
+  "comparison_fields": [
+    "generation duration_ms",
+    "report_char_count",
+    "capture_scope (raw selector or body_fallback)",
+    "capture_scope_for_context (main section | body)",
+    "fallback_used",
+    "capture_complete",
+    "quote_integrity.verdict",
+    "structural_evidence.verdict",
+    "combined_telemetry.verdict",
+    "legacy verdict",
+    "process exit",
+    "recognized_citation_line_count",
+    "unique_cited_jd_count",
+    "covered_gap_count",
+    "observed_gap_count",
+    "appendix.present",
+    "appendix.row_count",
+    "body_appendix.missing_from_appendix count",
+    "body_appendix.appendix_not_cited count",
+    "structural red_reasons",
+    "structural amber_reasons",
+    "structural not_evaluable_reasons",
+    "structural tool_error",
+    "measured cost per run",
+    "measured cost total"
+  ],
+
+  "post_run_review": {
+    "generation": ["success", "app_error", "timeout", "provider_error"],
+    "capture": ["complete", "incomplete", "fallback_complete", "fallback_incomplete"],
+    "legacy": ["green", "amber", "red"],
+    "quote_integrity": ["green", "amber", "red", "not_evaluable", "tool_error"],
+    "structural_evidence": ["green", "amber", "red", "not_evaluable", "tool_error"],
+    "combined": ["green", "amber", "red", "not_evaluable", "tool_error"],
+    "integration": ["pass", "fail", "not_evaluable"],
+    "review_source_priority": [
+      "metadata.json relevant blocks",
+      "verdict.md telemetry sections",
+      "structural_evidence_summary.json",
+      "quote_integrity_summary.json",
+      "structural_checks.json",
+      "network_diagnostics.json",
+      "harness stdout summary + measured cost",
+      "limited report snippets ONLY to verify a specific structural reason"
+    ],
+    "avoid_copying_full_report_bodies_into_governance": true
+  },
+
+  "retention_policy": {
+    "committed_paths": [
+      ".agent/regression_runs/<run-id>/metadata.json",
+      ".agent/regression_runs/<run-id>/verdict.md",
+      ".agent/regression_runs/<run-id>/structural_checks.json",
+      ".agent/regression_runs/<run-id>/quote_integrity_summary.json",
+      ".agent/regression_runs/<run-id>/structural_evidence_summary.json",
+      ".agent/regression_runs/<run-id>/structural_evidence_context.json",
+      ".agent/regression_runs/<run-id>/network_diagnostics.json"
+    ],
+    "excluded_paths": [
+      "$TMPDIR/acr-regression-runs/<run-id>/report.md (local scratchpad only)",
+      "$TMPDIR/acr-regression-runs/<run-id>/report.png (local scratchpad only)"
+    ],
+    "no_baseline_promotion": true,
+    "no_copy_into_baseline_directories": true,
+    "no_report_md_committed": true,
+    "no_screenshot_committed": true,
+    "no_proprietary_output_committed": true,
+    "governance_artifacts_summarize_counts_and_verdicts_only": true
+  },
+
+  "future_run_report_requirements": [
+    "human cost approval reference (message quote or DECISION path)",
+    "exact A and B commands as run",
+    "run IDs (both)",
+    "total API cost measured",
+    "confirmation no retries",
+    "duration per run",
+    "process exit per run",
+    "legacy verdict per run",
+    "QI verdict per run",
+    "structural verdict per run",
+    "combined telemetry verdict per run",
+    "capture context per run (capture_scope, fallback_used, capture_complete)",
+    "artifact existence matrix (7 per run)",
+    "metadata consistency check (structural_evidence + combined_telemetry blocks well-formed)",
+    "verdict.md consistency check (4 sibling sections present, required wording present)",
+    "baseline diff (must be 0 lines under .agent/regression_baselines/**)",
+    "checker_hash per run (SHA-256)",
+    "harness git commit SHA per run",
+    "no report rewrite confirmation",
+    "integration pass/fail per run and overall",
+    "anomalies list",
+    "recommended next step"
+  ],
+
+  "future_decision_outcomes": {
+    "approve": {
+      "conditions": [
+        "integration behaved correctly on both runs",
+        "no blocking correctness defect",
+        "no legacy/process-exit coupling",
+        "measured cost within cap",
+        "no forbidden file mutated"
+      ],
+      "does_NOT_authorize": [
+        "baseline migration (Phase 4)",
+        "blocking promotion (Phase 6)",
+        "AgentOps-5f-promote",
+        "additional paid runs without separate DECISION and cost approval"
+      ]
+    },
+    "revise": {
+      "conditions": [
+        "integration defect found",
+        "metadata / verdict inconsistency",
+        "capture-context classification error",
+        "tool-error handling defect",
+        "telemetry masking observed",
+        "unexpected retry",
+        "unexpected cost issue"
+      ]
+    },
+    "pause": {
+      "conditions": [
+        "external provider outage or app failure prevents meaningful evaluation",
+        "results insufficient but no clear implementation defect"
+      ]
+    }
+  },
+
+  "policy_resolutions": {
+    "Q1_paid_run_count": "2 (exactly one Fixture A + one Fixture B)",
+    "Q2_fixtures": "A and B — no C/D/E, no additional fixtures",
+    "Q3_retry_allowed": "NO — zero automatic or manual retry",
+    "Q4_cost_estimate_usd": 0.10,
+    "Q5_hard_cost_cap_usd": 0.15,
+    "Q6_stop_conditions": "see stop_conditions[] — enumerated 14 items",
+    "Q7_exact_commands": "node scripts/report-regression-local.mjs --fixture A · then B · with npm run dev in a separate terminal",
+    "Q8_integration_success_definition": "both runs meet the acceptance_criteria.integration.pass_requires_both_runs list",
+    "Q9_does_structural_red_fail_phase3": "NO — a structural RED that accurately reflects the generated report AND does not alter legacy verdict/process exit is not an integration failure; it is a valid telemetry observation. Product-quality follow-up may be triggered separately.",
+    "Q10_does_qi_amber_fail_phase3": "NO — same reasoning as Q9",
+    "Q11_does_telemetry_affect_legacy_verdict": "NO — invariant asserted by tests I17/I20 and verified in run artifacts",
+    "Q12_does_telemetry_affect_process_exit": "NO — process.exit(classification.exit) remains the sole authority",
+    "Q13_are_baselines_changed": "NO — 0-line diff expected under .agent/regression_baselines/**",
+    "Q14_are_reports_rewritten": "NO — validator and helper never mutate report.md",
+    "Q15_are_run_artifacts_committed": "YES for 7 governance artifacts per run · NO for report.md and screenshot (scratchpad only)",
+    "Q16_does_phase3_authorize_phase4": "NO — Phase 4 (baseline metadata migration) requires separate DECISION + grandfathering policy",
+    "Q17_does_phase3_authorize_blocking_promotion": "NO — Phase 6 requires separate DECISION and additional evidence phases",
+    "Q18_does_phase3_authorize_agentops_5f_promote": "NO — explicitly out of scope",
+    "Q19_what_if_A_fails_externally": "record failure · do NOT retry A · do NOT run B · report cost incurred · Phase 3 result = 'pause' unless issue is fully within our runtime, in which case = 'revise'",
+    "Q20_what_if_cost_exceeds_cap": "stop immediately · do NOT continue to B · do NOT retry · surface actual usage · Phase 3 DECISION outcome = 'revise' or 'pause' with explicit cost explanation"
+  },
+
+  "risks": [
+    "External provider (Anthropic API) outage or 429 could inflate wall clock without producing telemetry — mitigated by 240s HARD_LATENCY_MS and stop-on-external-failure",
+    "Dev server not started before harness — hard-rejected by assertLocalhost; harness fails deterministically without paid call",
+    "Capture context derivation regression from run_07 fix could re-emerge if Phase 2 code is silently touched — mitigated by re-running deterministic 66/66 suite before + after Phase 3",
+    "Structural evidence RED on a real generated report could be misread as an integration failure — mitigated by memo § 18 distinguishing product from integration failure",
+    "Cost accounting granularity varies by provider path — mitigated by hard_cap_per_run + hard_cap_total",
+    "Legacy 25-check count could drift if any script is silently edited — Phase 3 RUN_REPORT MUST record the count from structural_checks.json for direct comparison against Phase 2 baseline",
+    "Combined telemetry precedence could be misread by future consumers — mitigated by memo § 16 explicit table and by metadata.combined_telemetry.display_only field",
+    "Retention leak risk: report.md accidentally committed — mitigated by .agent/regression_runs/<run-id>/ containing only sanitized JSON + verdict.md; report.md path is $TMPDIR/acr-regression-runs/<run-id>/",
+    "Baseline eligibility could unintentionally shift if metadata schema is over-interpreted — mitigated by no-promotion policy and by 0-line baseline diff acceptance criterion",
+    "Design scope creep: 'while we're at it' quality tuning — explicitly forbidden by TASK and design memo § 4/§ 5"
+  ],
+
+  "open_questions": [],
+
+  "boundaries_respected": {
+    "no_implementation": true,
+    "no_code_change": true,
+    "no_prompt_change": true,
+    "no_generation": true,
+    "no_fixture_run": true,
+    "no_llm_api_call": true,
+    "no_playwright_launch": true,
+    "no_dev_server_start": true,
+    "no_checker_change": true,
+    "no_harness_change": true,
+    "no_r1_r2_change": true,
+    "no_new_qi_tier": true,
+    "no_baseline_mutation": true,
+    "no_baseline_promotion": true,
+    "no_blocking_promotion": true,
+    "no_5f_promote": true,
+    "no_agent_scripts_change": true,
+    "no_pipeline_change": true,
+    "no_package_lockfile_workflow_env_vercel_change": true,
+    "no_threshold_change": true,
+    "no_retry_behavior_added": true,
+    "no_fuzzy_edit_distance_llm_judge_post_generation_replacement": true,
+    "no_c_d_e_run": true,
+    "no_pdfs_ingested": true,
+    "no_openai_api": true,
+    "no_report_md_or_screenshot_or_secret_committed": true,
+    "no_push": true,
+    "no_deploy": true,
+    "cost_usd": 0
+  }
+}
