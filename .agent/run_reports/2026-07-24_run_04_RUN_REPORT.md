@@ -97,9 +97,11 @@ example**: Fixture A refined-run · 5/5/4/4.
 
 - **GREEN**: exactly 5 gaps · 5/5 covered · ≥ 5 lines · Appendix
   present · all body jds in Appendix · no malformed required rows
-- **AMBER**: uncited Appendix · duplicate row · > 1 citation per gap
-  (still 5/5) · > 5 lines · repeated jd across gaps · parser
-  ambiguity
+- **AMBER**: uncited Appendix · duplicate row · identical/redundant
+  citation duplicated WITHIN the SAME gap · > 1 citation per gap
+  when redundant (still 5/5) · > 5 lines when redundant · parser
+  ambiguity  · **NOT** ordinary repeated jd_id across DIFFERENT
+  gaps (that stays GREEN)
 - **RED**: Appendix missing · gap count ≠ 5 · < 5 lines · gap without
   citation · body cite missing from Appendix · malformed required
   citation · malformed required Appendix row
@@ -170,12 +172,15 @@ $0 · grandfathering exception clause) → Stability collection (Phase
 ## Policy-question resolutions (Q1-Q15)
 
 Full answers in memo § 30 + findings JSON `policy_resolutions`.
-Key resolutions: exactly-5 gaps · ≥ 5 lines · repeated jd_id allowed
-AMBER · missing-from-Appendix RED · uncited-Appendix AMBER ·
-duplicate-row AMBER (or RED if conflicting content) · > 1 per-gap
-allowed AMBER · missing-Appendix RED in structural summary but
-telemetry-only · insufficient-capture not_evaluable · **Option B**
-separate CLI · **first impl standalone only** · **no baseline
+Key resolutions: exactly-5 gaps · ≥ 5 lines · **repeated jd_id
+across DIFFERENT gaps allowed AND GREEN** (five unique jd_ids NOT
+required · source diversity out of scope · Fixture A 5/5/4/4 is
+canonical GREEN) · missing-from-Appendix RED · uncited-Appendix
+AMBER · duplicate-row AMBER (or RED if conflicting content) ·
+identical/redundant citation WITHIN the SAME gap AMBER · > 1 per-gap
+when redundant AMBER · missing-Appendix RED in structural summary
+but telemetry-only · insufficient-capture not_evaluable · **Option
+B** separate CLI · **first impl standalone only** · **no baseline
 mutation in first loop** · **no legacy verdict impact initially** ·
 **controlled A+B required before blocking promotion** · **5f-promote
 NOT authorized after implementation**.

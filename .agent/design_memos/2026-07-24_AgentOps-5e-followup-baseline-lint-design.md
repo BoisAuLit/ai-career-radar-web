@@ -233,14 +233,22 @@ Report validator RED if `covered_gap_count < 5` OR
 - Appendix present
 - all body jd_ids represented in Appendix
 - no malformed required rows
+- **repeated `jd_id` across DIFFERENT gaps is allowed AND remains
+  GREEN** when all structural requirements pass (source diversity is
+  explicitly out of scope; the validator MUST NOT convert a source-
+  diversity preference into a structural AMBER)
 
 **AMBER**:
 
 - Appendix contains uncited entries
 - duplicate identical Appendix row
-- more than one citation in a single gap (all gaps still covered)
-- more than 5 total citation lines
-- repeated jd_id across multiple gaps (visible signal · not RED)
+- identical or clearly redundant citation line duplicated WITHIN the
+  SAME gap (structurally suspicious redundancy — distinct from
+  ordinary reuse of the same `jd_id` across DIFFERENT gaps, which
+  remains GREEN)
+- more than one citation in a single gap when the extra citation is
+  redundant (all gaps still covered)
+- more than 5 total citation lines when the excess is redundant
 - structural parser ambiguity (validator vs checker disagreement)
 
 **RED**:
@@ -421,13 +429,15 @@ Current A + B baselines would be:
 
 Full list in findings JSON `test_matrix`. Summary:
 
-- **GREEN**: G1-G4 (5-gaps + 5-citations · unique + repeated jd_ids
-  · dedupe correct)
+- **GREEN**: G1-G4 (5-gaps + 5-citations · unique or legitimately
+  repeated jd_ids across DIFFERENT gaps · dedupe correct · canonical
+  Fixture A 5/5/4/4 is GREEN)
 - **RED**: R1-R10 (missing Appendix · zero/insufficient lines · gap
   concentration · body/Appendix mismatch · malformed shapes · wrong
   gap count)
-- **AMBER**: A1-A5 (uncited Appendix · duplicate row · repeated jd
-  · > 5 lines · parser ambiguity)
+- **AMBER**: A1-A5 (uncited Appendix · duplicate row ·
+  identical/redundant citation duplicated WITHIN the SAME gap ·
+  > 5 lines when redundant · parser ambiguity)
 - **not_evaluable**: N1 (truncated capture)
 - **tool_error**: E1-E3 (missing file · unreadable · bad args)
 
@@ -468,11 +478,11 @@ Full list in findings JSON `test_matrix`. Summary:
 |---|---|---|
 | Q1 | Exactly 5 or at least 5 gaps? | **exactly 5** |
 | Q2 | Exactly 5 or at least 5 citations? | **at least 5** (>5 → AMBER) |
-| Q3 | Repeated jd_id across gaps allowed? | **allowed AMBER** (visible · not RED) |
+| Q3 | Repeated jd_id across different gaps allowed? | **allowed AND GREEN** when all structural requirements pass · **NOT** a structural defect · five unique jd_ids are NOT required · source diversity is out of scope · Fixture A 5/5/4/4 is canonical GREEN |
 | Q4 | Body-cited jd_id must appear in Appendix? | **yes** — missing_from_appendix RED |
 | Q5 | Uncited Appendix rows RED or AMBER? | **AMBER telemetry** |
 | Q6 | Duplicate Appendix rows RED or AMBER? | **AMBER** for identical dedup miss · **RED** for conflicting content |
-| Q7 | > 1 citation per gap allowed? | **allowed AMBER** |
+| Q7 | > 1 citation per gap allowed? | **allowed** · AMBER ONLY when the extra citation is clearly redundant (identical line / same-jd same-span duplicate) · non-redundant additional citations remain GREEN · per-gap 5/5 remains the hard requirement |
 | Q8 | Missing Appendix RED while telemetry-only? | **yes** RED in structural_evidence_summary · does NOT flip legacy exit code |
 | Q9 | Insufficient capture RED or not_evaluable? | **not_evaluable** — do NOT overload RED |
 | Q10 | Separate CLI or extend checker? | **separate CLI** (Option B) |
@@ -493,7 +503,8 @@ Full list in findings JSON `test_matrix`. Summary:
    independent.
 4. Structural lint may raise AMBER signals for currently-benign
    patterns (uncited Appendix rows) — visible but non-blocking
-   initially.
+   initially. Repeated `jd_id` across DIFFERENT gaps is explicitly
+   NOT one of these AMBER patterns; it remains GREEN.
 5. jd_id spacing/case bugs could confuse consistency — mitigated by
    exact string match.
 6. Harness integration timing could hide the new signal in

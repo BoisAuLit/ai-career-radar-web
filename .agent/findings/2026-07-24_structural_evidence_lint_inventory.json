@@ -100,14 +100,15 @@
       "citation_line_count >= 5",
       "Appendix present",
       "all body jd_ids represented in Appendix",
-      "no malformed required rows"
+      "no malformed required rows",
+      "repeated jd_id across DIFFERENT gaps is allowed and remains GREEN when all structural requirements pass (source diversity is out of scope)"
     ],
     "AMBER": [
       "Appendix contains uncited entries",
       "duplicate identical Appendix row",
-      "more than one citation in a single gap (all gaps still covered)",
-      "more than 5 total citation lines",
-      "repeated jd_id across multiple gaps (allowed but flagged for source diversity awareness)",
+      "identical or clearly redundant citation line duplicated WITHIN the SAME gap",
+      "more than one citation in a single gap when the extra citation is redundant (all gaps still covered)",
+      "more than 5 total citation lines when the excess is redundant",
       "structural parser ambiguity (validator vs checker disagreement)"
     ],
     "RED": [
@@ -126,8 +127,9 @@
       "tool_error"
     ],
     "policy_selected": {
-      "repeated_jd_id_across_gaps": "AMBER (visible signal · not RED · matches DECISION count_nuance)",
-      "more_than_5_citation_lines": "AMBER (visible but not RED)",
+      "repeated_jd_id_across_different_gaps": "GREEN when every gap has a valid parser-recognized citation, every citation is structurally valid, every body-cited jd_id appears in the Appendix, no malformed rows, and reuse is across different gaps · NOT a structural defect · source diversity is out of scope",
+      "identical_or_redundant_citation_within_same_gap": "AMBER (structurally suspicious redundancy)",
+      "more_than_5_citation_lines_when_redundant": "AMBER (redundant excess only · non-redundant extras remain GREEN)",
       "uncited_appendix_rows": "AMBER telemetry",
       "capture_insufficient": "not_evaluable (do not overload RED with tool-side deficiencies)"
     }
@@ -230,7 +232,7 @@
   },
   "test_matrix": [
     {"id": "G1", "kind": "GREEN", "scenario": "5 gaps · 1 citation each · 5 unique jd_ids", "expected_verdict": "green", "expected_exit_code": 0},
-    {"id": "G2", "kind": "GREEN", "scenario": "5 gaps · 1 citation each · 4 unique jd_ids (1 dup across gaps)", "expected_verdict": "green_or_amber", "expected_exit_code": 0, "note": "AMBER if repeated_jd_id_across_gaps signal fires per policy"},
+    {"id": "G2", "kind": "GREEN", "scenario": "5 gaps · 1 citation each · 4 unique jd_ids (1 jd_id legitimately reused across two different gaps with distinct valid spans) — canonical Fixture A 5/5/4/4 pattern", "expected_verdict": "green", "expected_exit_code": 0, "note": "repeated jd_id across DIFFERENT gaps is GREEN when all structural requirements pass; source diversity is out of scope"},
     {"id": "G3", "kind": "GREEN", "scenario": "5 gaps · 1 gap has 2 citations · all gaps covered", "expected_verdict": "amber", "expected_exit_code": 0, "note": "AMBER: more_than_one_citation_in_a_gap"},
     {"id": "G4", "kind": "GREEN", "scenario": "deduplicated Appendix rows correctly emitted", "expected_verdict": "green", "expected_exit_code": 0},
     {"id": "R1", "kind": "RED", "scenario": "missing Appendix", "expected_verdict": "red", "expected_exit_code": 1},
@@ -246,7 +248,7 @@
     {"id": "N1", "kind": "not_evaluable", "scenario": "truncated capture missing Appendix section entirely", "expected_verdict": "not_evaluable", "expected_exit_code": 0, "note": "capture_evaluable = false — do NOT overload RED"},
     {"id": "A1", "kind": "AMBER", "scenario": "uncited Appendix entry present", "expected_verdict": "amber", "expected_exit_code": 0},
     {"id": "A2", "kind": "AMBER", "scenario": "duplicate identical Appendix row", "expected_verdict": "amber", "expected_exit_code": 0},
-    {"id": "A3", "kind": "AMBER", "scenario": "repeated jd_id across multiple gaps", "expected_verdict": "amber", "expected_exit_code": 0},
+    {"id": "A3", "kind": "AMBER", "scenario": "identical / clearly redundant citation line duplicated WITHIN the SAME gap (structurally suspicious redundancy — NOT the same as ordinary reuse across different gaps, which is GREEN)", "expected_verdict": "amber", "expected_exit_code": 0},
     {"id": "A4", "kind": "AMBER", "scenario": "more than 5 evidence lines", "expected_verdict": "amber", "expected_exit_code": 0},
     {"id": "A5", "kind": "AMBER", "scenario": "structural parser ambiguity (validator vs checker Appendix rows disagree)", "expected_verdict": "amber", "expected_exit_code": 0},
     {"id": "E1", "kind": "tool_error", "scenario": "missing report file", "expected_verdict": "tool_error", "expected_exit_code": 2},
@@ -264,11 +266,11 @@
   "policy_resolutions": {
     "Q1": {"question": "Exactly 5 gaps or at least 5?", "recommendation": "exactly 5 — matches prompt contract 'exactly 5 numbered ranked gaps'"},
     "Q2": {"question": "At least 5 citation lines or exactly 5?", "recommendation": "at least 5 — matches prompt wording 'at least 5 total'; > 5 is AMBER not RED"},
-    "Q3": {"question": "Is repeated jd_id across gaps allowed?", "recommendation": "allowed but flagged AMBER for source-diversity visibility · do NOT block; matches DECISION count_nuance for Fixture A"},
+    "Q3": {"question": "Is repeated jd_id across different gaps allowed?", "recommendation": "allowed AND GREEN when every gap has a valid parser-recognized citation, every citation is structurally valid, every body-cited jd_id appears in the Appendix, no malformed rows, and reuse is across DIFFERENT gaps · five unique jd_ids are NOT required · source diversity is explicitly out of scope · Fixture A 5/5/4/4 is canonical GREEN"},
     "Q4": {"question": "Must every body-cited jd_id appear in Appendix?", "recommendation": "yes — missing_from_appendix is RED"},
     "Q5": {"question": "Are uncited Appendix rows RED or AMBER?", "recommendation": "AMBER telemetry"},
     "Q6": {"question": "Are duplicate Appendix rows RED or AMBER?", "recommendation": "AMBER for identical row dedup miss · RED only if same jd_id appears with conflicting company/title"},
-    "Q7": {"question": "Is more than one citation per gap allowed?", "recommendation": "allowed AMBER · not RED · maintains prompt spirit while catching over-quoting drift"},
+    "Q7": {"question": "Is more than one citation per gap allowed?", "recommendation": "allowed · AMBER ONLY when the extra citation is clearly redundant (e.g., identical line, or same-jd same-span duplicate); non-redundant additional citations remain GREEN; per-gap coverage 5/5 remains the hard requirement"},
     "Q8": {"question": "Should missing Appendix be RED even while telemetry-only?", "recommendation": "yes RED verdict in structural_evidence_summary · but does NOT flip legacy exit code until a separate promotion DECISION"},
     "Q9": {"question": "Should insufficient capture be RED or not_evaluable?", "recommendation": "not_evaluable — do NOT overload RED with tool-side deficiencies; harness completion_state already surfaces capture problems separately"},
     "Q10": {"question": "Separate CLI or extend existing checker?", "recommendation": "separate CLI — scripts/structural-evidence-check.mjs — Option B"},
