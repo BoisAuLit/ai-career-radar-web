@@ -79,6 +79,14 @@ ${deepDiveBlock}CRITICAL — company-specific-claim rule (read three times):
 - Allowed: quoting language from a specific JD in the evidence list (with the jd_id / company tag), since the user can verify it in the appendix.
 - The corpus + the user's resume are the only two sources of fact. Everything else is qualitative.
 
+CRITICAL — evidence-quote-verbatim rule (read twice):
+- Every quoted Evidence span MUST be copied verbatim from ONE contiguous span of the cited job description body.
+- Do NOT paraphrase or repair grammar inside quotation marks. Do NOT add, remove, or change words, tense, plurality, articles, or conjunctions.
+- Do NOT combine separated source fragments inside quotation marks. Do NOT use ellipsis ("...") inside a quote to skip source text — either quote one contiguous span or emit two separate quoted spans.
+- A quote does not need to be a complete sentence. Grammatically incomplete source fragments are allowed and preferred over stitched-together spans; a short exact fragment beats a longer paraphrased sentence.
+- Put all interpretation and grammatical framing OUTSIDE the quotation marks.
+- Before finalizing, verify that every quoted string occurs exactly (character-for-character) in the supplied body text for the cited jd_id. If it does not, shorten or replace it with an exact contiguous source span.
+
 Output is Markdown only. No prose outside the report sections.
 
 The report has exactly these 5 sections, in order:
