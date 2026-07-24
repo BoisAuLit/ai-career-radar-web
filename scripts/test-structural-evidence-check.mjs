@@ -100,6 +100,27 @@ function invoke(reportPath, outputPath, extraArgs = []) {
   return { exitCode: res.status, stdout: res.stdout, stderr: res.stderr, artifact };
 }
 
+function writeContextFixture(name, obj) {
+  const p = join(TMP_ROOT, `${name}.context.json`);
+  writeFileSync(p, JSON.stringify(obj, null, 2), "utf8");
+  return p;
+}
+
+function completeCaptureContext(overrides = {}) {
+  return {
+    schema_version: "0.1-phase2",
+    capture_scope: "main section",
+    fallback_used: false,
+    completion_state: "success",
+    capture_complete: true,
+    report_capture_error: null,
+    report_char_count: 4200,
+    expected_sections_captured: true,
+    source: "report-regression-local",
+    ...overrides,
+  };
+}
+
 function writeFixture(name, contents) {
   const p = join(FIXTURE_DIR, `${name}.md`);
   writeFileSync(p, contents, "utf8");
@@ -596,6 +617,217 @@ test("INV · G1 artifact does not embed full report body", () => {
   assert.equal(r.artifact.network_used, false);
   assert.equal(r.artifact.llm_used, false);
   assert.equal(r.artifact.source_rewritten, false);
+});
+
+// -------- CONTEXT MODE (Phase 2) --------
+// Baseline: a healthy GREEN report reused across context tests to prove
+// context does not alter classification of otherwise-valid captures.
+const GREEN_BASELINE = skeleton({
+  appendix: tabAppendix([
+    { jd_id: "jd_100001", company: "ExampleCo", title: "Senior AI Engineer" },
+    { jd_id: "jd_100002", company: "NovaAI", title: "ML Solutions" },
+    { jd_id: "jd_100003", company: "HelixLabs", title: "LLM Ops" },
+    { jd_id: "jd_100004", company: "Zenith", title: "Applied Research" },
+    { jd_id: "jd_100005", company: "Draft", title: "Fine-tuning Lead" },
+  ]),
+});
+const RED_MISSING_APPENDIX = skeleton({ appendix: null });
+
+test("CTX1 · valid complete context + GREEN report · verdict GREEN · capture_context recorded", () => {
+  const rp = writeFixture("CTX1_report", GREEN_BASELINE);
+  const cp = writeContextFixture("CTX1", completeCaptureContext());
+  const op = tmpOut("CTX1");
+  const r = invoke(rp, op, ["--context", cp]);
+  assert.equal(r.exitCode, 0);
+  assert.equal(r.artifact.verdict, "green");
+  assert.ok(r.artifact.capture_context, "capture_context missing on success");
+  assert.equal(r.artifact.capture_context.schema_version, "0.1-phase2");
+  assert.equal(r.artifact.capture_context.capture_scope, "main section");
+  assert.equal(r.artifact.capture_context.capture_complete, true);
+});
+
+test("CTX2 · capture_complete=false · not_evaluable (never RED)", () => {
+  const rp = writeFixture("CTX2_report", RED_MISSING_APPENDIX);
+  const cp = writeContextFixture(
+    "CTX2",
+    completeCaptureContext({ capture_complete: false }),
+  );
+  const op = tmpOut("CTX2");
+  const r = invoke(rp, op, ["--context", cp]);
+  assert.equal(r.exitCode, 0);
+  assert.equal(r.artifact.verdict, "not_evaluable");
+  assert.ok(
+    r.artifact.not_evaluable_reasons.some((x) => /capture_incomplete/.test(x)),
+  );
+});
+
+test("CTX3 · completion_state=application_error · not_evaluable", () => {
+  const rp = writeFixture("CTX3_report", GREEN_BASELINE);
+  const cp = writeContextFixture(
+    "CTX3",
+    completeCaptureContext({ completion_state: "application_error" }),
+  );
+  const op = tmpOut("CTX3");
+  const r = invoke(rp, op, ["--context", cp]);
+  assert.equal(r.exitCode, 0);
+  assert.equal(r.artifact.verdict, "not_evaluable");
+  assert.ok(
+    r.artifact.not_evaluable_reasons.some((x) => /application_error/.test(x)),
+  );
+});
+
+test("CTX4 · report_capture_error non-null · not_evaluable", () => {
+  const rp = writeFixture("CTX4_report", GREEN_BASELINE);
+  const cp = writeContextFixture(
+    "CTX4",
+    completeCaptureContext({ report_capture_error: "timeout_extract" }),
+  );
+  const op = tmpOut("CTX4");
+  const r = invoke(rp, op, ["--context", cp]);
+  assert.equal(r.exitCode, 0);
+  assert.equal(r.artifact.verdict, "not_evaluable");
+  assert.ok(
+    r.artifact.not_evaluable_reasons.some((x) =>
+      /report_capture_error/.test(x),
+    ),
+  );
+});
+
+test("CTX5 · unknown capture_scope · not_evaluable (NOT silently evaluable)", () => {
+  const rp = writeFixture("CTX5_report", GREEN_BASELINE);
+  const cp = writeContextFixture(
+    "CTX5",
+    completeCaptureContext({ capture_scope: "sidebar" }),
+  );
+  const op = tmpOut("CTX5");
+  const r = invoke(rp, op, ["--context", cp]);
+  assert.equal(r.exitCode, 0);
+  assert.equal(r.artifact.verdict, "not_evaluable");
+  assert.ok(
+    r.artifact.not_evaluable_reasons.some((x) =>
+      /unknown_capture_scope/.test(x),
+    ),
+  );
+});
+
+test("CTX6 · fallback_used=true AND expected_sections_captured=false · not_evaluable", () => {
+  const rp = writeFixture("CTX6_report", GREEN_BASELINE);
+  const cp = writeContextFixture(
+    "CTX6",
+    completeCaptureContext({
+      capture_scope: "body",
+      fallback_used: true,
+      expected_sections_captured: false,
+    }),
+  );
+  const op = tmpOut("CTX6");
+  const r = invoke(rp, op, ["--context", cp]);
+  assert.equal(r.exitCode, 0);
+  assert.equal(r.artifact.verdict, "not_evaluable");
+  assert.ok(
+    r.artifact.not_evaluable_reasons.some((x) =>
+      /fallback_capture_incomplete/.test(x),
+    ),
+  );
+});
+
+test("CTX7 · fallback_used=true AND expected_sections_captured=true · normal evaluation (GREEN)", () => {
+  const rp = writeFixture("CTX7_report", GREEN_BASELINE);
+  const cp = writeContextFixture(
+    "CTX7",
+    completeCaptureContext({
+      capture_scope: "body",
+      fallback_used: true,
+      expected_sections_captured: true,
+    }),
+  );
+  const op = tmpOut("CTX7");
+  const r = invoke(rp, op, ["--context", cp]);
+  assert.equal(r.exitCode, 0);
+  assert.equal(r.artifact.verdict, "green");
+});
+
+test("CTX8 · unknown schema_version · tool_error exit 2 · no artifact", () => {
+  const rp = writeFixture("CTX8_report", GREEN_BASELINE);
+  const cp = writeContextFixture(
+    "CTX8",
+    completeCaptureContext({ schema_version: "0.2-future" }),
+  );
+  const op = tmpOut("CTX8");
+  const r = invoke(rp, op, ["--context", cp]);
+  assert.equal(r.exitCode, 2);
+  assert.equal(r.artifact, null);
+  assert.ok(/context_schema_unknown/.test(r.stderr));
+});
+
+test("CTX9 · missing required field · tool_error exit 2", () => {
+  const rp = writeFixture("CTX9_report", GREEN_BASELINE);
+  const badCtx = completeCaptureContext();
+  delete badCtx.expected_sections_captured;
+  const cp = writeContextFixture("CTX9", badCtx);
+  const op = tmpOut("CTX9");
+  const r = invoke(rp, op, ["--context", cp]);
+  assert.equal(r.exitCode, 2);
+  assert.equal(r.artifact, null);
+  assert.ok(/context_missing_field/.test(r.stderr));
+});
+
+test("CTX10 · invalid field type · tool_error exit 2", () => {
+  const rp = writeFixture("CTX10_report", GREEN_BASELINE);
+  const cp = writeContextFixture(
+    "CTX10",
+    completeCaptureContext({ fallback_used: "yes" }),
+  );
+  const op = tmpOut("CTX10");
+  const r = invoke(rp, op, ["--context", cp]);
+  assert.equal(r.exitCode, 2);
+  assert.equal(r.artifact, null);
+  assert.ok(/context_invalid_field_type/.test(r.stderr));
+});
+
+test("CTX11 · explicit context suppresses synthetic truncation marker", () => {
+  const withMarker =
+    GREEN_BASELINE + "\n<!-- STRUCTURAL_EVIDENCE_TRUNCATED -->\n";
+  const rp = writeFixture("CTX11_marker_but_context_complete", withMarker);
+  const cp = writeContextFixture("CTX11", completeCaptureContext());
+  const op = tmpOut("CTX11");
+  const r = invoke(rp, op, ["--context", cp]);
+  assert.equal(r.exitCode, 0);
+  assert.equal(
+    r.artifact.verdict,
+    "green",
+    "explicit context must override synthetic marker",
+  );
+});
+
+test("CTX12 · standalone mode (no --context) remains backward-compatible", () => {
+  const rp = writeFixture("CTX12_standalone", GREEN_BASELINE);
+  const op = tmpOut("CTX12");
+  const r = invoke(rp, op); // no --context
+  assert.equal(r.exitCode, 0);
+  assert.equal(r.artifact.verdict, "green");
+  assert.equal(r.artifact.capture_context, null);
+});
+
+test("CTX13 · malformed context JSON · tool_error exit 2", () => {
+  const rp = writeFixture("CTX13_report", GREEN_BASELINE);
+  const cp = join(TMP_ROOT, "CTX13.context.json");
+  writeFileSync(cp, "{not json", "utf8");
+  const op = tmpOut("CTX13");
+  const r = invoke(rp, op, ["--context", cp]);
+  assert.equal(r.exitCode, 2);
+  assert.equal(r.artifact, null);
+  assert.ok(/context_invalid_json/.test(r.stderr));
+});
+
+test("CTX14 · missing --context file · tool_error exit 2", () => {
+  const rp = writeFixture("CTX14_report", GREEN_BASELINE);
+  const cp = join(TMP_ROOT, "CTX14_absent.context.json");
+  const op = tmpOut("CTX14");
+  const r = invoke(rp, op, ["--context", cp]);
+  assert.equal(r.exitCode, 2);
+  assert.equal(r.artifact, null);
+  assert.ok(/context_unreadable/.test(r.stderr));
 });
 
 // -------- Summary --------

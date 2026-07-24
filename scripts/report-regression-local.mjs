@@ -35,6 +35,10 @@ import { fileURLToPath } from "node:url";
 import { execSync, spawnSync } from "node:child_process";
 import path from "node:path";
 import os from "node:os";
+import {
+  runStructuralEvidence,
+  combineTelemetryVerdict,
+} from "./lib/structural-evidence-integration.mjs";
 
 const REPO_ROOT = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -826,6 +830,52 @@ async function main() {
     runId,
   });
 
+  // ─── Structural evidence telemetry (AgentOps-5e Phase 2) ──────────────
+  // Non-blocking sibling telemetry. Runs after QI is complete and BEFORE
+  // any legacy `checks.push` to avoid accidental coupling to `classify`.
+  // MUST NOT append to `checks[]`. MUST NOT change legacy verdict or
+  // process exit. See:
+  //   .agent/decisions/2026-07-24_run_06_DECISION.md
+  //   .agent/design_memos/2026-07-24_AgentOps-5e-followup-baseline-lint-integrate-design.md
+  const structuralSummaryPath = path.join(runDir, "structural_evidence_summary.json");
+  const structuralContextPath = path.join(runDir, "structural_evidence_context.json");
+  const structuralValidatorPath = path.join(REPO_ROOT, "scripts/structural-evidence-check.mjs");
+  // capture_complete + expected_sections_captured MUST come from harness
+  // facts, never from structural-validator output. See design § 13.
+  const captureCompleteFromHarness =
+    completionState === "success" &&
+    Boolean(reportText) &&
+    capture.selectedLength > 0 &&
+    capture.selectedMarkerHits === REPORT_SECTION_MARKERS.length &&
+    capture.selectedHasEvidence;
+  const expectedSectionsCapturedFromHarness =
+    capture.selectedMarkerHits === REPORT_SECTION_MARKERS.length &&
+    capture.selectedHasEvidence;
+  const structuralEvidence = runStructuralEvidence({
+    validatorPath: structuralValidatorPath,
+    reportPath: scratchReportPath,
+    reportSaved: Boolean(reportText),
+    outputPath: structuralSummaryPath,
+    contextPath: structuralContextPath,
+    captureContext: {
+      capture_scope: capture.scope,
+      fallback_used: Boolean(capture.fallbackUsed),
+      completion_state: completionState,
+      capture_complete: captureCompleteFromHarness,
+      report_capture_error: reportText ? null : "report_text_not_captured",
+      report_char_count: reportCharCount,
+      expected_sections_captured: expectedSectionsCapturedFromHarness,
+      source: "report-regression-local",
+    },
+    summaryPathRelative: `.agent/regression_runs/${runId}/structural_evidence_summary.json`,
+    contextPathRelative: `.agent/regression_runs/${runId}/structural_evidence_context.json`,
+  });
+  const combinedTelemetryVerdict = combineTelemetryVerdict(
+    // Map QI's { verdict } shape into the same shape the helper expects.
+    { evaluation_status: quoteIntegrity.checkerExecuted ? "completed" : "not_run", verdict: quoteIntegrity.verdict === "unknown" ? null : quoteIntegrity.verdict },
+    structuralEvidence,
+  );
+
   // ─── Structural checks ────────────────────────────────────────────────
   checks.push({
     key: "page_loaded",
@@ -1105,6 +1155,8 @@ async function main() {
         "structural_checks.json",
         "verdict.md",
         "quote_integrity_summary.json",
+        "structural_evidence_summary.json",
+        "structural_evidence_context.json",
         "network_diagnostics.json",
       ],
       local_scratchpad: [
@@ -1135,6 +1187,32 @@ async function main() {
       red_reasons: quoteIntegrity.red_reasons,
       amber_reasons: quoteIntegrity.amber_reasons,
       blocking_mode: quoteIntegrity.blocking_mode,
+    },
+    // AgentOps-5e Phase 2 · sibling telemetry · display-only · MUST NOT
+    // influence legacy verdict, process exit, or baseline eligibility.
+    structural_evidence: {
+      evaluation_status: structuralEvidence.evaluation_status,
+      verdict: structuralEvidence.verdict,
+      blocking_mode: structuralEvidence.blocking_mode,
+      schema_version: structuralEvidence.schema_version,
+      context_schema_version: structuralEvidence.context_schema_version,
+      checker_path: "scripts/structural-evidence-check.mjs",
+      checker_hash: structuralEvidence.checker_hash,
+      exit_code: structuralEvidence.exit_code,
+      duration_ms: structuralEvidence.duration_ms,
+      summary_path: structuralEvidence.summary_path,
+      context_path: structuralEvidence.context_path,
+      capture_context: structuralEvidence.capture_context,
+      affected_legacy_verdict: false,
+      tool_error: structuralEvidence.tool_error,
+    },
+    combined_telemetry: {
+      verdict: combinedTelemetryVerdict,
+      display_only: true,
+      affected_legacy_verdict: false,
+      affected_process_exit: false,
+      quote_integrity_verdict: quoteIntegrity.verdict,
+      structural_evidence_verdict: structuralEvidence.verdict,
     },
   };
 
@@ -1224,13 +1302,47 @@ async function main() {
           )
           .join("\n"),
     "",
-    "## Quote integrity",
+    "## Legacy regression verdict",
+    "",
+    `- **Verdict**: **${classification.verdict.toUpperCase()}** (source of truth for process exit)`,
+    `- **Exit code**: ${classification.exit}`,
+    "- Telemetry sections below (quote integrity, structural evidence, combined) do NOT affect this verdict.",
+    "",
+    "## Quote integrity telemetry",
     "",
     `- **Verdict**: **${(quoteIntegrity.verdict || "unknown").toUpperCase()}**`,
     `- **Summary**: \`${quoteIntegrity.summary_path}\``,
     `- **Red reasons**: ${quoteIntegrity.red_reasons.length}`,
     `- **Amber reasons**: ${quoteIntegrity.amber_reasons.length}`,
     `- **Blocking mode**: \`${quoteIntegrity.blocking_mode}\` — telemetry only in this integration loop; does not change the report-regression GREEN/AMBER/RED exit code. Promoting to blocking requires a separate DECISION.`,
+    "- Quote-integrity telemetry does NOT affect the legacy verdict.",
+    "",
+    "## Structural evidence telemetry",
+    "",
+    `- **Verdict**: **${(structuralEvidence.verdict ? structuralEvidence.verdict : structuralEvidence.evaluation_status).toUpperCase()}**`,
+    `- **Evaluation status**: \`${structuralEvidence.evaluation_status}\``,
+    `- **Exit code**: ${structuralEvidence.exit_code === null ? "_null_" : structuralEvidence.exit_code}`,
+    `- **Duration**: ${structuralEvidence.duration_ms} ms`,
+    `- **Checker hash**: \`${structuralEvidence.checker_hash || "_none_"}\``,
+    `- **Summary**: \`${structuralEvidence.summary_path || "_none_"}\``,
+    `- **Context**: \`${structuralEvidence.context_path || "_none_"}\``,
+    `- **Capture scope**: \`${capture.scope}\` · **capture_complete**: ${captureCompleteFromHarness}`,
+    `- **Red reasons**: ${structuralEvidence.red_reasons.length}${structuralEvidence.red_reasons.length ? ` — ${structuralEvidence.red_reasons.slice(0, 5).join("; ")}` : ""}`,
+    `- **Amber reasons**: ${structuralEvidence.amber_reasons.length}${structuralEvidence.amber_reasons.length ? ` — ${structuralEvidence.amber_reasons.slice(0, 5).join("; ")}` : ""}`,
+    `- **Not-evaluable reasons**: ${structuralEvidence.not_evaluable_reasons.length}${structuralEvidence.not_evaluable_reasons.length ? ` — ${structuralEvidence.not_evaluable_reasons.slice(0, 5).join("; ")}` : ""}`,
+    structuralEvidence.tool_error
+      ? `- **Tool error**: \`${structuralEvidence.tool_error.reason}\`${structuralEvidence.tool_error.detail ? ` — ${String(structuralEvidence.tool_error.detail).slice(0, 200)}` : ""}`
+      : "- **Tool error**: _none_",
+    "- **Blocking mode**: `telemetry_only` — Structural-evidence telemetry does NOT affect the legacy verdict.",
+    "- A RED telemetry state MUST remain visibly RED even when the legacy verdict is GREEN.",
+    "",
+    "## Combined telemetry",
+    "",
+    `- **Combined verdict**: **${combinedTelemetryVerdict.toUpperCase()}**`,
+    "- **Display only**: yes — combined telemetry is display-only.",
+    "- Combined telemetry does NOT affect the legacy verdict.",
+    "- Combined telemetry does NOT affect the harness process exit.",
+    "- Do NOT describe the overall run simply as GREEN when telemetry contains RED.",
     "",
     "## Network diagnostics",
     "",
@@ -1251,6 +1363,12 @@ async function main() {
       const written = ["metadata.json", "structural_checks.json", "verdict.md"];
       if (existsSync(path.join(runDir, "quote_integrity_summary.json"))) {
         written.push("quote_integrity_summary.json");
+      }
+      if (existsSync(path.join(runDir, "structural_evidence_summary.json"))) {
+        written.push("structural_evidence_summary.json");
+      }
+      if (existsSync(path.join(runDir, "structural_evidence_context.json"))) {
+        written.push("structural_evidence_context.json");
       }
       if (existsSync(path.join(runDir, "network_diagnostics.json"))) {
         written.push("network_diagnostics.json");

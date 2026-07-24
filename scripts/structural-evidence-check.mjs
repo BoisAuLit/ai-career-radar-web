@@ -18,7 +18,15 @@
 //   node scripts/structural-evidence-check.mjs \
 //     --report <report.md path> \
 //     --output <structural_evidence_summary.json path> \
+//     [--context <structural_evidence_context.json path>] \
 //     [--fixture <A|B|C|D|E>] [--source-run-id <id>] [--help]
+//
+// Phase 2 (AgentOps-5e-followup-baseline-lint-integrate-implement):
+//   Optional `--context <path>` accepts a small JSON envelope describing the
+//   harness capture state so structural evaluation can distinguish real
+//   Appendix omission from incomplete capture. Standalone two-argument
+//   Phase 1 invocation remains valid. Explicit context overrides the
+//   synthetic truncation marker. Real harness never emits the marker.
 
 import {
   readFileSync,
@@ -32,12 +40,14 @@ import { dirname, join } from "node:path";
 import process from "node:process";
 
 const SCHEMA_VERSION = "0.1-phase1";
+const CONTEXT_SCHEMA_VERSION = "0.1-phase2";
 const IMPL_ID = "structural-evidence-check.mjs@0.1-phase1";
 
 const USAGE = `usage:
   node scripts/structural-evidence-check.mjs \\
     --report <report.md path> \\
     --output <structural_evidence_summary.json path> \\
+    [--context <structural_evidence_context.json path>] \\
     [--fixture <A|B|C|D|E>] [--source-run-id <id>] [--help]
 
 exit codes:
@@ -60,12 +70,19 @@ function parseArgs(argv) {
   const knownFlags = new Set([
     "--report",
     "--output",
+    "--context",
     "--fixture",
     "--source-run-id",
     "--help",
     "-h",
   ]);
-  const out = { report: null, output: null, fixture: null, sourceRunId: null };
+  const out = {
+    report: null,
+    output: null,
+    context: null,
+    fixture: null,
+    sourceRunId: null,
+  };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--help" || a === "-h") {
@@ -83,6 +100,10 @@ function parseArgs(argv) {
       const v = argv[++i];
       if (!v || v.startsWith("--")) fatalCli(`missing value for ${a}`);
       out.output = v;
+    } else if (a === "--context") {
+      const v = argv[++i];
+      if (!v || v.startsWith("--")) fatalCli(`missing value for ${a}`);
+      out.context = v;
     } else if (a === "--fixture") {
       const v = argv[++i];
       if (!v || v.startsWith("--")) fatalCli(`missing value for ${a}`);
@@ -97,6 +118,149 @@ function parseArgs(argv) {
   if (!out.report) fatalCli("missing required --report");
   if (!out.output) fatalCli("missing required --output");
   return out;
+}
+
+// -------- Context loading / validation (Phase 2) --------
+const ACCEPTED_CAPTURE_SCOPES = new Set(["main section", "body"]);
+const ACCEPTED_COMPLETION_STATES = new Set([
+  "success",
+  "application_error",
+  "hard_timeout",
+  "navigation_error",
+  "not_started",
+]);
+const REQUIRED_CONTEXT_FIELDS = [
+  "schema_version",
+  "capture_scope",
+  "fallback_used",
+  "completion_state",
+  "capture_complete",
+  "report_capture_error",
+  "report_char_count",
+  "expected_sections_captured",
+  "source",
+];
+
+// Emits a structured tool_error to stderr and exits 2 without writing any
+// artifact. Callers MUST have opened no persistent output yet.
+function contextToolError(reason, detail) {
+  process.stderr.write(
+    `structural-evidence-check: tool_error reason=${reason}${detail ? ` detail=${detail}` : ""}\n`,
+  );
+  process.exit(2);
+}
+
+function loadAndValidateContext(contextPath) {
+  let raw;
+  try {
+    raw = readFileSync(contextPath, "utf8");
+  } catch (err) {
+    contextToolError("context_unreadable", `${contextPath}: ${err.message}`);
+  }
+  let obj;
+  try {
+    obj = JSON.parse(raw);
+  } catch (err) {
+    contextToolError("context_invalid_json", `${contextPath}: ${err.message}`);
+  }
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
+    contextToolError("context_invalid_shape", "expected JSON object");
+  }
+  for (const field of REQUIRED_CONTEXT_FIELDS) {
+    if (!(field in obj)) {
+      contextToolError("context_missing_field", field);
+    }
+  }
+  // Strict type validation.
+  if (typeof obj.schema_version !== "string") {
+    contextToolError("context_invalid_field_type", "schema_version:string");
+  }
+  if (obj.schema_version !== CONTEXT_SCHEMA_VERSION) {
+    contextToolError(
+      "context_schema_unknown",
+      `expected ${CONTEXT_SCHEMA_VERSION}, got ${obj.schema_version}`,
+    );
+  }
+  if (typeof obj.capture_scope !== "string") {
+    contextToolError("context_invalid_field_type", "capture_scope:string");
+  }
+  if (typeof obj.fallback_used !== "boolean") {
+    contextToolError("context_invalid_field_type", "fallback_used:boolean");
+  }
+  if (typeof obj.completion_state !== "string") {
+    contextToolError("context_invalid_field_type", "completion_state:string");
+  }
+  if (typeof obj.capture_complete !== "boolean") {
+    contextToolError("context_invalid_field_type", "capture_complete:boolean");
+  }
+  if (
+    obj.report_capture_error !== null &&
+    typeof obj.report_capture_error !== "string"
+  ) {
+    contextToolError(
+      "context_invalid_field_type",
+      "report_capture_error:string|null",
+    );
+  }
+  if (
+    typeof obj.report_char_count !== "number" ||
+    !Number.isFinite(obj.report_char_count) ||
+    obj.report_char_count < 0 ||
+    !Number.isInteger(obj.report_char_count)
+  ) {
+    contextToolError(
+      "context_invalid_field_type",
+      "report_char_count:non-negative-integer",
+    );
+  }
+  if (typeof obj.expected_sections_captured !== "boolean") {
+    contextToolError(
+      "context_invalid_field_type",
+      "expected_sections_captured:boolean",
+    );
+  }
+  if (typeof obj.source !== "string" || obj.source.length === 0) {
+    contextToolError("context_invalid_field_type", "source:non-empty-string");
+  }
+  return obj;
+}
+
+// Returns `null` if the context indicates a structurally evaluable capture,
+// or a `{ reason }` object with the not_evaluable reason string otherwise.
+// See DECISION 2026-07-24_run_06 §Capture-sufficiency policy.
+function contextNotEvaluableReason(ctx) {
+  if (ctx.completion_state !== "success") {
+    return { reason: `completion_state_${ctx.completion_state}` };
+  }
+  if (ctx.report_capture_error !== null) {
+    return { reason: "report_capture_error_present" };
+  }
+  if (ctx.capture_complete === false) {
+    return { reason: "capture_incomplete_from_harness_context" };
+  }
+  if (!ACCEPTED_CAPTURE_SCOPES.has(ctx.capture_scope)) {
+    return { reason: `unknown_capture_scope_${ctx.capture_scope}` };
+  }
+  if (ctx.fallback_used === true && ctx.expected_sections_captured === false) {
+    return { reason: "fallback_capture_incomplete" };
+  }
+  return null;
+}
+
+// Small sanitized subset of context for embedding in the summary artifact.
+// Excludes free-form strings that could carry proprietary content.
+function summarizeContext(ctx) {
+  return {
+    schema_version: ctx.schema_version,
+    capture_scope: ctx.capture_scope,
+    fallback_used: ctx.fallback_used,
+    completion_state: ctx.completion_state,
+    capture_complete: ctx.capture_complete,
+    report_capture_error_present: ctx.report_capture_error !== null,
+    report_char_count: ctx.report_char_count,
+    expected_sections_captured: ctx.expected_sections_captured,
+    source: ctx.source,
+  };
 }
 
 // -------- Structural constants --------
@@ -377,6 +541,17 @@ function atomicWriteJson(outputPath, obj) {
 function main(argv) {
   const args = parseArgs(argv);
 
+  // Phase 2: load + validate context BEFORE reading report so tool_error
+  // paths (malformed context / unknown schema / missing field) short-circuit
+  // without ever opening the output artifact. Explicit context takes
+  // precedence over the synthetic truncation marker.
+  let context = null;
+  let contextNotEvaluable = null;
+  if (args.context) {
+    context = loadAndValidateContext(args.context);
+    contextNotEvaluable = contextNotEvaluableReason(context);
+  }
+
   // Read report (tool_error if missing/unreadable).
   let reportText;
   try {
@@ -390,11 +565,27 @@ function main(argv) {
 
   const startedAt = Date.now();
 
+  // Phase 2 precedence: harness-context not_evaluable overrides text-based
+  // checks so incomplete capture is never falsely surfaced as structural RED.
+  if (contextNotEvaluable) {
+    const artifact = baseArtifact(args, reportText, startedAt, {
+      verdict: "not_evaluable",
+      not_evaluable_reasons: [contextNotEvaluable.reason],
+      capture_context: summarizeContext(context),
+    });
+    tryEmit(args.output, artifact);
+    process.stdout.write(
+      `structural-evidence-check verdict=not_evaluable reason=${contextNotEvaluable.reason}\n`,
+    );
+    process.exit(0);
+  }
+
   // not_evaluable: empty body OR explicit truncation marker present.
   if (reportText.trim().length === 0) {
     const artifact = baseArtifact(args, reportText, startedAt, {
       verdict: "not_evaluable",
       not_evaluable_reasons: ["report_body_empty"],
+      capture_context: context ? summarizeContext(context) : null,
     });
     tryEmit(args.output, artifact);
     process.stdout.write(
@@ -402,7 +593,10 @@ function main(argv) {
     );
     process.exit(0);
   }
-  if (reportText.includes(EXPLICIT_TRUNCATION_MARKER)) {
+  // Synthetic truncation marker is Phase 1 test-only. If explicit context
+  // was supplied and did NOT mark capture incomplete, ignore the marker so
+  // a harness-driven run cannot be fooled by report contents.
+  if (!context && reportText.includes(EXPLICIT_TRUNCATION_MARKER)) {
     const artifact = baseArtifact(args, reportText, startedAt, {
       verdict: "not_evaluable",
       not_evaluable_reasons: ["explicit_truncation_marker"],
@@ -462,6 +656,7 @@ function main(argv) {
     appendixJdIds,
     missingFromAppendix,
     appendixNotCited,
+    capture_context: context ? summarizeContext(context) : null,
   });
 
   tryEmit(args.output, artifact);
@@ -538,6 +733,9 @@ function baseArtifact(args, reportText, startedAt, extras) {
     source_rewritten: false,
     network_used: false,
     llm_used: false,
+    capture_context: extras.capture_context !== undefined
+      ? extras.capture_context
+      : null,
   };
 }
 
