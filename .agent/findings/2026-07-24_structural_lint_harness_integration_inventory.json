@@ -1,0 +1,329 @@
+{
+  "schema_version": "0.1-design",
+  "loop": "AgentOps-5e-followup-baseline-lint-integrate-design",
+  "generated_by": "AgentOps-5e-followup-baseline-lint-integrate-design (2026-07-24_run_06) · inspection only",
+  "harness_lifecycle": [
+    {"step": "run_dir_created", "file_hint": "scripts/report-regression-local.mjs::main", "when": "very early", "report_md_exists": false, "capture_metadata_final": false, "can_fail": true, "downstream_depends": true},
+    {"step": "playwright_start_generation", "when": "after run_dir", "report_md_exists": false, "capture_metadata_final": false, "can_fail": true, "downstream_depends": true},
+    {"step": "report_capture_race", "note": "fail-fast race between `Copy report` and `Retry`; determines completion_state", "when": "generation phase", "report_md_exists": false, "capture_metadata_final": false, "can_fail": true, "downstream_depends": true},
+    {"step": "completion_state_determined", "values": ["success","application_error","hard_timeout","navigation_error","not_started"], "capture_metadata_final": "true for completion_state; capture_scope/fallback_used follow"},
+    {"step": "extract_report_text", "file_hint": "extractReportText(page)", "when": "after done state", "note": "produces {scope, strategy, candidateCount, qualifiedCount, selectedLength, pageBodyCharCount, fallbackUsed, ...}", "capture_metadata_final": true},
+    {"step": "save_scratch_report_md", "file_hint": "line ~800-810", "report_md_exists": "true if reportText truthy", "can_fail": true, "downstream_depends": true},
+    {"step": "run_quote_integrity", "file_hint": "line ~819 runQuoteIntegrity()", "note": "invokes scripts/quote-integrity-check.mjs via spawnSync; writes quote_integrity_summary.json under runDir", "report_md_exists": true, "capture_metadata_final": true, "can_fail_gracefully": true, "downstream_depends": true, "recommended_structural_invocation_neighbor": true},
+    {"step": "push_structural_checks", "file_hint": "line ~830-1077", "note": "legacy 25-check list built"},
+    {"step": "classify_checks", "file_hint": "classify(checks) line ~517", "note": "produces {verdict, exit, red, amber}"},
+    {"step": "build_metadata_object", "file_hint": "line ~1080-1139", "note": "includes `quote_integrity` sub-block at ~1128"},
+    {"step": "write_metadata_json", "file_hint": "line ~1141-1145"},
+    {"step": "write_structural_checks_json", "file_hint": "line ~1147-1151"},
+    {"step": "build_write_network_diagnostics", "file_hint": "line ~1153-1188"},
+    {"step": "build_verdict_md", "file_hint": "line ~1190-1262", "note": "sections: Red / Amber / Quote integrity / Network diagnostics / Artifacts"},
+    {"step": "write_verdict_md", "file_hint": "line ~1264"},
+    {"step": "browser_close", "file_hint": "line ~1266"},
+    {"step": "summary_line_console_log", "file_hint": "line ~1268-1284"},
+    {"step": "process_exit_classification", "file_hint": "line ~1285", "note": "legacy exit code from classify(checks) · **not affected by QI or structural**"}
+  ],
+  "invocation_point_options": [
+    {"id": "A_after_capture_before_qi", "pros": ["capture context final","report.md exists"], "cons": ["asymmetric with QI (QI later)","would need structural before QI to write to metadata block ordering — but ordering is easy either way"], "recommendation": "consider only if we want structural to be first-class alongside QI"},
+    {"id": "B_after_qi_before_structural_checks", "pros": ["matches QI symmetry — both after report.md save · both write JSON to runDir","report.md exists · capture context final","QI already ran so no race"], "cons": ["cleanest but requires small helper for spawn"], "recommendation": "PRIMARY"},
+    {"id": "C_after_all_telemetry_before_metadata", "pros": ["simplest sequential"], "cons": ["capture context still fine but symmetry with QI weaker","harder to include in metadata block if we want structural.summary_path referenced there"], "recommendation": "REJECT — B is cleaner"},
+    {"id": "D_after_verdict_md_post_processing", "pros": ["never touches metadata"], "cons": ["verdict.md would not include structural block","two-write pattern (verdict.md then patch) is fragile","couples to legacy verdict artifact"], "recommendation": "REJECT"}
+  ],
+  "selected_invocation_point": {
+    "id": "B_after_qi_before_structural_checks",
+    "location_hint": "immediately after line ~828 `runQuoteIntegrity(...)` returns and before line ~830 first `checks.push`",
+    "rationale": "symmetric with QI · report.md and capture context both final · metadata block can include both `quote_integrity` and `structural_evidence` sub-blocks · verdict.md can display both side-by-side · minimal disturbance to legacy 25-check flow · legacy exit code produced by classify() remains untouched",
+    "constraints": [
+      "must not spawn if report.md was not saved (mirror QI's blocked_no_report path)",
+      "must never rethrow; helper returns an envelope like `runQuoteIntegrity` does",
+      "must not affect classify(checks) result",
+      "must not push into the `checks[]` array (legacy verdict source-of-truth stays untouched)"
+    ]
+  },
+  "capture_context_options": [
+    {"id": "A_multiple_cli_flags", "pros": ["explicit"], "cons": ["quoting/escaping surface","hard to extend","larger CLI parser change"], "recommendation": "REJECT"},
+    {"id": "B_temporary_context_json_via_--context", "pros": ["single small extension point","typed schema","testable","cleanup easy (tmp file)","extensible for future harness fields"], "cons": ["one extra IO"], "recommendation": "PRIMARY"},
+    {"id": "C_env_vars", "pros": ["no CLI change"], "cons": ["opaque · poor schema · leaks across processes"], "recommendation": "REJECT"},
+    {"id": "D_stdin_json_envelope", "pros": ["no fs"], "cons": ["harder to inspect · CLI shell composition awkward · debuggability"], "recommendation": "REJECT"}
+  ],
+  "selected_context_contract": {
+    "kind": "temporary JSON file · single new CLI flag `--context <path>`",
+    "path_convention": "harness writes to `<runDir>/structural_evidence_context.json` (retained as a sanitized artifact for audit; small file · minimal fields)",
+    "fields": {
+      "schema_version": "0.1-phase2",
+      "capture_scope": "one of: main section | body | none · matches harness capture.scope",
+      "fallback_used": "boolean · matches harness capture.fallbackUsed",
+      "completion_state": "one of: success | application_error | hard_timeout | navigation_error | not_started",
+      "capture_complete": "boolean · true only when completion_state=success AND capture_scope covers full report (main section captured OR body includes both gap section and Appendix)",
+      "report_capture_error": "string | null · non-null when reportText was empty or extraction failed",
+      "report_char_count": "number · matches metadata.report_char_count",
+      "expected_sections_captured": "boolean · true when required section markers (Target role, Your top 5 gaps, Evidence Appendix) are present in reportText",
+      "source": "\"report-regression-local\""
+    },
+    "artifact_persistence": "retain sanitized context file in runDir for audit; do NOT embed full report body or long quote excerpts",
+    "malformed_context": "→ tool_error (validator exit 2)"
+  },
+  "cli_extension_design": {
+    "selected": "extend structural-evidence-check.mjs with OPTIONAL `--context <path>` while preserving current two-argument behavior",
+    "backward_compat": "existing Phase 1 invocation `--report <p> --output <p>` continues to work · synthetic marker `<!-- STRUCTURAL_EVIDENCE_TRUNCATED -->` remains supported for Phase 1 test compatibility",
+    "precedence": "explicit context takes precedence over synthetic marker · real harness never emits or depends on the marker",
+    "context_missing_but_flag_absent": "preserve standalone behavior (no context = pure text-based verdict)",
+    "context_file_missing_when_flag_present": "tool_error exit 2",
+    "context_malformed": "tool_error exit 2",
+    "context_schema_version_unknown": "tool_error exit 2 · do NOT silently ignore",
+    "context_incomplete_capture_maps_to": "not_evaluable (verdict) with reason `capture_incomplete_from_harness_context`"
+  },
+  "capture_sufficiency_rules": {
+    "not_evaluable_when": [
+      "completion_state !== 'success'",
+      "capture_complete === false",
+      "report_capture_error !== null",
+      "capture_scope not in evaluable_capture_scopes",
+      "fallback_used === true AND expected_sections_captured === false"
+    ],
+    "structurally_evaluable_when": [
+      "completion_state === 'success'",
+      "capture_complete === true",
+      "capture_scope in evaluable_capture_scopes",
+      "report_capture_error === null"
+    ],
+    "evaluable_capture_scopes": ["main section","body"],
+    "fallback_used_alone_note": "fallback_used=true does NOT automatically imply not_evaluable · if fallback still captures the full report (expected_sections_captured=true), classification proceeds normally; the AMBER-level `report_capture_scope_not_body` legacy check continues to surface the fallback visibility separately",
+    "unknown_capture_scope": "must NOT silently become evaluable · treat as not_evaluable with reason `unknown_capture_scope`",
+    "missing_context_fields": "tool_error (do NOT guess)",
+    "precedence_ordering": [
+      "tool_error (validator or harness-side spawn failure)",
+      "harness-context not_evaluable (from --context)",
+      "text-based structural RED (from report content)",
+      "AMBER (from report content)",
+      "GREEN (from report content)"
+    ]
+  },
+  "artifact_behavior": {
+    "output_path": "runDir/structural_evidence_summary.json",
+    "context_path": "runDir/structural_evidence_context.json (sanitized · retained for audit)",
+    "artifact_atomicity": "validator writes via .tmp-<pid> + renameSync (already in Phase 1)",
+    "harness_invocation_records": [
+      "attempted (boolean)",
+      "command",
+      "exit_code",
+      "duration_ms",
+      "checker_hash",
+      "schema_version",
+      "verdict",
+      "blocking_mode",
+      "context_supplied (boolean)",
+      "context_schema_version",
+      "tool_error_details",
+      "summary_path"
+    ],
+    "temp_context_persistence": "retain sanitized context file — small, aids audit, no proprietary content"
+  },
+  "metadata_integration": {
+    "block_path": "metadata.structural_evidence",
+    "fields": {
+      "evaluation_status": "completed | not_evaluable | tool_error | not_run",
+      "verdict": "green | amber | red | not_evaluable | null",
+      "blocking_mode": "telemetry_only",
+      "schema_version": "0.1-phase1",
+      "checker_path": "scripts/structural-evidence-check.mjs",
+      "checker_hash": "sha256:<hex>",
+      "exit_code": "0 | 1 | 2 | null",
+      "duration_ms": "number",
+      "summary_path": ".agent/regression_runs/<runId>/structural_evidence_summary.json | null",
+      "context_path": ".agent/regression_runs/<runId>/structural_evidence_context.json | null",
+      "capture_context": {
+        "capture_scope": "...",
+        "fallback_used": "...",
+        "completion_state": "...",
+        "capture_complete": "..."
+      },
+      "affected_legacy_verdict": false
+    },
+    "null_behavior": "verdict=null iff evaluation_status ∈ {tool_error, not_run}",
+    "tool_error_behavior": "evaluation_status=tool_error · verdict=null · exit_code recorded (2 or null on spawn fail) · summary_path=null unless partial artifact exists (should NOT unless validator misbehaves)",
+    "not_run_behavior": "evaluation_status=not_run · verdict=null · used when reportText not saved (blocked_no_report analogue)",
+    "relative_path_format": "match existing quote_integrity.summary_path convention (repo-root-relative)",
+    "single_metadata_write": "harness patches structural_evidence block INTO the metadata object built at line ~1080 BEFORE writing metadata.json (single atomic write)",
+    "no_baseline_change": "phase 2 does NOT touch .agent/regression_baselines/**"
+  },
+  "verdict_markdown_integration": {
+    "sections_added": [
+      "## Structural evidence telemetry"
+    ],
+    "sibling_of": "## Quote integrity",
+    "required_wording": [
+      "Structural telemetry does NOT affect legacy verdict.",
+      "Quote-integrity telemetry does NOT affect legacy verdict.",
+      "RED telemetry is not silently presented as overall GREEN.",
+      "Overall display must not mask either result."
+    ],
+    "included_fields": ["verdict","exit_code","checker_hash","context.capture_scope","context.capture_complete","citation_line_count","covered_gap_count","observed_gap_count","appendix.present","body_appendix.missing_from_appendix (short)","not_evaluable_reasons (short)","tool_error (short)"],
+    "excluded_from_output": ["full report body","full quote text","long quote excerpts"],
+    "conciseness_target": "under ~15 markdown lines"
+  },
+  "combined_telemetry": {
+    "field": "combined_telemetry_verdict",
+    "location": "metadata.combined_telemetry (single source of truth) · echoed in verdict.md",
+    "rules": {
+      "red_if": "either QI or structural verdict === red",
+      "amber_if": "neither red AND (QI or structural verdict === amber)",
+      "not_evaluable_if": "one cannot be evaluated AND neither is red",
+      "green_if": "both are green",
+      "tool_error_if": "either QI or structural tool_error"
+    },
+    "phase_2_impact": "does NOT affect harness process exit code · does NOT affect legacy verdict · display-only"
+  },
+  "exit_handling": {
+    "validator_exit_0": {"artifact_expected": true, "verdict_range": ["green","amber","not_evaluable"], "harness_action": "continue normally · record in metadata + verdict.md"},
+    "validator_exit_1": {"artifact_expected": true, "verdict_expected": "red", "harness_action": "continue normally · record RED in structural telemetry · legacy verdict unchanged · legacy process exit unchanged"},
+    "validator_exit_2": {"artifact_expected": false, "action": "record tool_error · continue metadata/verdict.md write · legacy verdict unchanged · do NOT retry · do NOT silently ignore"},
+    "spawn_fail": "record tool_error with reason `validator_spawn_failed` · exit_code=null · duration_ms=elapsed until failure",
+    "timeout": "record tool_error with reason `validator_timeout` · exit_code=null",
+    "artifact_missing_despite_exit_0_or_1": "record tool_error with reason `artifact_missing_after_exit_${code}` · verdict=null · legacy verdict unchanged",
+    "artifact_malformed_json": "record tool_error with reason `artifact_malformed_json` · verdict=null",
+    "checker_hash_compute_fail": "record tool_error with reason `checker_hash_compute_failed` · continue with verdict from artifact if present",
+    "report_file_missing_at_invocation": "skip invocation · record evaluation_status=not_run · reason `report_md_not_saved`",
+    "context_file_write_fail": "record tool_error with reason `context_write_failed` · skip validator invocation · continue metadata/verdict.md write"
+  },
+  "timeout_policy": {
+    "selected_seconds": 5,
+    "rationale": "validator is local · linear scan of a Markdown report · Phase 1 tests complete in <1 s each · 5 s provides ample headroom",
+    "timeout_effect": "kill child process · record tool_error with reason `validator_timeout` · no retry · legacy verdict unchanged · legacy latency thresholds (HARD_LATENCY_MS=240_000 · SOFT_LATENCY_MS=120_000) unchanged"
+  },
+  "implementation_hash": {
+    "selected": "SHA-256 content hash of scripts/structural-evidence-check.mjs",
+    "field_name": "checker_hash",
+    "format": "\"sha256:<hex>\" (64-char lowercase hex prefixed by algorithm)",
+    "rationale": "identifies exact validator implementation independent of git state · robust against local modifications · comparable across environments · rejected: short git commit (requires git binary access + repo state) · git blob hash (harder to reproduce)",
+    "computation": "readFileSync(validatorPath, 'utf8') → crypto.createHash('sha256').update(text).digest('hex')",
+    "compute_fail_handling": "record tool_error `checker_hash_compute_failed` but continue"
+  },
+  "test_matrix": [
+    {"id": "I1", "scenario": "GREEN structural + legacy GREEN", "expected": "metadata.structural_evidence.verdict=green · legacy verdict=green · process exit unchanged"},
+    {"id": "I2", "scenario": "AMBER structural + legacy GREEN", "expected": "metadata.structural_evidence.verdict=amber · legacy verdict=green"},
+    {"id": "I3", "scenario": "RED structural + legacy GREEN", "expected": "metadata.structural_evidence.verdict=red · legacy verdict=green · legacy exit unchanged"},
+    {"id": "I4", "scenario": "not_evaluable from --context (capture_complete=false)", "expected": "verdict=not_evaluable · legacy verdict unchanged · reason present"},
+    {"id": "I5", "scenario": "validator tool_error (exit 2)", "expected": "structural_evidence.evaluation_status=tool_error · verdict=null · legacy verdict unchanged"},
+    {"id": "I6", "scenario": "QI AMBER + structural GREEN", "expected": "combined_telemetry_verdict=amber · legacy verdict unchanged"},
+    {"id": "I7", "scenario": "QI GREEN + structural RED", "expected": "combined_telemetry_verdict=red · legacy verdict unchanged"},
+    {"id": "I8", "scenario": "QI RED + structural GREEN", "expected": "combined_telemetry_verdict=red"},
+    {"id": "I9", "scenario": "QI RED + structural RED", "expected": "combined_telemetry_verdict=red"},
+    {"id": "I10", "scenario": "artifact missing despite validator exit 0", "expected": "tool_error `artifact_missing_after_exit_0`"},
+    {"id": "I11", "scenario": "malformed structural summary JSON", "expected": "tool_error `artifact_malformed_json`"},
+    {"id": "I12", "scenario": "validator timeout", "expected": "tool_error `validator_timeout` · legacy verdict unchanged"},
+    {"id": "I13", "scenario": "context schema invalid", "expected": "validator exit 2 · tool_error"},
+    {"id": "I14", "scenario": "fallback capture marked incomplete", "expected": "not_evaluable with reason from harness context"},
+    {"id": "I15", "scenario": "fallback capture explicitly complete", "expected": "verdict from report content · GREEN if healthy"},
+    {"id": "I16", "scenario": "Phase 1 CLI backward-compatible (no --context)", "expected": "standalone Phase 1 tests still pass (all 26)"},
+    {"id": "I17", "scenario": "no baseline files changed by harness invocation", "expected": "`.agent/regression_baselines/**` mtime unchanged"},
+    {"id": "I18", "scenario": "no report body embedded in metadata/verdict/context", "expected": "grep across artifacts finds no >120-char verbatim substring of report"},
+    {"id": "I19", "scenario": "no validator retry on failure", "expected": "single spawn call per run · no second attempt"},
+    {"id": "I20", "scenario": "legacy process exit code unchanged", "expected": "exit code matches classify(checks).exit regardless of structural verdict"}
+  ],
+  "test_architecture_options": [
+    {"id": "A_export_helpers_from_harness", "pros": ["reuse harness logic exactly"], "cons": ["forces refactor of production harness","increased risk to legacy verdict path"], "recommendation": "REJECT"},
+    {"id": "B_new_helper_module", "pros": ["single small helper file","testable in isolation","harness imports helper"], "cons": ["new file · but scoped small"], "recommendation": "PRIMARY"},
+    {"id": "C_spawn_whole_harness_no_generation_mode", "pros": ["end-to-end fidelity"], "cons": ["requires new harness flag/branch","harder to isolate failures","risks accidentally starting generation"], "recommendation": "REJECT"},
+    {"id": "D_static_source_assertions_only", "pros": ["zero runtime"], "cons": ["cannot verify actual telemetry aggregation"], "recommendation": "REJECT alone · adopt as supplement"}
+  ],
+  "selected_test_architecture": "B_new_helper_module (integration adapter) + supplemental static source assertions for backward-compatibility guarantees",
+  "implementation_scope": {
+    "changed_files_expected": [
+      "scripts/structural-evidence-check.mjs (extend with `--context` support only · preserve all existing behavior · +~40 lines)",
+      "scripts/test-structural-evidence-check.mjs (add context-mode tests · preserve all 26 existing tests · +~150 lines)",
+      "scripts/report-regression-local.mjs (invoke validator + metadata block + verdict.md block · +~80 lines)",
+      "scripts/lib/structural-evidence-integration.mjs (new helper module · +~120 lines)",
+      "scripts/test-structural-evidence-integration.mjs (new deterministic integration tests · +~250 lines)",
+      "scripts/fixtures/structural-evidence/ (add context-mode fixture reports · +~5 files)",
+      ".agent/tasks/<next>_TASK.md",
+      ".agent/design_memos/<next-implement>.md",
+      ".agent/run_reports/<next>_RUN_REPORT.md"
+    ],
+    "explicitly_forbidden": [
+      "scripts/quote-integrity-check.mjs (unchanged)",
+      "src/**",
+      "src/lib/prompts.ts",
+      ".agent/regression_baselines/**",
+      "src/app/api/**",
+      "package.json / package-lock.json / workflows / env / vercel.json",
+      "pipeline",
+      ".agent/scripts/**"
+    ]
+  },
+  "rollback": {
+    "phase_2_rollback_steps": [
+      "revert Phase 2 harness patch commit",
+      "structural-evidence-check.mjs --context extension can remain (backward-compatible) OR be reverted",
+      "remove metadata.structural_evidence block emission from harness",
+      "remove `## Structural evidence telemetry` section from verdict.md",
+      "no prompt rollback required (Phase 2 does not touch prompt)",
+      "no baseline restoration required (Phase 2 does not mutate baselines)"
+    ],
+    "clean_rollback": true
+  },
+  "policy_resolutions": {
+    "Q1_integration_point": {"answer": "Option B — immediately after runQuoteIntegrity() and before first legacy checks.push"},
+    "Q2_cli_args_or_context_json": {"answer": "Option B — temporary JSON context file via optional `--context <path>`"},
+    "Q3_context_overrides_marker": {"answer": "YES — explicit context takes precedence over synthetic marker; real harness never emits marker"},
+    "Q4_evaluable_capture_scopes": {"answer": "`main section` and `body`"},
+    "Q5_fallback_used_implies_not_evaluable": {"answer": "NO — fallback_used=true alone does not imply not_evaluable; must also have expected_sections_captured=false"},
+    "Q6_exit_1_behavior": {"answer": "record structural verdict=RED · include in metadata + verdict.md · legacy verdict unchanged · legacy process exit unchanged"},
+    "Q7_exit_2_behavior": {"answer": "record tool_error · include in metadata + verdict.md · legacy verdict unchanged · no retry · no silent ignore"},
+    "Q8_structural_red_changes_legacy_verdict": {"answer": "NO"},
+    "Q9_structural_red_changes_harness_process_exit": {"answer": "NO"},
+    "Q10_combined_telemetry_storage": {"answer": "metadata.combined_telemetry (single source of truth) + brief echo in verdict.md"},
+    "Q11_validator_hash": {"answer": "SHA-256 content hash of scripts/structural-evidence-check.mjs, stored as `checker_hash: \"sha256:<hex>\"`"},
+    "Q12_validator_timeout": {"answer": "5 seconds"},
+    "Q13_retry_allowed": {"answer": "NO"},
+    "Q14_phase_2_touches_baseline_metadata": {"answer": "NO"},
+    "Q15_phase_2_requires_ab_generation": {"answer": "NO"},
+    "Q16_phase_3_auto_authorized": {"answer": "NO — Phase 3 (paid A/B) requires separate DECISION + human GO + ~$0.10 cost approval"},
+    "Q17_phase_2_can_modify_qi_checker": {"answer": "NO"},
+    "Q18_phase_2_can_alter_thresholds": {"answer": "NO"},
+    "Q19_incomplete_capture_classification": {"answer": "not_evaluable — never RED; classified via explicit harness context, not by report-text inference"},
+    "Q20_5f_promote_authorized": {"answer": "NO"}
+  },
+  "risks": [
+    "Adding a helper module + harness patch is the largest scripts/ change since 5c-integrate; regression risk mitigated by keeping structural block strictly additive and by covering it with deterministic integration tests",
+    "Metadata schema addition may affect downstream consumers if any exist (currently none — 5e-migrate proved zero code consumers of baseline_metadata.json; run-level metadata.json has no known consumers either)",
+    "verdict.md format change is user-facing (for human review); wording must not imply structural affects legacy verdict",
+    "SHA-256 hash requires readFileSync on every run — cheap but adds a tiny bit of I/O",
+    "Context JSON file adds one write per run; retained for audit but may confuse users unfamiliar with its purpose (mitigated by docstring/comment)",
+    "Timeout of 5 s must not be triggered by legitimate reports; validator is fast but future report growth could exceed if implementation is refactored",
+    "Combined telemetry field must be clearly labeled as non-blocking to avoid misinterpretation",
+    "Backward compat with Phase 1 CLI (no --context) must remain — validator MUST NOT require --context",
+    "If harness spawn logic differs subtly between platforms (macOS/Linux), integration helper module must handle both",
+    "Not-evaluable classification depends on harness context correctness; a bug in harness context construction could hide real Appendix omissions — mitigated by cross-checking capture_scope enumeration explicitly"
+  ],
+  "open_questions": [],
+  "boundaries_respected": {
+    "no_implementation": true,
+    "no_code_change": true,
+    "no_prompt_change": true,
+    "no_generation": true,
+    "no_fixture_run": true,
+    "no_llm_api_call": true,
+    "no_checker_change": true,
+    "no_r1_relaxation": true,
+    "no_r2_relaxation": true,
+    "no_new_match_tier": true,
+    "no_baseline_mutation": true,
+    "no_promotion": true,
+    "no_blocking_promotion": true,
+    "no_agentops_5f_promote": true,
+    "no_pipeline_change": true,
+    "no_agent_scripts_change": true,
+    "no_threshold_change": true,
+    "no_retry_behavior_added": true,
+    "no_c_d_e_run": true,
+    "no_a_e_suite": true,
+    "no_pdf_ingestion": true,
+    "no_openai_api": true,
+    "no_report_md_or_screenshot_committed": true,
+    "no_secret_committed": true,
+    "no_env_or_vercel_or_package_or_lockfile_or_workflow_change": true,
+    "no_push": true,
+    "no_deploy": true,
+    "cost_usd": 0
+  }
+}
