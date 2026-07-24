@@ -1,0 +1,278 @@
+{
+  "schema_version": "0.1-design",
+  "loop": "AgentOps-5e-followup-prompt-refinement-design",
+  "generated_by": "AgentOps-5e-followup-prompt-refinement-design (2026-07-24_run_02) · inspection only",
+  "negative_experiment": {
+    "task_id": "2026-07-24_run_01",
+    "rejected_impl_commit": "11c581c",
+    "validation_commit": "fbcc766",
+    "rollback_commit": "3957e87",
+    "decision_verdict": "revise",
+    "cost_usd_spent": 0.10,
+    "fixture_a": {
+      "run_id": "20260724T010632Z_fixture-A",
+      "legacy_verdict": "green",
+      "exit_code": 0,
+      "qi_verdict": "red",
+      "red_reasons": ["Evidence Appendix missing while report contains evidence/citation language"],
+      "counts": {"quote_candidates": 19, "evidence_entries": 0, "fabricated_or_unmatched_quotes": 0, "terminal_punctuation_only_matches": 0},
+      "jd_000201_result": "not_cited"
+    },
+    "fixture_b": {
+      "run_id": "20260724T010756Z_fixture-B",
+      "legacy_verdict": "green",
+      "exit_code": 0,
+      "qi_verdict": "red",
+      "red_reasons": ["Evidence Appendix missing while report contains evidence/citation language"],
+      "counts": {"quote_candidates": 21, "evidence_entries": 0, "fabricated_or_unmatched_quotes": 0, "terminal_punctuation_only_matches": 0},
+      "jd_000201_result": "not_cited"
+    }
+  },
+  "omission_mechanism": {
+    "supported_findings": [
+      "post-patch A (20260724T010632Z) evidence_entries dropped to 0 from pre-patch A stability 5 (20260723T042627Z)",
+      "post-patch B (20260724T010756Z) evidence_entries dropped to 0 from pre-patch B diagnostics 5 (20260723T160538Z)",
+      "both post-patch runs continued producing 19-21 double-quoted spans (quote_candidates) — model did not stop quoting entirely, only stopped using the `Evidence quote: \"TEXT\" — Company, jd_XXXXXX.` recognized citation format",
+      "both post-patch runs dropped the Evidence Appendix entirely",
+      "no checker/parser/harness change occurred; therefore the change in output shape is entirely on the model-generation side",
+      "R2 terminal-punctuation-only fires dropped to 0 in both post-patch runs, consistent with zero recognized citation-format quotes rather than a checker defect"
+    ],
+    "inferences_plausible": [
+      "the patch added strong DO NOT clauses (paraphrase, grammar repair, ellipsis, word add/remove) plus a self-check requiring exact-substring verification with 'shorten OR replace' — 'replace' left omission as a valid safe-compliance path",
+      "pre-existing prompt language for the Appendix was permissive ('End the report with a short evidence appendix listing the JDs cited') with no MUST, no explicit heading contract, and no minimum count — the patch increased citation risk without tightening structural obligation",
+      "the top-5-gaps bullet template says 'quote a phrase if useful' and 'One evidence quote from a real JD (give the company)' — neither is worded as mandatory; combined with new negative constraints, the model chose the safest compliance path (omission)",
+      "the model appears to have interpreted 'if a quote is not exact, shorten or replace it with an exact contiguous source span' as permission to substitute a shorter double-quoted phrase in free-form prose that no longer matches the checker regex"
+    ],
+    "unknowns": [
+      "whether other Sonnet 4.6 samples with different temperature or system-instruction placement would exhibit the same behavior",
+      "whether the Evidence Appendix would have been dropped without the self-check clause (only the combined patch was tested)",
+      "whether adding a positive mandatory example without any negative constraints would alone suffice, versus mandatory-structure plus verbatim-contract together",
+      "whether the observed omission is stable across many runs or a probabilistic edge case that would sometimes still emit citations"
+    ]
+  },
+  "healthy_report_evidence_counts": [
+    {"run_id": "20260723T042627Z_fixture-A", "evidence_entries": 5, "qi_verdict": "amber", "note": "5d-stability healthy A"},
+    {"run_id": "20260723T160538Z_fixture-B", "evidence_entries": 5, "qi_verdict": "red_R1", "note": "5d-b-timeout-diagnostics healthy B"},
+    {"run_id": "20260723T035644Z_fixture-A", "evidence_entries": 0, "qi_verdict": "red_appendix_missing", "note": "5d A — rare pre-patch outlier where model omitted Appendix intermittently"},
+    {"run_id": "20260724T010632Z_fixture-A", "evidence_entries": 0, "qi_verdict": "red_appendix_missing", "note": "5e-implement post-patch"},
+    {"run_id": "20260724T010756Z_fixture-B", "evidence_entries": 0, "qi_verdict": "red_appendix_missing", "note": "5e-implement post-patch"}
+  ],
+  "healthy_evidence_count_norm": 5,
+  "recommended_minimum_evidence_count": 5,
+  "recommended_minimum_evidence_count_rationale": "healthy runs consistently produce 5 evidence entries because the current output has 5 numbered gap items, each with 'One evidence quote from a real JD' — N=5 matches the existing structural convention (one quote per gap) without inflating verbosity or introducing filler",
+  "current_contract": {
+    "prompt_file": "src/lib/prompts.ts::reportSystemPrompt",
+    "structural_instructions_evidence": [
+      {"line": 79, "text": "Allowed: quoting language from a specific JD in the evidence list (with the jd_id / company tag), since the user can verify it in the appendix.", "mandatory": false, "note": "PERMISSIVE — 'allowed' not required"},
+      {"line": 95, "text": "Why it's a gap for THIS user (what's missing from THIS resume — quote a phrase if useful)", "mandatory": false, "note": "OPTIONAL — 'if useful'"},
+      {"line": 97, "text": "One evidence quote from a real JD (give the company)", "mandatory_implied": true, "mandatory_explicit": false, "note": "under 'For each gap' — implies 1 per gap = 5 total but never labeled MUST"},
+      {"line": 119, "text": "End the report with a short evidence appendix listing the JDs cited (jd_id + company + title only).", "mandatory": false, "note": "PERMISSIVE — no MUST, no explicit heading, no format spec, easy to skip"}
+    ],
+    "structural_gaps": [
+      "no `MUST` wording for any evidence element",
+      "no minimum count stated for `Evidence quote:` lines",
+      "no explicit `## Evidence Appendix` heading required",
+      "no prohibition against omission when exact quoting is difficult",
+      "no requirement to shorten instead of omit",
+      "no format specification for the `Evidence quote:` line as an output contract (checker regex expectation lives only in the checker)",
+      "positive example absent"
+    ]
+  },
+  "structural_invariants": [
+    {"id": "S1", "level": "must", "text": "final report MUST include a section headed `## Evidence Appendix`"},
+    {"id": "S2", "level": "must", "text": "report MUST include at least 5 `Evidence quote: \"TEXT\" — Company, jd_XXXXXX.` lines, one per numbered gap in the top-5 gaps section"},
+    {"id": "S3", "level": "must", "text": "every major gap MUST cite at least one jd_id via the `Evidence quote:` line under that gap"},
+    {"id": "S4", "level": "must", "text": "each evidence line MUST use the exact format `Evidence quote: \"TEXT\" — Company, jd_XXXXXX.` (with straight double quotes, em/en dash, comma, and jd_XXXXXX suffix)"},
+    {"id": "S5", "level": "must", "text": "Evidence Appendix MUST list every cited jd_id from body citations, with jd_id + company + title columns; duplicates de-duplicated"},
+    {"id": "S6", "level": "must", "text": "no required evidence element may be omitted because an exact full sentence is unavailable — use a shorter exact fragment instead"}
+  ],
+  "faithfulness_invariants": [
+    {"id": "F1", "level": "must", "text": "every quoted span must be one exact contiguous substring of the cited JD body"},
+    {"id": "F2", "level": "must", "text": "no ellipsis (`...` or `…`) inside a quote to bridge separated source spans"},
+    {"id": "F3", "level": "must", "text": "no grammar repair inside quotation marks"},
+    {"id": "F4", "level": "must", "text": "no paraphrase inside quotation marks"},
+    {"id": "F5", "level": "must", "text": "no insertion, deletion, or replacement of words, tense, plurality, articles, or conjunctions inside quotation marks"},
+    {"id": "F6", "level": "must", "text": "explanatory text must remain outside quotation marks"},
+    {"id": "F7", "level": "allowed", "text": "grammatically incomplete source fragments are explicitly allowed and preferred over stitched-together spans"}
+  ],
+  "completion_invariants": [
+    {"id": "C1", "level": "must", "text": "before final output, verify the required 5 `Evidence quote:` lines exist"},
+    {"id": "C2", "level": "must", "text": "before final output, verify the `## Evidence Appendix` section exists"},
+    {"id": "C3", "level": "must", "text": "before final output, verify every quoted string is exact (character-for-character) in the supplied body for the cited jd_id"},
+    {"id": "C4", "level": "must", "text": "before final output, verify every cited jd_id exists in the supplied EVIDENCE JDs list"},
+    {"id": "C5", "level": "must", "text": "failure to find a long exact quote MUST lead to a shorter exact quote from the same source, not omission"},
+    {"id": "C6", "level": "must", "text": "omission of any required evidence element is invalid output; the self-check MUST NOT accept a report that lacks the required structure"}
+  ],
+  "options": [
+    {"id": "A_refined_prompt_only", "summary": "mandatory structure + exact quote rules + positive example + shorter-fragment fallback + final checklist framed as omission-invalid", "structural_preservation": "high", "exactness_preservation": "high", "impl_size": "small (~40 lines of prompt text in one file)", "parser_checker_impact": "zero", "cost_usd": 0.10, "op_complexity": "low", "failure_mode": "model still probabilistically omits under stress; needs paid A/B to confirm", "auditability": "high", "recommended": true},
+    {"id": "B_prompt_plus_output_skeleton", "summary": "prewrite required headings and evidence slots in the output skeleton (positive slot-filling)", "structural_preservation": "very high", "exactness_preservation": "high (same rules as A)", "impl_size": "small-medium (~60 lines of prompt text)", "parser_checker_impact": "zero if skeleton uses existing Markdown shape", "cost_usd": 0.10, "op_complexity": "low", "failure_mode": "over-prescriptive skeleton may reduce report flexibility", "auditability": "very high", "recommended_as_secondary_lite": true, "note": "the user-suggested B-lite variant is Option A + a mandatory Appendix heading + a mandatory 5-line evidence count enforcement in the skeleton — this is what the recommended design (below) actually adopts"},
+    {"id": "C_structured_JSON_generation", "summary": "model emits JSON quote+interpretation+jd_id triples; server renders Markdown", "structural_preservation": "guaranteed", "exactness_preservation": "very high", "impl_size": "large (streaming JSON + server render + client update + harness)", "parser_checker_impact": "high (report shape changes)", "cost_usd": 0.30, "op_complexity": "high", "failure_mode": "large migration risk", "auditability": "very high", "recommended": false, "reason_deferred": "too large for first iteration; keep for later if A/B insufficient"},
+    {"id": "D_runtime_validation_regenerate", "summary": "server-side structural check + automatic regeneration if Appendix or 5 quotes missing", "structural_preservation": "guaranteed", "exactness_preservation": "high (relies on prompt still)", "impl_size": "medium", "parser_checker_impact": "medium (adds retry pathway)", "cost_usd": ">$0.20 per report worst-case (retry cost)", "op_complexity": "medium", "failure_mode": "implicit retry violates 'no retry behavior' rule locked in prior DECISIONs", "auditability": "medium", "recommended": false, "reason_rejected": "not authorized under current no-retry policy; would need separate DECISION"},
+    {"id": "E_deterministic_span_extraction", "summary": "model outputs (jd_id, start_index, end_index) tuples; server slices exact source text", "structural_preservation": "guaranteed", "exactness_preservation": "guaranteed", "impl_size": "very large (model must reliably locate byte offsets in supplied JD body)", "parser_checker_impact": "very high", "cost_usd": ">$0.30", "op_complexity": "very high", "failure_mode": "model offset accuracy unproven at scale", "auditability": "very high", "recommended": false, "reason_deferred": "too large; keep for later"}
+  ],
+  "recommended_design": {
+    "primary": "Option B-lite = Option A + mandatory skeleton enforcement",
+    "rationale": "smallest surface that fixes both prior failures: adds mandatory `## Evidence Appendix` heading + mandatory 5 `Evidence quote:` lines + shorter-fragment-over-omission fallback + positive example + verbatim contract, while preserving current Markdown, parser regex, checker, harness, R1, R2",
+    "parser_checker_impact": "zero",
+    "cost_first_paid_validation_usd": 0.10,
+    "why_not_pure_A": "prior implement loop demonstrated pure A-style (verbatim + self-check) without mandatory structure led to omission; the fix must add positive obligation, not just negative constraints",
+    "why_not_C_D_E": "all deferred as too large or violating current no-retry policy"
+  },
+  "draft_contract": {
+    "target_file": "src/lib/prompts.ts::reportSystemPrompt",
+    "insertion_strategy": "add one CRITICAL block near existing evidence and company-specific claim instructions AND tighten existing lines 95/97/119 with MUST wording; do NOT remove any existing rule",
+    "part_1_mandatory_structure": [
+      "The final report MUST include a section headed exactly `## Evidence Appendix`.",
+      "The Evidence Appendix MUST list each cited jd_id once with columns jd_id, company, title (tab or `|` separated).",
+      "The 'Your top 5 gaps' section MUST contain 5 `Evidence quote:` lines total (one per gap) in this EXACT format: `Evidence quote: \"TEXT\" — Company, jd_XXXXXX.` (straight double quotes, em-dash, comma, jd_XXXXXX suffix).",
+      "Omission of any required evidence element is INVALID output. Never omit an Evidence quote line because exact quoting is difficult — use a shorter exact fragment from the same JD instead."
+    ],
+    "part_2_exact_quote_rules": [
+      "Text inside quotation marks must be one contiguous substring of the cited JD body, copied character-for-character.",
+      "Do not paraphrase, repair grammar, or bridge separated spans with ellipsis inside quotation marks.",
+      "Do not add, remove, or change words, tense, plurality, articles, or conjunctions inside quotation marks.",
+      "Fragmentary source text is valid inside quotes; put explanation and grammatical framing OUTSIDE the quotation marks."
+    ],
+    "part_3_shorter_fragment_fallback": [
+      "If a complete sentence cannot be quoted exactly, use a shorter exact fragment from the same JD.",
+      "A 5-word exact fragment beats a 20-word paraphrase.",
+      "A 5-word exact fragment ALSO beats omission — never omit the required Evidence quote line."
+    ],
+    "part_4_final_self_check": [
+      "Before finalizing, verify ALL of the following:",
+      "- 5 `Evidence quote:` lines exist (one per numbered gap)",
+      "- `## Evidence Appendix` section exists and lists each cited jd_id once",
+      "- every quoted string appears exactly (character-for-character) in the supplied body text for the cited jd_id",
+      "- every cited jd_id exists in the supplied EVIDENCE JDs list",
+      "If any of these is not satisfied, add or shorten quotes until all 4 checks pass. Do NOT publish a report that omits the required structure."
+    ],
+    "positive_example": {
+      "purpose": "demonstrate short-fragment acceptance and interpretation-outside-quotes shape",
+      "example_text": "Evidence quote: \"agentic RAG at scale\" — ExampleCo, jd_999999. This phrase shows the archetype expects hands-on production experience with retrieval-plus-tool-use, not just prompt engineering.",
+      "characteristics": ["short exact contiguous fragment inside quotes (3 words)", "explanatory prose outside quotes", "exact citation format", "synthetic jd_id to avoid proprietary content"]
+    },
+    "negative_examples": {
+      "purpose": "demonstrate what does NOT count as valid",
+      "examples": [
+        {"anti_pattern": "ellipsis bridging", "example": "Evidence quote: \"agentic RAG at scale ... hands-on production\" — ExampleCo, jd_999999.", "why_invalid": "combines two non-contiguous source spans via ellipsis"},
+        {"anti_pattern": "grammar repair", "example": "Evidence quote: \"agentic RAG working at scale\" — ExampleCo, jd_999999.", "why_invalid": "inserts 'working' to grammar-repair source phrase 'agentic RAG at scale'"},
+        {"anti_pattern": "omission", "example": "Under gap #3: [no Evidence quote line at all]", "why_invalid": "structural mandate requires 5 total; omission is invalid"}
+      ]
+    }
+  },
+  "instruction_hierarchy": {
+    "system_level_critical_contract": "one new CRITICAL block near lines 79-80 covering both structure and exactness",
+    "section_level_tightening": "in the 'Your top 5 gaps' bullet template (line 97), replace 'One evidence quote from a real JD (give the company)' with mandatory-labeled MUST wording that spells out the exact format",
+    "output_skeleton_tightening": "replace line 119 with a MUST-labeled `## Evidence Appendix` heading contract",
+    "final_checklist_placement": "at end of prompt, immediately before the closing backtick — 4-bullet mandatory checklist",
+    "duplication_policy": "structure and exactness rules stated once in critical block; specific format restated in section template (line 97) and in checklist — controlled repetition is fine, avoid restating the DO NOT list 4 times",
+    "omission_prohibition_placement": "must appear in the critical block AND the checklist — closes the escape path"
+  },
+  "static_validation_plan": {
+    "kind": "future $0 static assertions in a separate implement loop; not added here",
+    "checks": [
+      "prompt contains `## Evidence Appendix`",
+      "prompt contains `MUST` next to `Evidence quote`",
+      "prompt contains `MUST` next to Evidence Appendix heading",
+      "prompt contains `at least 5` OR `5 Evidence quote:` mandatory-count phrasing",
+      "prompt contains `Evidence quote: \\\"` and `— ` (em-dash) and `jd_` format string",
+      "prompt contains shorter-fragment-fallback wording (`shorter exact fragment`)",
+      "prompt contains omission-is-invalid wording (`omission`, `invalid`, `never omit`)",
+      "prompt contains exact-substring self-check wording",
+      "prompt contains positive short-fragment example",
+      "prompt contains negative example(s) for ellipsis bridging and grammar repair",
+      "output skeleton still matches checker regex `Evidence quote: \"TEXT\" — Company, jd_XXXXXX.`"
+    ]
+  },
+  "future_structural_validator_concept": {
+    "kind": "future separate design loop; not authorized now",
+    "shape": "post-generation deterministic check on the emitted report.md text",
+    "fails_run_if": ["`## Evidence Appendix` heading missing", "fewer than 5 `Evidence quote:` regex matches", "any Appendix jd_id absent from body citations", "any body-cited jd_id absent from Appendix"],
+    "does_not": ["rewrite output", "retry automatically", "invoke LLM"],
+    "budget_impact": "zero at generation time; hard-fails downstream telemetry",
+    "gating_note": "if adopted, promotes structural checks from telemetry to blocking — requires separate DECISION"
+  },
+  "future_paid_validation_plan": {
+    "authorized_here": false,
+    "requires_separate_task_and_decision": true,
+    "stages": [
+      "apply refined prompt in src/lib/prompts.ts (small diff)",
+      "add deterministic $0 tests per static_validation_plan",
+      "TypeScript typecheck",
+      "run Fixture A exactly once (no retries)",
+      "run Fixture B exactly once (no retries)"
+    ],
+    "estimated_cost_usd": 0.10,
+    "success_criteria": [
+      "Evidence Appendix present in A and B",
+      "recognized evidence_entries >= 5 in A and B",
+      "no fabricated_or_unmatched quotes",
+      "jd_000201 either correctly cited with exact contiguous quote OR legitimately not selected while other valid evidence remains",
+      "report remains legacy GREEN",
+      "R1 unchanged in checker code",
+      "R2 unchanged in checker code",
+      "checker / parser / harness unchanged",
+      "no baseline mutation",
+      "QI remains telemetry-only"
+    ],
+    "jd_000201_nuance": "success does NOT require jd_000201 to be cited every run; success means it must not be incorrectly quoted if selected; omission is acceptable only if the overall evidence apparatus remains healthy",
+    "failure_criteria": [
+      "Appendix missing",
+      "zero recognized evidence entries",
+      "fewer than 5 recognized evidence entries",
+      "new unmatched quotes appear",
+      "citation format malformed",
+      "checker weakened",
+      "model again avoids all evidence",
+      "report becomes structurally invalid"
+    ]
+  },
+  "open_questions_with_recommendations": {
+    "Q1_mandatory_evidence_count": {"question": "Should a minimum count of Evidence quote lines be mandatory?", "recommendation": "YES — omission of the whole apparatus was the observed failure mode; mandatory count closes that escape path"},
+    "Q2_minimum_count_value": {"question": "What should the minimum count be?", "recommendation": "5 (one per numbered gap) — matches existing 'Your top 5 gaps' structural convention and prior healthy-run norm; do not introduce filler citations by choosing 6+"},
+    "Q3_mandatory_appendix": {"question": "Should Evidence Appendix be explicitly mandatory?", "recommendation": "YES with an exact `## Evidence Appendix` heading and column contract; current 'End the report with a short evidence appendix' is too permissive"},
+    "Q4_omission_forbidden": {"question": "Should omission because of quote difficulty be explicitly forbidden?", "recommendation": "YES — this is the critical fix; must appear in both the critical block and the final checklist"},
+    "Q5_positive_example": {"question": "Should a positive short-fragment example be included?", "recommendation": "YES — one compact synthetic example showing exact short fragment inside quotes + explanation outside; anchors format by imitation and demonstrates the shorter-fragment fallback"},
+    "Q6_negative_example": {"question": "Should a negative ellipsis-bridging example be included?", "recommendation": "YES — 2-3 short synthetic negative examples (ellipsis bridging, grammar repair, omission); explicit anti-patterns prevent re-emergence of prior failure"},
+    "Q7_self_check_ordering": {"question": "Should the self-check come after structural completion checks?", "recommendation": "YES — the checklist should verify structural presence FIRST (Appendix + 5 lines) then exactness (character-for-character match); this ordering prevents 'passed exactness by omitting everything'"},
+    "Q8_future_structural_validator": {"question": "Should a future structural validator fail zero-evidence or missing-Appendix runs?", "recommendation": "YES eventually, but in a separate design loop; do not couple this design to a checker-side change; prompt-only first"},
+    "Q9_first_impl_prompt_only": {"question": "Should the first implementation remain prompt-only?", "recommendation": "YES — matches minimum-first / anti-overengineering principle; keeps checker/parser/harness untouched; enables clean revert if it fails again"},
+    "Q10_paid_ab_before_promotion": {"question": "Is another paid A/B run required before any promotion-related work?", "recommendation": "YES — no promotion-related work (5f-promote, baseline promotion, blocking QI) until at least one paid A+B loop demonstrates the refined prompt fixes both structure and exactness"}
+  },
+  "boundaries_respected": {
+    "no_implementation": true,
+    "no_prompt_change": true,
+    "no_code_change": true,
+    "no_generation": true,
+    "no_fixture_run": true,
+    "no_llm_api_call": true,
+    "no_checker_change": true,
+    "no_parser_change": true,
+    "no_harness_change": true,
+    "no_r1_relaxation": true,
+    "no_r2_relaxation": true,
+    "no_edit_distance": true,
+    "no_fuzzy_matching": true,
+    "no_llm_judge": true,
+    "no_post_generation_replacement": true,
+    "no_silent_quote_rewriting": true,
+    "no_baseline_mutation": true,
+    "no_baseline_promotion": true,
+    "no_blocking_promotion": true,
+    "no_agentops_5f_promote": true,
+    "no_pipeline_change": true,
+    "no_agent_scripts_change": true,
+    "no_threshold_change": true,
+    "no_retry_behavior_added": true,
+    "no_c_d_e_run": true,
+    "no_a_e_suite": true,
+    "no_pdf_ingestion": true,
+    "no_openai_api": true,
+    "no_report_md_or_screenshot_committed": true,
+    "no_secret_committed": true,
+    "no_env_or_vercel_or_package_or_lockfile_or_workflow_change": true,
+    "no_push": true,
+    "no_deploy": true,
+    "cost_usd": 0
+  }
+}
