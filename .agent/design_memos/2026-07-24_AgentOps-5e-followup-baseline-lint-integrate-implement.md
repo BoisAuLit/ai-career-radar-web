@@ -108,24 +108,75 @@ exit 2 (no artifact written).
 
 ## 8 · Capture-Context Truth Table
 
-Constructed in `scripts/report-regression-local.mjs` from harness facts
-only. **Structural output is NEVER used** to derive context; that would
-be a circular evaluation.
+**Corrected 2026-07-24_run_07** — the initial implementation contained
+a circular dependency: `capture_complete` was derived in part from
+harness-side structural-content signals (an evidence-appendix regex
+hit and a section-marker completeness count). That would have made a
+fully captured but structurally broken report look "not_evaluable"
+instead of RED — defeating the validator's purpose.
+
+The correction extracts the derivation into a pure helper
+`deriveCaptureCompleteness()` in
+`scripts/lib/structural-evidence-integration.mjs` which consumes ONLY
+category A (transport / capture-mechanism) facts.
+
+### Capture signal categorization
+
+| signal | provenance | category |
+|---|---|---|
+| `completionState` | Playwright wait outcome | **A** — transport |
+| `reportText` non-empty | extractReportText return | **A** — transport |
+| `capture.selectedLength > 0` | chosen candidate length | **A** — transport |
+| `capture.scope` (selector or `body_fallback`) | container identifier | **A** — transport |
+| `capture.fallbackUsed` | branch flag | **A** — transport |
+| `reportCaptureError === null` | extraction exception state | **A** — transport |
+| `capture.selectedHasEvidence` | `EVIDENCE_APPENDIX_RE.test(text)` | **B** — structural content ⛔ |
+| `capture.selectedMarkerHits` | count of REPORT_SECTION_MARKERS in text | **B** — structural content ⛔ |
+| `REPORT_SECTION_MARKERS` | product section headings | **B** — structural content ⛔ |
+| structural validator output | recursive | **B** — structural content ⛔ |
+| Appendix presence in report | recursive | **B** — structural content ⛔ |
+| citation count | recursive | **B** — structural content ⛔ |
+
+**Only category A is allowed to determine `capture_complete` and
+`expected_sections_captured`.**
+
+### Corrected truth table
+
+`captureComplete = expectedSectionsCaptured = mechanismReached`, where:
+
+```
+mechanismReached =
+  completionState === "success"
+  AND reportCaptureError === null
+  AND typeof reportText === "string" AND reportText.length > 0
+  AND Number.isFinite(selectedLength) AND selectedLength > 0
+  AND typeof scope === "string" AND scope !== "unset"
+```
 
 | harness state | capture_complete | expected_sections_captured |
 |---|---|---|
-| completion=success + reportText present + selectedLength>0 + all 5 markers matched + evidence-appendix regex hit | **true** | **true** |
-| completion=success + fallback captured all 5 markers + evidence | **true** | **true** |
-| partial capture (fewer markers) or missing evidence-appendix regex hit | **false** | **false** |
+| completion=success + reportText non-empty + selectedLength>0 + scope set | **true** | **true** |
 | generation error / hard timeout / navigation error | **false** | **false** |
-| empty reportText | **false** | **false** |
-| unknown state | **false** | **false** |
+| completion=success + reportText empty | **false** | **false** |
+| extraction exception (reportCaptureError non-null) | **false** | **false** |
+| scope=`"unset"` (never ran extraction) | **false** | **false** |
+| **fallback but complete container** | **true** | **true** |
+| **complete capture but Appendix missing in report** | **true** | **true** (→ validator returns RED) |
+| **complete capture but zero citations** | **true** | **true** (→ validator returns RED) |
+| **complete capture but only 4 gaps** | **true** | **true** (→ validator returns RED) |
 
-`capture_complete` is derived from `completionState === "success"` AND
-`reportText` non-empty AND `capture.selectedLength > 0` AND
-`capture.selectedMarkerHits === REPORT_SECTION_MARKERS.length` AND
-`capture.selectedHasEvidence` — never from structural-validator output
-or Appendix presence in the report.
+### Scope mapping
+
+Harness `capture.scope` values (e.g. `"[data-testid*='report']"`,
+`"main section"`, `"body_fallback"`) are mapped into the validator's
+accepted scope set `{"main section", "body"}` at the boundary:
+
+- `fallbackUsed === true` → `"body"`
+- otherwise → `"main section"` (the chosen candidate came from a
+  report-container selector)
+
+The original harness scope string is retained in the metadata
+(`metadata.capture_scope`) and shown in `verdict.md` for observability.
 
 ## 9 · Capture-Sufficiency Rules
 
@@ -325,9 +376,34 @@ Display-only — never inserted into `checks[]`, never used for
 - Phase 1 `scripts/test-structural-evidence-check.mjs`: **40/40 PASS**
   (26 Phase 1 preserved + 14 CTX1-CTX14).
 - Phase 2 `scripts/test-structural-evidence-integration.mjs`:
-  **20/20 PASS** (I1-I20).
+  **26/26 PASS** (I1-I20 original + I21-I26 evaluability-regression
+  added in the 2026-07-24_run_07 correction).
+- Total: **66/66 PASS**.
 - `npx tsc --noEmit`: exit 0.
 - `node --check` on all 5 changed / new `.mjs` files: OK.
+
+### I21-I26 (correction regression coverage)
+
+- **I21** · complete capture + missing Appendix → structural RED
+  (evaluable) · exit_code=1 · legacy verdict unchanged.
+- **I22** · complete capture + zero citations → structural RED.
+- **I23** · complete capture + only 4 gaps → structural RED
+  (`observed_gap_count_4_not_5`).
+- **I24** · true truncated capture (`completion_state="hard_timeout"`,
+  `selectedLength=0`, `scope="unset"`) → `deriveCaptureCompleteness`
+  returns `captureComplete=false`; end-to-end
+  `structural.verdict=not_evaluable`.
+- **I25** · fallback captured a complete container
+  (`fallbackUsed=true`, `scope="body_fallback"`, complete text) →
+  `captureComplete=true` · `captureScopeForContext="body"` · normal
+  evaluation (GREEN for a well-formed report).
+- **I26** · circularity closed · static source assertions:
+  `runStructuralEvidence({...})` invocation region does NOT reference
+  `selectedHasEvidence`, `selectedMarkerHits`, `REPORT_SECTION_MARKERS`,
+  or `EVIDENCE_APPENDIX_RE`; the `deriveCaptureCompleteness({...})`
+  call region does NOT reference any of them; the helper module itself
+  does NOT reference any of them (docstring rephrased to avoid the
+  banned identifier tokens).
 
 ## 23 · Phase 1 Backward Compatibility
 
@@ -356,10 +432,9 @@ I20 verifies:
 | step | command | result |
 |---|---|---|
 | Phase 1 tests | `node scripts/test-structural-evidence-check.mjs` | **40 passed, 0 failed** (exit 0) |
-| Phase 2 tests | `node scripts/test-structural-evidence-integration.mjs` | **20 passed, 0 failed** (exit 0) |
+| Phase 2 tests | `node scripts/test-structural-evidence-integration.mjs` | **26 passed, 0 failed** (exit 0) |
 | Typecheck | `npx tsc --noEmit` | exit 0 |
-| Syntax check | `node --check <5 files>` | all OK |
-| Diff scope | `git diff --name-only` | 3 modified files, all in `scripts/` |
+| Syntax check | `node --check` (helper + harness + Phase 2 tests) | all OK |
 | QI checker diff | `git diff scripts/quote-integrity-check.mjs` | 0 lines |
 | `src/` diff | `git diff src/` | 0 lines |
 | baseline diff | `git diff .agent/regression_baselines/` | 0 lines |
@@ -367,6 +442,12 @@ I20 verifies:
 | Timeout test | I12 (500ms cap, 4s sleep stub) | validator_timeout confirmed |
 | No-retry test | I19 (spawn counter) | exactly 1 spawn confirmed |
 | Process-exit test | I20 (static assertion) | `process.exit(classification.exit)` intact |
+| **Missing-Appendix RED test** | **I21** (complete capture, no Appendix) | structural RED · exit_code=1 · **evaluable** |
+| **Zero-citations RED test** | **I22** (complete capture, no citations) | structural RED · exit_code=1 · **evaluable** |
+| **4-gap RED test** | **I23** (complete capture, 4 gaps) | structural RED · exit_code=1 · **evaluable** |
+| **True truncation test** | **I24** (hard_timeout, selectedLength=0) | `captureComplete=false` · **not_evaluable** |
+| **Fallback complete test** | **I25** (body fallback, complete container) | `captureComplete=true` · normal GREEN evaluation |
+| **Circularity-closed test** | **I26** (source assertions) | no banned identifiers in the invocation / derivation / helper |
 
 ## 26 · Baseline Boundaries
 

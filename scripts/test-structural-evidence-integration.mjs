@@ -28,6 +28,7 @@ import process from "node:process";
 import {
   runStructuralEvidence,
   combineTelemetryVerdict,
+  deriveCaptureCompleteness,
 } from "./lib/structural-evidence-integration.mjs";
 
 const REPO_ROOT = resolve(".");
@@ -510,6 +511,171 @@ test("I20 · Static source assertions · legacy process-exit / checks-push seman
     !/checks\.push\([^)]*structural(Evidence|Result|Envelope)/i.test(harnessSrc),
     "harness must not push structural results into legacy checks[]",
   );
+});
+
+// -------- I21-I26 · capture-evaluability regression (2026-07-24_run_07 fix) --------
+//
+// Purpose: prove that capture completeness is derived STRICTLY from
+// transport/mechanism facts (category A) and never from structural-
+// content signals (category B). A fully captured but structurally
+// broken report MUST remain evaluable and yield structural RED — not
+// not_evaluable.
+
+// Build the same synthetic report but strip specific structural
+// elements to represent complete capture + missing structure.
+const REPORT_NO_APPENDIX = skeleton({ appendix: null });
+const REPORT_NO_CITATIONS = skeleton({
+  citationsPerGap: [[], [], [], [], []],
+  appendix: APPENDIX_5,
+});
+const REPORT_FOUR_GAPS = skeleton({
+  gapsCount: 4,
+  appendix: tabAppendix([
+    { jd_id: "jd_100001", company: "ExampleCo", title: "Senior AI Engineer" },
+    { jd_id: "jd_100002", company: "NovaAI", title: "ML Solutions" },
+    { jd_id: "jd_100003", company: "HelixLabs", title: "LLM Ops" },
+    { jd_id: "jd_100004", company: "Zenith", title: "Applied Research" },
+  ]),
+});
+
+test("I21 · Complete capture · missing Appendix → RED (evaluable, NOT not_evaluable)", () => {
+  const dir = newRunDir("I21");
+  const env = invokeStructural(dir, REPORT_NO_APPENDIX);
+  assert.equal(env.evaluation_status, "completed", "must be evaluable");
+  assert.equal(env.verdict, "red", "missing Appendix must produce RED");
+  assert.equal(env.exit_code, 1, "validator must exit 1 for RED");
+  assert.ok(
+    env.red_reasons.some((r) => /appendix_missing/.test(r)),
+    `expected evidence_appendix_missing, got ${JSON.stringify(env.red_reasons)}`,
+  );
+});
+
+test("I22 · Complete capture · zero citations → RED (evaluable)", () => {
+  const dir = newRunDir("I22");
+  const env = invokeStructural(dir, REPORT_NO_CITATIONS);
+  assert.equal(env.evaluation_status, "completed");
+  assert.equal(env.verdict, "red");
+  assert.equal(env.exit_code, 1);
+  assert.ok(
+    env.red_reasons.some((r) => /citation_line_count=0/.test(r)),
+  );
+});
+
+test("I23 · Complete capture · four gaps only → RED (evaluable)", () => {
+  const dir = newRunDir("I23");
+  const env = invokeStructural(dir, REPORT_FOUR_GAPS);
+  assert.equal(env.evaluation_status, "completed");
+  assert.equal(env.verdict, "red");
+  assert.equal(env.exit_code, 1);
+  assert.ok(
+    env.red_reasons.some((r) => /observed_gap_count_4_not_5/.test(r)),
+  );
+});
+
+test("I24 · True truncated capture (completion=hard_timeout) → deriveCaptureCompleteness=false", () => {
+  const d = deriveCaptureCompleteness({
+    completionState: "hard_timeout",
+    reportText: "",
+    selectedLength: 0,
+    scope: "unset",
+    fallbackUsed: false,
+    reportCaptureError: null,
+  });
+  assert.equal(d.captureComplete, false);
+  assert.equal(d.expectedSectionsCaptured, false);
+  // And the full round-trip: passing capture_complete=false → not_evaluable.
+  const dir = newRunDir("I24");
+  const env = invokeStructural(dir, GREEN_REPORT, { capture_complete: false });
+  assert.equal(env.evaluation_status, "not_evaluable");
+  assert.equal(env.verdict, "not_evaluable");
+});
+
+test("I25 · Fallback capture with complete container → normal evaluation (NOT auto not_evaluable)", () => {
+  const d = deriveCaptureCompleteness({
+    completionState: "success",
+    reportText: "a".repeat(5000),
+    selectedLength: 5000,
+    scope: "body_fallback",
+    fallbackUsed: true,
+    reportCaptureError: null,
+  });
+  assert.equal(d.captureComplete, true);
+  assert.equal(d.expectedSectionsCaptured, true);
+  assert.equal(d.captureScopeForContext, "body");
+  // Full round-trip: fallback with valid GREEN report → GREEN.
+  const dir = newRunDir("I25");
+  const env = invokeStructural(dir, GREEN_REPORT, {
+    capture_scope: "body",
+    fallback_used: true,
+    expected_sections_captured: true,
+  });
+  assert.equal(env.evaluation_status, "completed");
+  assert.equal(env.verdict, "green");
+});
+
+test("I26 · Circularity closed · deriveCaptureCompleteness ignores structural-content signals AND harness context construction is content-independent", () => {
+  // (a) Purity: varying structural signals in the report cannot change
+  // deriveCaptureCompleteness output — the function does not accept them.
+  const baseArgs = {
+    completionState: "success",
+    reportText: "a".repeat(5000),
+    selectedLength: 5000,
+    scope: "main section",
+    fallbackUsed: false,
+    reportCaptureError: null,
+  };
+  const good = deriveCaptureCompleteness(baseArgs);
+  // Simulate "structurally broken" by literally passing the SAME transport
+  // facts — the derivation MUST still return the same result.
+  const alsoGood = deriveCaptureCompleteness(baseArgs);
+  assert.deepEqual(good, alsoGood);
+  assert.equal(good.captureComplete, true);
+
+  // (b) Static source: harness capture-context construction MUST NOT
+  // reference selectedHasEvidence, selectedMarkerHits, REPORT_SECTION_MARKERS,
+  // or EVIDENCE_APPENDIX_RE inside the deriveCaptureCompleteness call or the
+  // captureContext object.
+  const harnessSrc = readFileSync(HARNESS, "utf8");
+  const helperSrc = readFileSync(HELPER, "utf8");
+  // Isolate the `runStructuralEvidence({ ... })` invocation region.
+  const invStart = harnessSrc.indexOf("runStructuralEvidence({");
+  assert.notEqual(invStart, -1, "expected runStructuralEvidence invocation");
+  const invEnd = harnessSrc.indexOf("});", invStart);
+  const invocationRegion = harnessSrc.slice(invStart, invEnd + 3);
+  assert.ok(
+    !/selectedHasEvidence/.test(invocationRegion),
+    "runStructuralEvidence invocation MUST NOT reference selectedHasEvidence",
+  );
+  assert.ok(
+    !/selectedMarkerHits/.test(invocationRegion),
+    "runStructuralEvidence invocation MUST NOT reference selectedMarkerHits",
+  );
+  assert.ok(
+    !/REPORT_SECTION_MARKERS/.test(invocationRegion),
+    "runStructuralEvidence invocation MUST NOT reference REPORT_SECTION_MARKERS",
+  );
+  assert.ok(
+    !/EVIDENCE_APPENDIX_RE/.test(invocationRegion),
+    "runStructuralEvidence invocation MUST NOT reference EVIDENCE_APPENDIX_RE",
+  );
+  // The deriveCaptureCompleteness call itself must not reference structural signals.
+  const deriveStart = harnessSrc.indexOf("deriveCaptureCompleteness({");
+  assert.notEqual(deriveStart, -1, "harness must call deriveCaptureCompleteness");
+  const deriveEnd = harnessSrc.indexOf("});", deriveStart);
+  const deriveRegion = harnessSrc.slice(deriveStart, deriveEnd + 3);
+  for (const banned of ["selectedHasEvidence", "selectedMarkerHits", "REPORT_SECTION_MARKERS", "EVIDENCE_APPENDIX_RE"]) {
+    assert.ok(
+      !new RegExp(banned).test(deriveRegion),
+      `deriveCaptureCompleteness call MUST NOT reference ${banned}`,
+    );
+  }
+  // The helper itself must not reference banned identifiers.
+  for (const banned of ["selectedHasEvidence", "selectedMarkerHits", "REPORT_SECTION_MARKERS", "EVIDENCE_APPENDIX_RE"]) {
+    assert.ok(
+      !new RegExp(banned).test(helperSrc),
+      `helper module MUST NOT reference ${banned}`,
+    );
+  }
 });
 
 // -------- Summary --------

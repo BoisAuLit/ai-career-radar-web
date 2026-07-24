@@ -94,6 +94,64 @@ function truncateStream(text, max = 500) {
   return trimmed.length > max ? trimmed.slice(0, max) : trimmed;
 }
 
+// -------- Pure capture-completeness derivation (2026-07-24_run_07 fix) --------
+//
+// Circular-dependency correction: the initial Phase 2 implementation
+// derived `capture_complete` from two harness-side structural-content
+// booleans (an evidence-heading regex hit and a section-marker-hit
+// count). That made a fully captured but structurally broken report
+// look "not_evaluable" instead of RED — masking exactly the regression
+// the validator exists to detect.
+//
+// This helper derives capture sufficiency from TRANSPORT / MECHANISM facts
+// ONLY (category A). It MUST NOT reference any content-derived signal:
+//   - the harness-side "has evidence" boolean (evidence-heading regex hit)
+//   - the harness-side section-marker-hit count
+//   - the section-marker enumeration
+//   - any regex targeting evidence structure
+//   - the structural validator's output
+//   - Appendix presence
+//   - citation count
+// Signals in that list are all category B (structural content). Their
+// absence indicates a report regression, not a capture failure.
+//
+// Complete capture + missing Appendix → structural RED (evaluable).
+// Complete capture + zero citations   → structural RED (evaluable).
+// Genuinely truncated / failed capture → not_evaluable.
+//
+// Also maps the harness `capture.scope` (CSS selector strings or
+// `"body_fallback"`) into the validator-accepted scope set
+// `{"main section", "body"}`.
+export function deriveCaptureCompleteness({
+  completionState,
+  reportText,
+  selectedLength,
+  scope,
+  fallbackUsed,
+  reportCaptureError = null,
+} = {}) {
+  const mechanismReached =
+    completionState === "success" &&
+    reportCaptureError === null &&
+    typeof reportText === "string" &&
+    reportText.length > 0 &&
+    Number.isFinite(selectedLength) &&
+    selectedLength > 0 &&
+    typeof scope === "string" &&
+    scope !== "unset";
+  // Scope mapping: fallback captures the whole page body (which strictly
+  // includes the report region). Any specific selector match came from
+  // one of the CANDIDATE_SELECTORS — all of which target a report
+  // container. Both cases yield an accepted validator scope; the specific
+  // selector is retained separately in metadata for observability.
+  const captureScopeForContext = fallbackUsed ? "body" : "main section";
+  return {
+    captureComplete: mechanismReached,
+    expectedSectionsCaptured: mechanismReached,
+    captureScopeForContext,
+  };
+}
+
 // Small pure helper for combined telemetry — exported so harness code and
 // tests can reuse identical rules.
 export function combineTelemetryVerdict(qi, structural) {

@@ -12,10 +12,159 @@
 - **task_path**: `.agent/tasks/2026-07-24_run_07_TASK.md`
 - **memo_path**: `.agent/design_memos/2026-07-24_AgentOps-5e-followup-baseline-lint-integrate-implement.md`
 - **impl_commit**: `bc246d3` (Integrate structural evidence telemetry)
+- **correction_commit**: pending (see § Correction below)
+- **run_report_commits**: `5b1b97b` (initial) · pending (revision)
 
 ## Commits
 
-- `bc246d3` Integrate structural evidence telemetry
+- `bc246d3` Integrate structural evidence telemetry (initial)
+- `5b1b97b` Add RUN_REPORT 2026-07-24_run_07 (initial)
+- **pending** — `Fix structural capture evaluability` (correction, this
+  turn; addresses reviewer-discovered circular dependency).
+
+## Correction (reviewer-discovered)
+
+### Circularity risk
+
+Human + ChatGPT review of the initial implementation flagged that the
+capture-context truth table depended on structural-content signals
+(evidence-appendix regex hit; product section-marker completeness).
+That would have caused a fully captured but structurally broken report
+to be classified as `not_evaluable` instead of `red`, exactly masking
+the regression the validator is intended to detect.
+
+### Provenance inspection
+
+The three suspect signals had these provenances (from
+`scripts/report-regression-local.mjs`):
+
+- **`REPORT_SECTION_MARKERS`** (line 162): array of the report's own
+  product section headings (`Target role`, `What you already have`,
+  `Top 5 gaps`, `Over-prioritizing`, `Highest-leverage next action`).
+  Their absence is itself a structural report regression → **category
+  B (structural content)**.
+- **`EVIDENCE_APPENDIX_RE`** (line 169): regex
+  `/evidence appendix|## evidence/i` — targets the same Appendix
+  heading the structural validator checks → **category B**.
+- **`selectedHasEvidence`** (lines 377, 414, 436): boolean produced
+  by `EVIDENCE_APPENDIX_RE.test(text)` → **category B**.
+- **`selectedMarkerHits`** (lines 374, 413, 435): count of
+  `REPORT_SECTION_MARKERS` present in captured text → **category B**.
+- `selectedLength`, `capture.scope`, `capture.fallbackUsed`,
+  `completionState`, `reportText` → **category A (transport /
+  capture-mechanism facts)**.
+
+`selectedHasEvidence` **was** content-derived, matching the reviewer's
+concern verbatim.
+
+### Additional bug found during inspection
+
+The initial implementation also passed the raw harness `capture.scope`
+value (e.g. `"[data-testid*='report']"`, `"body_fallback"`) directly as
+`capture_scope` in the context envelope. The validator's
+`ACCEPTED_CAPTURE_SCOPES = {"main section", "body"}` would have
+rejected nearly every real production scope as
+`unknown_capture_scope_...` and returned `not_evaluable` — masking
+structural RED even for reports where capture succeeded via a specific
+selector. The correction maps the harness scope into the accepted set
+at the boundary (`fallbackUsed ? "body" : "main section"`).
+
+### Correction
+
+Extracted the derivation into a pure helper
+`deriveCaptureCompleteness()` in
+`scripts/lib/structural-evidence-integration.mjs`, consuming ONLY
+category A facts. Rewired `scripts/report-regression-local.mjs` to
+import and use it. Added six regression tests I21-I26.
+
+### New capture truth table
+
+```
+mechanismReached =
+  completionState === "success"
+  AND reportCaptureError === null
+  AND typeof reportText === "string" AND reportText.length > 0
+  AND Number.isFinite(selectedLength) AND selectedLength > 0
+  AND typeof scope === "string" AND scope !== "unset"
+
+captureComplete            = mechanismReached
+expectedSectionsCaptured   = mechanismReached
+captureScopeForContext     = fallbackUsed ? "body" : "main section"
+```
+
+**No structural-content signal is referenced anywhere in the
+derivation.** Static assertion I26 enforces this in the harness
+invocation region, the `deriveCaptureCompleteness` call region, and
+the helper module.
+
+### New tests (I21-I26)
+
+- **I21** · complete capture + missing Appendix → structural **RED**
+  (evaluable) · exit_code=1 · legacy verdict unchanged.
+- **I22** · complete capture + zero citations → structural **RED**
+  (evaluable) · not `not_evaluable`.
+- **I23** · complete capture + only 4 gaps → structural **RED**
+  (`observed_gap_count_4_not_5`).
+- **I24** · true truncated capture (`completion_state=hard_timeout`,
+  `selectedLength=0`, `scope="unset"`) → `deriveCaptureCompleteness`
+  returns `captureComplete=false`; round-trip →
+  `structural.verdict=not_evaluable`.
+- **I25** · fallback with complete container (`fallbackUsed=true`,
+  `scope="body_fallback"`, `selectedLength=5000`) →
+  `captureComplete=true` · `captureScopeForContext="body"` · normal
+  evaluation returns GREEN for a well-formed report.
+- **I26** · circularity closed · static assertions across the harness
+  invocation region, the `deriveCaptureCompleteness` call region, and
+  the helper module: **none** contain `selectedHasEvidence`,
+  `selectedMarkerHits`, `REPORT_SECTION_MARKERS`, or
+  `EVIDENCE_APPENDIX_RE`.
+
+### Updated test totals
+
+- Phase 1 `scripts/test-structural-evidence-check.mjs`: **40/40 PASS**
+  (unchanged).
+- Phase 2 `scripts/test-structural-evidence-integration.mjs`:
+  **26/26 PASS** (I1-I20 + I21-I26).
+- **Combined 66/66 PASS.**
+- `npx tsc --noEmit`: exit 0.
+- `node --check` on harness, helper, and Phase 2 tests: OK.
+
+### Behavioral outcomes
+
+- **Case A** (complete capture, missing Appendix): structural verdict
+  RED · legacy verdict unchanged · process exit unchanged.
+- **Case B** (complete capture, zero citations): structural verdict
+  RED · legacy verdict unchanged · process exit unchanged.
+- **Case C** (true truncated / failed capture): structural verdict
+  `not_evaluable` · legacy verdict unchanged · process exit unchanged.
+- **Case D** (fallback captured complete container): normal structural
+  evaluation · not automatically `not_evaluable`.
+
+### Not_evaluable now reserved for real capture insufficiency
+
+`not_evaluable` is now emitted only when the harness capture mechanism
+itself failed (completion≠success, extraction exception, empty
+reportText, `scope="unset"`, or fallback context marks
+`expected_sections_captured=false`). Missing structural content in a
+successfully captured report always yields RED — never
+`not_evaluable`.
+
+### Legacy / process-exit preservation
+
+- Legacy `checks[]` unchanged (structural envelope stored in local
+  variable only).
+- `classify(checks)` receives identical set of checks as before.
+- `process.exit(classification.exit)` remains the sole authority.
+- I20 continues to statically assert both facts (unchanged).
+
+### No generation · no baseline mutation · cost $0
+
+- No browser launched. No dev server. No LLM/API call.
+- `git diff scripts/quote-integrity-check.mjs` → 0 lines.
+- `git diff src/` → 0 lines.
+- `git diff .agent/regression_baselines/` → 0 lines.
+- `git diff .agent/scripts/` → 0 lines.
+- Incremental cost this correction: **$0**.
 
 ## Files changed
 
@@ -217,8 +366,9 @@ backward-compat, malformed context JSON, missing context file.
 
 ## Integration tests
 
-`node scripts/test-structural-evidence-integration.mjs` → **20 passed,
-0 failed** (exit 0).
+`node scripts/test-structural-evidence-integration.mjs` → **26 passed,
+0 failed** (exit 0) after the 2026-07-24_run_07 correction added
+I21-I26.
 
 Coverage: I1 GREEN envelope, I2 AMBER, I3 RED-as-telemetry (not
 tool_error), I4 incomplete-capture → not_evaluable, I5 validator

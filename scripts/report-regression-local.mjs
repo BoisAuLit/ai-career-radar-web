@@ -38,6 +38,7 @@ import os from "node:os";
 import {
   runStructuralEvidence,
   combineTelemetryVerdict,
+  deriveCaptureCompleteness,
 } from "./lib/structural-evidence-integration.mjs";
 
 const REPO_ROOT = path.resolve(
@@ -840,17 +841,21 @@ async function main() {
   const structuralSummaryPath = path.join(runDir, "structural_evidence_summary.json");
   const structuralContextPath = path.join(runDir, "structural_evidence_context.json");
   const structuralValidatorPath = path.join(REPO_ROOT, "scripts/structural-evidence-check.mjs");
-  // capture_complete + expected_sections_captured MUST come from harness
-  // facts, never from structural-validator output. See design § 13.
-  const captureCompleteFromHarness =
-    completionState === "success" &&
-    Boolean(reportText) &&
-    capture.selectedLength > 0 &&
-    capture.selectedMarkerHits === REPORT_SECTION_MARKERS.length &&
-    capture.selectedHasEvidence;
-  const expectedSectionsCapturedFromHarness =
-    capture.selectedMarkerHits === REPORT_SECTION_MARKERS.length &&
-    capture.selectedHasEvidence;
+  // 2026-07-24_run_07 correction: capture_complete + expected_sections_captured
+  // MUST come from harness capture-mechanism facts ONLY (category A) — never
+  // from structural-content signals (Appendix presence, evidence-regex hit,
+  // section-marker completeness). Otherwise a complete-but-broken report
+  // becomes not_evaluable instead of RED and the validator is defeated.
+  // See DECISION 2026-07-24_run_07 and helper `deriveCaptureCompleteness`.
+  const reportCaptureError = reportText ? null : "report_text_not_captured";
+  const captureDerivation = deriveCaptureCompleteness({
+    completionState,
+    reportText,
+    selectedLength: capture.selectedLength,
+    scope: capture.scope,
+    fallbackUsed: capture.fallbackUsed,
+    reportCaptureError,
+  });
   const structuralEvidence = runStructuralEvidence({
     validatorPath: structuralValidatorPath,
     reportPath: scratchReportPath,
@@ -858,13 +863,13 @@ async function main() {
     outputPath: structuralSummaryPath,
     contextPath: structuralContextPath,
     captureContext: {
-      capture_scope: capture.scope,
+      capture_scope: captureDerivation.captureScopeForContext,
       fallback_used: Boolean(capture.fallbackUsed),
       completion_state: completionState,
-      capture_complete: captureCompleteFromHarness,
-      report_capture_error: reportText ? null : "report_text_not_captured",
+      capture_complete: captureDerivation.captureComplete,
+      report_capture_error: reportCaptureError,
       report_char_count: reportCharCount,
-      expected_sections_captured: expectedSectionsCapturedFromHarness,
+      expected_sections_captured: captureDerivation.expectedSectionsCaptured,
       source: "report-regression-local",
     },
     summaryPathRelative: `.agent/regression_runs/${runId}/structural_evidence_summary.json`,
@@ -1326,7 +1331,7 @@ async function main() {
     `- **Checker hash**: \`${structuralEvidence.checker_hash || "_none_"}\``,
     `- **Summary**: \`${structuralEvidence.summary_path || "_none_"}\``,
     `- **Context**: \`${structuralEvidence.context_path || "_none_"}\``,
-    `- **Capture scope**: \`${capture.scope}\` · **capture_complete**: ${captureCompleteFromHarness}`,
+    `- **Capture scope**: \`${capture.scope}\` → context.\`${captureDerivation.captureScopeForContext}\` · **capture_complete**: ${captureDerivation.captureComplete} · **fallback_used**: ${Boolean(capture.fallbackUsed)}`,
     `- **Red reasons**: ${structuralEvidence.red_reasons.length}${structuralEvidence.red_reasons.length ? ` — ${structuralEvidence.red_reasons.slice(0, 5).join("; ")}` : ""}`,
     `- **Amber reasons**: ${structuralEvidence.amber_reasons.length}${structuralEvidence.amber_reasons.length ? ` — ${structuralEvidence.amber_reasons.slice(0, 5).join("; ")}` : ""}`,
     `- **Not-evaluable reasons**: ${structuralEvidence.not_evaluable_reasons.length}${structuralEvidence.not_evaluable_reasons.length ? ` — ${structuralEvidence.not_evaluable_reasons.slice(0, 5).join("; ")}` : ""}`,
