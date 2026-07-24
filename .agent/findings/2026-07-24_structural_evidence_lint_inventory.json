@@ -1,0 +1,323 @@
+{
+  "schema_version": "0.1-design",
+  "loop": "AgentOps-5e-followup-baseline-lint-design",
+  "generated_by": "AgentOps-5e-followup-baseline-lint-design (2026-07-24_run_04) · inspection only",
+  "current_signals": [
+    {"name": "contains_evidence_appendix", "source_file": "scripts/report-regression-local.mjs", "producer": "harness structural_checks writer", "semantics": "binary check: Appendix present or absent based on heading detection", "level": "structural", "current_blocking": true, "sufficient_for_new_contract": false, "gap": "presence only; no row count, no dedupe check, no consistency"},
+    {"name": "evidence_quotes_with_citation", "source_file": "scripts/quote-integrity-check.mjs", "producer": "extractEvidenceQuotes → counts", "semantics": "count of `Evidence quote: \"TEXT\" — Company, jd_XXXXXX.` regex matches", "level": "quote_integrity_bucket", "current_blocking": false, "sufficient_for_new_contract": "partial — provides total but not per-gap"},
+    {"name": "evidence_entries", "source_file": "scripts/quote-integrity-check.mjs", "producer": "checker summary counts", "semantics": "count of unique cited jd_ids after dedup on (jd_id, quote_text)", "level": "quote_integrity_bucket", "current_blocking": false, "sufficient_for_new_contract": false, "ambiguity": "differs from evidence_quotes_with_citation when a jd_id is quoted with two different spans — needed nuance for the new contract"},
+    {"name": "unique_cited_jd_count", "source_file": "derivable from sample_items", "producer": "checker", "semantics": "distinct jd_ids that appear in body citations", "level": "quote_integrity_bucket", "current_blocking": false, "sufficient_for_new_contract": false},
+    {"name": "quote_candidates", "source_file": "scripts/quote-integrity-check.mjs", "producer": "extractAllDoubleQuoted", "semantics": "any double-quoted span in report body", "level": "quote_integrity_bucket", "current_blocking": false, "sufficient_for_new_contract": false, "ambiguity": "includes prose quotes that are not cited-format"},
+    {"name": "fabricated_or_unmatched_quotes", "source_file": "scripts/quote-integrity-check.mjs", "producer": "matchTiered result aggregation", "semantics": "count of cited-format quotes that failed R1/R2/ellipsis tiers", "level": "quote_integrity_bucket", "current_blocking": false, "sufficient_for_new_contract": "n/a — belongs to QI, not structural lint"},
+    {"name": "terminal_punctuation_only_matches", "source_file": "scripts/quote-integrity-check.mjs", "producer": "matchTerminalPunctuationOnly", "semantics": "count of R2 AMBER punct-only matches", "level": "quote_integrity_bucket", "current_blocking": false, "sufficient_for_new_contract": "n/a — belongs to QI"},
+    {"name": "appendix_entries_not_cited", "source_file": "scripts/quote-integrity-check.mjs", "producer": "cross_check", "semantics": "count of Appendix jd_ids that no Evidence quote line cites", "level": "quote_integrity_bucket", "current_blocking": false, "sufficient_for_new_contract": "partial — one of several body/Appendix consistency signals"},
+    {"name": "legacy_verdict", "source_file": "scripts/report-regression-local.mjs", "producer": "harness structural + timing aggregation", "semantics": "green/amber/red aggregate over 25 structural checks + latency", "level": "harness", "current_blocking": true, "sufficient_for_new_contract": false, "ambiguity": "Appendix-missing currently red-level but check may not fail exit code even when Appendix absent (see 5e-implement-rejected runs)"},
+    {"name": "completion_state", "source_file": "scripts/report-regression-local.mjs", "producer": "network diagnostics + fail-fast race", "semantics": "success|application_error|hard_timeout|navigation_error|not_started", "level": "harness", "current_blocking": true, "sufficient_for_new_contract": "n/a — orthogonal to structural lint"},
+    {"name": "capture_scope", "source_file": "scripts/report-regression-local.mjs", "producer": "report extraction strategy", "semantics": "which page section was captured (main section, fallback)", "level": "harness", "current_blocking": false, "sufficient_for_new_contract": "gating — validator must consider truncated capture as not_evaluable"},
+    {"name": "fallback_used", "source_file": "scripts/report-regression-local.mjs", "producer": "capture strategy", "semantics": "boolean · true when shortest-qualified-candidate fallback used", "level": "harness", "current_blocking": false, "sufficient_for_new_contract": "gating input"}
+  ],
+  "validator_scope": {
+    "answers": [
+      {"id": "V1", "question": "Does the report contain the exact `## Evidence Appendix` heading?"},
+      {"id": "V2", "question": "Does the report contain at least 5 parser-recognized Evidence quote lines?"},
+      {"id": "V3", "question": "Does each of the 5 ranked gap sections contain at least one recognized Evidence quote line?"},
+      {"id": "V4", "question": "Are exactly 5 ranked gaps present?"},
+      {"id": "V5", "question": "Does every cited body jd_id appear in the Appendix?"},
+      {"id": "V6", "question": "Are Appendix rows syntactically valid and parser-recognized?"},
+      {"id": "V7", "question": "Are duplicate Appendix rows correctly de-duplicated?"},
+      {"id": "V8", "question": "Are uncited Appendix rows present?"},
+      {"id": "V9", "question": "Are citations concentrated in one gap rather than distributed 5/5?"},
+      {"id": "V10", "question": "Is the captured report scope sufficient to make these determinations?"}
+    ],
+    "excludes": [
+      "quote exactness (belongs to R1/R2 in QI checker)",
+      "R1/R2 tier matching (unchanged)",
+      "semantic relevance",
+      "JD selection quality",
+      "source diversity",
+      "whether five unique jd_ids exist (repeated jd_id is allowed if lines cover 5/5 gaps)",
+      "whether jd_000201 must be present"
+    ]
+  },
+  "count_semantics": {
+    "citation_line_count": "count of parser-recognized `Evidence quote:` lines anywhere in body",
+    "per_gap_coverage_count": "number of ranked gaps 1..5 with ≥ 1 recognized citation line",
+    "unique_cited_jd_count": "distinct jd_ids across all body citations",
+    "appendix_row_count": "distinct valid Appendix rows after dedup",
+    "policy": {
+      "min_citation_line_count": 5,
+      "min_per_gap_coverage_count": 5,
+      "min_unique_cited_jd_count": "no minimum (repetition allowed if lines cover 5/5)",
+      "appendix_row_count_may_be_fewer_than_citation_lines": true,
+      "canonical_example_A": "5 citation lines · 5/5 gap coverage · 4 unique jd_ids · 4 Appendix rows — structurally VALID"
+    }
+  },
+  "gap_parsing": {
+    "candidate_strategies": [
+      {"id": "A_markdown_heading", "description": "Detect `## Your top 5 gaps` heading then numbered list", "reliability": "medium", "impl_size": "small", "deps": "none", "false_positives": "low", "false_negatives": "medium (heading wording could drift)", "compat": "matches current report shape"},
+      {"id": "B_reuse_helpers", "description": "Extract shared pure helpers from prompts.ts or harness", "reliability": "n/a — current code has no such helpers", "impl_size": "medium (extraction refactor)", "recommendation": "do not refactor in this design loop"},
+      {"id": "C_narrow_regex_state_machine", "description": "Regex: `^\\d+\\.\\s+` at start of line inside the gap section; ends at next `##` heading", "reliability": "high", "impl_size": "small", "deps": "none", "false_positives": "low (bounded by ## delimiters)", "false_negatives": "low", "compat": "reliable for current shape"},
+      {"id": "D_markdown_ast", "description": "Use remark/mdast", "reliability": "high", "impl_size": "small in code but adds dep", "deps": "new npm package", "recommendation": "reject — hard rule no new dependency without strong reason"},
+      {"id": "E_generation_skeleton_assumption", "description": "Assume prompt-imposed section names verbatim", "reliability": "medium", "impl_size": "very small", "deps": "none", "false_negatives": "high (prompt drift breaks it)", "recommendation": "reject alone; use as sanity check only"}
+    ],
+    "recommended": "C_narrow_regex_state_machine",
+    "recommended_rationale": "no new dependency · deterministic · robust to prose changes as long as `## ` markdown-heading boundaries hold · lowest maintenance"
+  },
+  "appendix_parsing": {
+    "canonical_row_format": "tab-separated `jd_id\\tcompany\\ttitle`",
+    "existing_parser": "extractAppendix in scripts/quote-integrity-check.mjs supports tab-separated + 2-space + pipe alternates",
+    "options": [
+      {"id": "reuse_extractAppendix_via_import", "assessment": "requires ESM import + refactor; not available today"},
+      {"id": "extract_pure_helper", "assessment": "refactor — deferred; not this loop"},
+      {"id": "invoke_checker_cli", "assessment": "requires spawning checker; adds latency + coupling; rejected"},
+      {"id": "reimplement_narrow_parser", "assessment": "narrow deterministic parser mirroring extractAppendix's tab-separated primary path only (matches canonical prompt output); no dependency on other alternates"}
+    ],
+    "recommended": "reimplement_narrow_parser",
+    "recommended_rationale": "prompt now only offers one canonical format (tab-separated) · new validator can implement narrowly against that format · no risk of drifting from checker's more permissive parser · no coupling · easy to test",
+    "if_validator_and_checker_disagree": "record both counts in structural_evidence_summary; a mismatch flags an amber structural_parser_ambiguity signal"
+  },
+  "consistency_rules": {
+    "deterministic_sets": {
+      "body_cited_jd_ids": "distinct jd_ids from recognized citation lines",
+      "appendix_jd_ids": "distinct jd_ids from valid Appendix rows",
+      "missing_from_appendix": "body_cited_jd_ids − appendix_jd_ids",
+      "appendix_not_cited": "appendix_jd_ids − body_cited_jd_ids",
+      "duplicate_appendix_jd_ids": "jd_ids appearing more than once in Appendix after row parsing"
+    },
+    "severity": {
+      "body_citation_missing_from_appendix": "RED",
+      "malformed_appendix_row_when_expected_valid": "RED",
+      "duplicate_identical_appendix_row": "AMBER (allow benign dedup miss; escalate to RED only if duplicate is a distinct row with same jd_id but different content)",
+      "appendix_entry_not_cited": "AMBER telemetry",
+      "duplicate_body_citations_same_jd_different_span": "GREEN (allowed)",
+      "fewer_appendix_rows_than_citation_lines": "GREEN when body reuses jd_ids"
+    }
+  },
+  "verdict_policy": {
+    "GREEN": [
+      "exactly 5 ranked gaps",
+      "5/5 per-gap coverage",
+      "citation_line_count >= 5",
+      "Appendix present",
+      "all body jd_ids represented in Appendix",
+      "no malformed required rows"
+    ],
+    "AMBER": [
+      "Appendix contains uncited entries",
+      "duplicate identical Appendix row",
+      "more than one citation in a single gap (all gaps still covered)",
+      "more than 5 total citation lines",
+      "repeated jd_id across multiple gaps (allowed but flagged for source diversity awareness)",
+      "structural parser ambiguity (validator vs checker disagreement)"
+    ],
+    "RED": [
+      "Appendix missing",
+      "fewer than 5 ranked gaps OR more than 5 (contract says exactly 5)",
+      "fewer than 5 recognized citation lines",
+      "any ranked gap lacks a citation",
+      "body citation jd_id missing from Appendix",
+      "malformed citation line where a citation was required",
+      "malformed required Appendix row"
+    ],
+    "not_evaluable": [
+      "capture_scope insufficient to see the gap section",
+      "capture_scope insufficient to see the Appendix",
+      "report body empty",
+      "tool_error"
+    ],
+    "policy_selected": {
+      "repeated_jd_id_across_gaps": "AMBER (visible signal · not RED · matches DECISION count_nuance)",
+      "more_than_5_citation_lines": "AMBER (visible but not RED)",
+      "uncited_appendix_rows": "AMBER telemetry",
+      "capture_insufficient": "not_evaluable (do not overload RED with tool-side deficiencies)"
+    }
+  },
+  "artifact_schema": {
+    "path": "structural_evidence_summary.json in the run directory",
+    "shape": {
+      "schema_version": "0.1-design",
+      "verdict": "green|amber|red|not_evaluable",
+      "required_gap_count": 5,
+      "observed_gap_count": 5,
+      "recognized_citation_line_count": 5,
+      "unique_cited_jd_count": 4,
+      "per_gap": [
+        {"gap_number": 1, "citation_count": 1, "cited_jd_ids": ["jd_000347"], "covered": true}
+      ],
+      "covered_gap_count": 5,
+      "appendix": {
+        "present": true,
+        "row_count": 4,
+        "jd_ids": ["jd_000347","jd_000089","jd_000173","jd_000042"],
+        "malformed_rows": [],
+        "duplicate_rows": []
+      },
+      "body_appendix": {
+        "missing_from_appendix": [],
+        "appendix_not_cited": []
+      },
+      "red_reasons": [],
+      "amber_reasons": [],
+      "capture_scope": "main section",
+      "capture_evaluable": true,
+      "tool_error": null,
+      "checker_hash_at_evaluation": "105ce8a"
+    }
+  },
+  "implementation_options": [
+    {"id": "A_extend_qi_checker", "pros": ["one CLI"], "cons": ["couples structural lint to QI R1/R2 evolution", "increases QI checker file size", "risks touching R1/R2 tier logic accidentally"], "code_impact": "medium", "regression_risk": "medium", "testability": "medium", "coupling": "high", "rollback": "medium", "recommendation": "reject — separation of concerns"},
+    {"id": "B_separate_standalone_cli", "pros": ["separation of concerns", "no risk to R1/R2", "small independent file", "easy to test/lint/revert", "zero-dependency", "clean rollout"], "cons": ["parser duplication (mitigated: prompt only emits one canonical format now)"], "code_impact": "small (new file only)", "regression_risk": "low (does not touch any existing file)", "testability": "high", "coupling": "low", "rollback": "trivial (delete file)", "recommendation": "PRIMARY"},
+    {"id": "C_extend_harness_inline", "pros": ["no new CLI"], "cons": ["harness already large", "couples validator to harness release cadence", "harder to test in isolation"], "code_impact": "medium", "regression_risk": "medium", "testability": "low", "coupling": "high", "rollback": "medium", "recommendation": "reject"},
+    {"id": "D_shared_parser_library_plus_two_clis", "pros": ["reuse across QI + structural"], "cons": ["requires extracting stable helpers first (refactor risk)", "adds architectural complexity"], "code_impact": "large", "regression_risk": "high (refactor)", "testability": "high", "coupling": "medium", "rollback": "harder", "recommendation": "defer — worth revisiting only if a third checker emerges"}
+  ],
+  "selected_option": "B_separate_standalone_cli",
+  "cli_contract": {
+    "command": "node scripts/structural-evidence-check.mjs --report <path> --output <path>",
+    "required_args": ["--report", "--output"],
+    "optional_args": ["--fixture", "--source-run-id", "--help"],
+    "no_network": true,
+    "no_llm": true,
+    "no_rewrite": true,
+    "exit_codes": {
+      "0": "GREEN or AMBER telemetry result generated successfully",
+      "1": "RED structural result generated successfully",
+      "2": "tool / config / input error (unreadable file · malformed Markdown at fatal level · invalid args)"
+    },
+    "stdout": "one-line summary (verdict + counts) for harness logs",
+    "stderr": "diagnostics on tool_error only",
+    "on_missing_report": "exit 2 · no artifact written",
+    "on_malformed_markdown": "exit 2 if unreadable · else best-effort with not_evaluable verdict",
+    "artifact_atomicity": "write to output path via temp+rename to avoid partial artifacts"
+  },
+  "harness_integration": {
+    "phase": "future separate integration loop",
+    "invocation_timing": "after report capture · after QI check · before final verdict artifact",
+    "no_retry": true,
+    "no_rewrite": true,
+    "writes": "structural_evidence_summary.json in run directory",
+    "records": ["validator_exit_code", "validator_duration_ms", "validator_hash"],
+    "legacy_verdict_impact_initial": "none (telemetry-only)",
+    "quote_integrity_verdict_impact_initial": "none",
+    "combined_summary_reference": "verdict.md includes both blocks side-by-side",
+    "on_validator_error": {
+      "action": "record tool_error in metadata + emit structural_evidence_summary with verdict=not_evaluable and reason=tool_error",
+      "do_not": ["silently ignore", "auto-retry", "fall back to old behavior without a signal"]
+    }
+  },
+  "baseline_metadata_design": {
+    "sibling_block": "structural_evidence",
+    "shape_mirrors_quote_integrity": true,
+    "fields": [
+      "evaluation_status",
+      "verdict",
+      "schema_version",
+      "checker_commit",
+      "blocking_mode",
+      "grandfathered",
+      "grandfather_reason",
+      "evaluated_run_id",
+      "evaluated_at",
+      "summary_path",
+      "promotion_eligibility",
+      "promotion_reasons",
+      "reviewed_by",
+      "decision_id"
+    ],
+    "first_implementation_baseline_mutation": "NONE (do not migrate baseline metadata in the first implementation loop)",
+    "grandfathering_note": "pre-validator baselines would require a narrow AgentOps-5e-followup-baseline-lint-migrate DECISION analogous to 5e-migrate if metadata migration is later approved",
+    "promotion_eligibility_first_loop": "requires_review by default until validator has ≥ N controlled stability runs",
+    "no_promotion_this_design_loop": true
+  },
+  "test_matrix": [
+    {"id": "G1", "kind": "GREEN", "scenario": "5 gaps · 1 citation each · 5 unique jd_ids", "expected_verdict": "green", "expected_exit_code": 0},
+    {"id": "G2", "kind": "GREEN", "scenario": "5 gaps · 1 citation each · 4 unique jd_ids (1 dup across gaps)", "expected_verdict": "green_or_amber", "expected_exit_code": 0, "note": "AMBER if repeated_jd_id_across_gaps signal fires per policy"},
+    {"id": "G3", "kind": "GREEN", "scenario": "5 gaps · 1 gap has 2 citations · all gaps covered", "expected_verdict": "amber", "expected_exit_code": 0, "note": "AMBER: more_than_one_citation_in_a_gap"},
+    {"id": "G4", "kind": "GREEN", "scenario": "deduplicated Appendix rows correctly emitted", "expected_verdict": "green", "expected_exit_code": 0},
+    {"id": "R1", "kind": "RED", "scenario": "missing Appendix", "expected_verdict": "red", "expected_exit_code": 1},
+    {"id": "R2", "kind": "RED", "scenario": "zero evidence lines", "expected_verdict": "red", "expected_exit_code": 1},
+    {"id": "R3", "kind": "RED", "scenario": "4 evidence lines", "expected_verdict": "red", "expected_exit_code": 1},
+    {"id": "R4", "kind": "RED", "scenario": "5 lines concentrated in fewer than 5 gaps", "expected_verdict": "red", "expected_exit_code": 1},
+    {"id": "R5", "kind": "RED", "scenario": "one gap missing citation", "expected_verdict": "red", "expected_exit_code": 1},
+    {"id": "R6", "kind": "RED", "scenario": "body citation jd_id missing from Appendix", "expected_verdict": "red", "expected_exit_code": 1},
+    {"id": "R7", "kind": "RED", "scenario": "malformed citation format for a required line", "expected_verdict": "red", "expected_exit_code": 1},
+    {"id": "R8", "kind": "RED", "scenario": "malformed required Appendix row", "expected_verdict": "red", "expected_exit_code": 1},
+    {"id": "R9", "kind": "RED", "scenario": "only 4 ranked gaps present", "expected_verdict": "red", "expected_exit_code": 1},
+    {"id": "R10", "kind": "RED", "scenario": "6 ranked gaps present (exactly-5 contract)", "expected_verdict": "red", "expected_exit_code": 1},
+    {"id": "N1", "kind": "not_evaluable", "scenario": "truncated capture missing Appendix section entirely", "expected_verdict": "not_evaluable", "expected_exit_code": 0, "note": "capture_evaluable = false — do NOT overload RED"},
+    {"id": "A1", "kind": "AMBER", "scenario": "uncited Appendix entry present", "expected_verdict": "amber", "expected_exit_code": 0},
+    {"id": "A2", "kind": "AMBER", "scenario": "duplicate identical Appendix row", "expected_verdict": "amber", "expected_exit_code": 0},
+    {"id": "A3", "kind": "AMBER", "scenario": "repeated jd_id across multiple gaps", "expected_verdict": "amber", "expected_exit_code": 0},
+    {"id": "A4", "kind": "AMBER", "scenario": "more than 5 evidence lines", "expected_verdict": "amber", "expected_exit_code": 0},
+    {"id": "A5", "kind": "AMBER", "scenario": "structural parser ambiguity (validator vs checker Appendix rows disagree)", "expected_verdict": "amber", "expected_exit_code": 0},
+    {"id": "E1", "kind": "tool_error", "scenario": "missing report file", "expected_verdict": "tool_error", "expected_exit_code": 2},
+    {"id": "E2", "kind": "tool_error", "scenario": "unreadable input", "expected_verdict": "tool_error", "expected_exit_code": 2},
+    {"id": "E3", "kind": "tool_error", "scenario": "invalid arguments", "expected_verdict": "tool_error", "expected_exit_code": 2}
+  ],
+  "rollout_phases": [
+    {"phase": 1, "name": "standalone validator + deterministic tests", "cost_usd": 0, "gate": "separate TASK + RUN_REPORT + DECISION"},
+    {"phase": 2, "name": "harness telemetry integration", "cost_usd": 0, "gate": "separate TASK + RUN_REPORT + DECISION"},
+    {"phase": 3, "name": "controlled A/B validation, no retries", "cost_usd": 0.10, "gate": "separate TASK + RUN_REPORT + DECISION + human GO + cost approval"},
+    {"phase": 4, "name": "baseline metadata migration, grandfathered", "cost_usd": 0, "gate": "separate TASK + RUN_REPORT + DECISION + grandfathering exception clause"},
+    {"phase": 5, "name": "stability evidence collection", "cost_usd": "separate approval per run", "gate": "per-run DECISION"},
+    {"phase": 6, "name": "separate promotion DECISION (structural lint → blocking)", "cost_usd": 0, "gate": "separate promotion DECISION analogous to 5f-promote scope"}
+  ],
+  "policy_resolutions": {
+    "Q1": {"question": "Exactly 5 gaps or at least 5?", "recommendation": "exactly 5 — matches prompt contract 'exactly 5 numbered ranked gaps'"},
+    "Q2": {"question": "At least 5 citation lines or exactly 5?", "recommendation": "at least 5 — matches prompt wording 'at least 5 total'; > 5 is AMBER not RED"},
+    "Q3": {"question": "Is repeated jd_id across gaps allowed?", "recommendation": "allowed but flagged AMBER for source-diversity visibility · do NOT block; matches DECISION count_nuance for Fixture A"},
+    "Q4": {"question": "Must every body-cited jd_id appear in Appendix?", "recommendation": "yes — missing_from_appendix is RED"},
+    "Q5": {"question": "Are uncited Appendix rows RED or AMBER?", "recommendation": "AMBER telemetry"},
+    "Q6": {"question": "Are duplicate Appendix rows RED or AMBER?", "recommendation": "AMBER for identical row dedup miss · RED only if same jd_id appears with conflicting company/title"},
+    "Q7": {"question": "Is more than one citation per gap allowed?", "recommendation": "allowed AMBER · not RED · maintains prompt spirit while catching over-quoting drift"},
+    "Q8": {"question": "Should missing Appendix be RED even while telemetry-only?", "recommendation": "yes RED verdict in structural_evidence_summary · but does NOT flip legacy exit code until a separate promotion DECISION"},
+    "Q9": {"question": "Should insufficient capture be RED or not_evaluable?", "recommendation": "not_evaluable — do NOT overload RED with tool-side deficiencies; harness completion_state already surfaces capture problems separately"},
+    "Q10": {"question": "Separate CLI or extend existing checker?", "recommendation": "separate CLI — scripts/structural-evidence-check.mjs — Option B"},
+    "Q11": {"question": "Should first implementation touch harness?", "recommendation": "NO — first implementation loop is standalone validator only; harness integration is phase 2"},
+    "Q12": {"question": "Should first implementation mutate baseline metadata?", "recommendation": "NO — baseline metadata migration is phase 4 under a narrow grandfathering exception"},
+    "Q13": {"question": "Should structural lint initially affect legacy verdict?", "recommendation": "NO — telemetry-only initially · matches QI arc precedent"},
+    "Q14": {"question": "Is a controlled A+B required before any blocking promotion?", "recommendation": "YES — phase 3 is a paid controlled A+B under separate DECISION; no promotion before it"},
+    "Q15": {"question": "Is 5f-promote authorized after implementation?", "recommendation": "NO — 5f-promote is a separate arc; structural lint stability is prerequisite but not sufficient"}
+  },
+  "risks": [
+    "narrow reimplementation of Appendix parser may drift from checker's more permissive parser — mitigated by validator-vs-checker AMBER signal",
+    "exactly-5-gaps invariant is prompt-imposed; if prompt shape ever changes, validator must update in lockstep",
+    "capture_scope not_evaluable path may mask real Appendix omission if harness capture is too narrow — mitigated by keeping harness completion_state independent",
+    "structural lint may raise its own AMBER signals for currently-benign patterns (uncited Appendix rows) — visible but non-blocking initially",
+    "any jd_id that appears both cited and uncited due to spacing/case bugs could confuse consistency checks — mitigated by exact jd_id string match",
+    "harness integration timing could hide new signal if verdict.md is inconsistent — mitigated by fixing verdict.md schema in phase 2 loop",
+    "baseline metadata migration cost is small but requires grandfathering exception per 5e-migrate precedent",
+    "one stability A+B is not sufficient to prove long-term probabilistic behavior — phase 5 needs multiple controlled loops"
+  ],
+  "open_questions": [],
+  "boundaries_respected": {
+    "no_implementation": true,
+    "no_code_change": true,
+    "no_prompt_change": true,
+    "no_generation": true,
+    "no_fixture_run": true,
+    "no_llm_api_call": true,
+    "no_checker_change": true,
+    "no_parser_change": true,
+    "no_harness_change": true,
+    "no_r1_relaxation": true,
+    "no_r2_relaxation": true,
+    "no_baseline_mutation": true,
+    "no_promotion": true,
+    "no_blocking_promotion": true,
+    "no_agentops_5f_promote": true,
+    "no_pipeline_change": true,
+    "no_agent_scripts_change": true,
+    "no_threshold_change": true,
+    "no_retry_behavior_added": true,
+    "no_c_d_e_run": true,
+    "no_a_e_suite": true,
+    "no_pdf_ingestion": true,
+    "no_openai_api": true,
+    "no_report_md_or_screenshot_committed": true,
+    "no_secret_committed": true,
+    "no_env_or_vercel_or_package_or_lockfile_or_workflow_change": true,
+    "no_push": true,
+    "no_deploy": true,
+    "cost_usd": 0
+  }
+}
