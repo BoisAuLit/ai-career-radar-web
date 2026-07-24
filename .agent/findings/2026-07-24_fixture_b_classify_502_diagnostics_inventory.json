@@ -1,0 +1,440 @@
+{
+  "schema_version": "0.1-design",
+  "loop": "AgentOps-5e-followup-phase3-fixture-b-classify-502-diagnostics-design",
+  "generated_by": "AgentOps-5e-followup-phase3-fixture-b-classify-502-diagnostics-design (2026-07-24_run_10) · inspection only",
+  "parent_loop": "AgentOps-5e-followup-baseline-lint-integrate-phase3-execute (2026-07-24_run_09)",
+  "authorizing_decision": ".agent/decisions/2026-07-24_run_09_DECISION.md",
+  "cost_this_loop_usd": 0,
+
+  "failure_summary": {
+    "run_id": "20260724T193349Z_fixture-B",
+    "fixture": "B",
+    "route": "/api/classify",
+    "status": 502,
+    "status_text": "Bad Gateway",
+    "duration_wall_ms": 4561,
+    "duration_application_code_ms": 3600,
+    "generation_route_called": false,
+    "report_generated": false,
+    "retries": 0,
+    "root_cause_confirmed_from_existing_evidence": true,
+    "root_cause_summary": "The upstream Anthropic Sonnet 4.6 model returned malformed JSON in response to the Fixture B classify prompt. The classify route's ONLY explicit 502 branch (src/app/api/classify/route.ts lines 42-49) correctly caught the JSON.parse failure and returned the exact error to the client. The failure is an LLM output error, not a route bug, not an external outage, not a payload size problem, not a timeout, not a rate limit.",
+    "cost_correction_versus_prior_runreport": "Prior RUN_REPORT 2026-07-24_run_09 and DECISION 2026-07-24_run_09 stated 'Fixture B generation: $0'. Strictly true for /api/generate-report (never called), but /api/classify DID invoke Anthropic (~3.6s of application-code = one real Anthropic completion). The classify call incurred a small (much less than a report generation) but non-zero Anthropic cost for B."
+  },
+
+  "timeline": [
+    {"utc": "2026-07-24T19:31:20Z", "event": "dev server npm run dev started (PID 74612)"},
+    {"utc": "2026-07-24T19:31:21Z", "event": "Next.js Ready in 246ms · port 3000"},
+    {"utc": "2026-07-24T19:31:35Z", "event": "Fixture A harness invocation start"},
+    {"utc": "2026-07-24T19:31:35Z+", "event": "GET / 200 in 211ms (first page load)"},
+    {"utc": "2026-07-24T19:31:35Z+", "event": "GET /api/companies 200 in 46ms"},
+    {"utc": "2026-07-24T19:31:36Z~", "event": "POST /api/classify 200 in 4.4s (application-code 4.3s) — Fixture A classify SUCCESS"},
+    {"utc": "2026-07-24T19:31:40Z~", "event": "POST /api/generate-report 200 in 58s (application-code 58s) — Fixture A generation SUCCESS"},
+    {"utc": "2026-07-24T19:32:41Z", "event": "Fixture A harness invocation end (exit 0 · legacy GREEN)"},
+    {"utc": "2026-07-24T19:33:49.386Z", "event": "Fixture B harness invocation start (network_diagnostics.started_at)"},
+    {"utc": "2026-07-24T19:33:49Z+", "event": "GET / 200 in 30ms (second page load)"},
+    {"utc": "2026-07-24T19:33:49Z+", "event": "GET /api/companies 200 in 3ms (fast — cached)"},
+    {"utc": "2026-07-24T19:33:53.947Z", "event": "POST /api/classify 502 in 3.6s (application-code 3.6s) — Fixture B classify FAILURE (upstream JSON parse error)"},
+    {"utc": "2026-07-24T19:33:53.226Z+", "event": "first_non_2xx_response captured by harness at elapsed_ms 4561 (~= 3.6s app + Playwright overhead)"},
+    {"utc": "2026-07-24T19:33:53Z+", "event": "no POST /api/generate-report ever logged — chain aborted after 502"},
+    {"utc": "2026-07-24T19:33:54Z", "event": "Fixture B harness invocation end (exit 1 · legacy RED · completion_state application_error)"},
+    {"utc": "2026-07-24T19:33:57Z~", "event": "dev server killed"}
+  ],
+
+  "network_diagnostics": {
+    "source": ".agent/regression_runs/20260724T193349Z_fixture-B/network_diagnostics.json",
+    "schema_version": "0.1-b-timeout-diagnostics",
+    "completion_state": "application_error",
+    "completion_elapsed_ms": 3840,
+    "error_state_detected": true,
+    "requestfailed_count": 0,
+    "non_2xx_count": 1,
+    "statuses": {"502": 1},
+    "first_failure_elapsed_ms": 4561,
+    "generate_route_status": null,
+    "captured_response_body_excerpt": "{\"error\":\"Classifier returned invalid JSON\",\"detail\":\"Bad control character in string literal in JSON at position 57 (line 3 column 27)\",\"raw\":\"{\\n \\\"archetype\\\": \\\"applied_ai\\\",\\n \\\"company_preferences [],\\n \\\"level_hint\\\": \\\"mid\\\",\\n \\\"reasoning\\\": \\\"The user explicitly wants to build user-facing AI product features with LLM outputs surfaced in UI, workflow automation, and lightweight agentic behaviors — this is squarely applied_ai. They call out no research or infra, confirming the product-sh",
+    "captured_response_body_shows": {
+      "error_message": "Classifier returned invalid JSON",
+      "parse_error_detail": "Bad control character in string literal in JSON at position 57 (line 3 column 27)",
+      "raw_llm_output_starts_with": "{\\n \\\"archetype\\\": \\\"applied_ai\\\",\\n \\\"company_preferences [],\\n ...",
+      "malformed_key": "\"company_preferences [],",
+      "correct_key_would_be": "\"company_preferences\": [],",
+      "malformation_type": "Missing '\":' between key and value — the model wrote the field name then jumped straight to the value with a space, dropping the closing quote and the colon separator"
+    },
+    "visible_error_excerpt_note": "The network_diagnostics.visible_error_excerpt field is DOM text captured from the app's error banner ('Something went wrong Please try again...'), NOT the API response body. The actual 502 body is in events[0].body_excerpt (above)."
+  },
+
+  "server_log_findings": [
+    {
+      "source": "/tmp/acr-dev-server.log",
+      "size_bytes": 1249,
+      "line_count": 25,
+      "relevant_lines": [
+        "GET / 200 in 211ms (next.js: 81ms, application-code: 129ms)",
+        "GET /api/companies 200 in 46ms (next.js: 40ms, application-code: 6ms)",
+        "POST /api/classify 200 in 4.4s (next.js: 66ms, application-code: 4.3s)",
+        "POST /api/generate-report 200 in 58s (next.js: 14ms, application-code: 58s)",
+        "GET / 200 in 30ms (next.js: 2ms, application-code: 27ms)",
+        "GET /api/companies 200 in 3ms (next.js: 1104µs, application-code: 1914µs)",
+        "POST /api/classify 502 in 3.6s (next.js: 1122µs, application-code: 3.6s)"
+      ],
+      "observations": [
+        "Log contains only Next.js default access-log lines. No application-level error logging is emitted from the classify route on the 502 path.",
+        "The 502 was returned by the classify route itself (Next.js reports application-code: 3.6s, meaning the route function executed for 3.6s before responding).",
+        "No stack trace, no exception text, no unhandled-rejection notice visible in the log.",
+        "The 3.6s app-code duration is consistent with a full round-trip to Anthropic Sonnet 4.6 for a short classify prompt (Fixture A's classify took 4.3s and succeeded).",
+        "No 429, no ECONNRESET, no ETIMEDOUT, no 'fetch failed' in the log.",
+        "No unusual Next.js compile / recompile / restart between A and B (would show as separate log lines)."
+      ]
+    }
+  ],
+
+  "classify_route_inventory": {
+    "source_path": "src/app/api/classify/route.ts",
+    "line_count": 53,
+    "model": "claude-sonnet-4-6",
+    "max_duration_seconds": 30,
+    "request_schema": {
+      "type": "object",
+      "fields": {"target": {"type": "string", "required": true, "trimmed_before_use": true}}
+    },
+    "dependencies": [
+      {"name": "@ai-sdk/anthropic", "purpose": "anthropic() model constructor"},
+      {"name": "ai", "purpose": "generateText() call"},
+      {"name": "@/lib/prompts", "purpose": "classifySystemPrompt() system message"},
+      {"name": "@/lib/types", "purpose": "Classification type"}
+    ],
+    "timeout_behavior": {
+      "explicit_route_timeout_ms": null,
+      "route_max_duration_seconds": 30,
+      "abort_controllers_used": false,
+      "fetch_call_timeout": "SDK default (not configured in route)",
+      "note_on_3600ms_duration": "3.6s is well under the 30s maxDuration. No timeout was reached; the SDK call completed successfully (Anthropic returned text), and the JSON.parse of that text failed."
+    },
+    "error_mapping": [
+      {"trigger": "empty target field", "response_status": 400, "body": "{ error: \"Missing 'target' in request body\" }"},
+      {"trigger": "JSON.parse of Anthropic response text throws", "response_status": 502, "body": "{ error: 'Classifier returned invalid JSON', detail: <parse error message>, raw: <first ~500 chars of LLM text> }"}
+    ],
+    "explicit_502_paths": [
+      {"path": "line 42-49", "condition": "JSON.parse(raw) throws in the try/catch on line 39-50", "when_reached": "Anthropic returned text that is not valid JSON — either malformed structure, missing quotes/braces, invalid escape sequence, or control characters"}
+    ],
+    "implicit_error_paths_uncaught": [
+      "generateText() rejection (e.g. Anthropic API error, network failure, invalid API key) — would propagate as unhandled rejection and Next.js would return 500, NOT 502. Confirmed by exclusion: we observed 502, not 500, so generateText() succeeded and the parse branch fired.",
+      "req.json() rejection (malformed request body) — would propagate as unhandled rejection and return 500."
+    ],
+    "logging_behavior": "None. The route does not emit any application-level log. Errors are only visible via the returned response body.",
+    "sanitization": "The 502 response body echoes the parse error message and the first ~500 chars of the raw LLM text. This is visible to the client. It does NOT expose the API key or system prompt. The raw text may contain user-facing content the model wrote (in this case a fragment of the classifier's reasoning about the user's target). Acceptable for local harness diagnostics; not intended for public UX.",
+    "provider_error_masking": "Any provider-side error mapping happens in the ai-sdk / anthropic-sdk layers, not this route. This route only distinguishes 'missing target' (400) vs 'unparseable LLM response' (502)."
+  },
+
+  "fixture_comparison": {
+    "fixture_a": {
+      "path": ".agent/regression_fixtures/benchmark_A_backend_to_applied_ai.md",
+      "file_size_bytes": 8879,
+      "file_sha256": "795f7fdf0add55105546344b95d3227699ba10de5bbb726cb1718acaee249b7b",
+      "target_role_char_count": 405,
+      "target_role_line_count": 10,
+      "target_role_first_words": "Applied AI Engineer at a frontier AI product company like Anthropic, Cohere, or a similar frontier lab.",
+      "classify_result": "SUCCESS — Anthropic returned valid JSON parseable as Classification"
+    },
+    "fixture_b": {
+      "path": ".agent/regression_fixtures/benchmark_B_fullstack_to_ai_product.md",
+      "file_size_bytes": 8294,
+      "file_sha256": "335414d75fd3135c9b84087461a62e1803d1c9b868332ad841308f8a49de4105",
+      "target_role_char_count": 404,
+      "target_role_line_count": 11,
+      "target_role_first_words": "AI Product Engineer at an AI-first Series B or C scaleup. I want to build user-facing AI product features",
+      "classify_result": "FAILURE — Anthropic returned text that failed JSON.parse at position 57 (line 3 column 27) on the key '\"company_preferences [],'"
+    },
+    "differences": [
+      {"field": "file_size_bytes", "a": 8879, "b": 8294, "delta": -585, "significance": "trivial · both files well under any conceivable size limit"},
+      {"field": "target_role_char_count", "a": 405, "b": 404, "delta": -1, "significance": "essentially identical size"},
+      {"field": "target_role_line_count", "a": 10, "b": 11, "delta": +1, "significance": "trivial · both < 20 lines"},
+      {"field": "target semantic content", "a": "Applied AI Engineer at Anthropic/Cohere · RAG + evals + prompt engineering + model behavior debugging", "b": "AI Product Engineer at AI-first Series B/C scaleup · workflow automation + lightweight agentic behaviors + LLM output surfaced in UI", "significance": "Both fit the 'applied_ai' archetype but B's phrasing is denser with jargon (agentic, LLM outputs, product-shaped work). The model chose the correct archetype ('applied_ai') per the raw text captured; the failure is in JSON formatting, not classification correctness."}
+    ],
+    "payload_construction": {
+      "harness_reads_fixture_markdown": "scripts/report-regression-local.mjs line 240: `targetRole: sections['Target role input'] || ''`",
+      "harness_fills_textarea": "scripts/report-regression-local.mjs line 721: `.fill(fixture.targetRole)`",
+      "frontend_posts_classify": "src/app/page.tsx line 549-553: `fetch('/api/classify', { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({ target }) })`",
+      "classify_route_receives": "src/app/api/classify/route.ts line 11: `body: { target?: string } = await req.json(); const target = (body.target || '').trim();`",
+      "payload_shape_for_both_fixtures": "{ target: <string> }",
+      "payload_size_range": "~200-450 bytes JSON per fixture",
+      "no_binary_no_control_chars_in_fixture": "Confirmed — fixture target is markdown-parsed plain text; contains newlines but no NUL / SOH / other control characters"
+    }
+  },
+
+  "test_coverage": {
+    "unit_tests_for_classify_route": "None found under scripts/test-* or src/**/*.test.* for /api/classify. The route has no direct test coverage today.",
+    "integration_tests_using_classify": "The Playwright regression harness scripts/report-regression-local.mjs is the sole exerciser; it calls classify via the app frontend, not directly.",
+    "test_scenarios_covered": [],
+    "test_scenarios_not_covered": [
+      "Valid target → successful classification",
+      "Empty target → 400",
+      "Malformed body → 500 (unhandled)",
+      "Anthropic returning non-JSON text → 502 (the exact case observed)",
+      "Anthropic returning JSON with markdown fences → 502 (fence stripping only handles opening ```, not partial)",
+      "Anthropic returning valid JSON but wrong shape → currently succeeds (Classification cast is unchecked at runtime)",
+      "Anthropic API error → 500 (unhandled generateText rejection)",
+      "Anthropic timeout → 500 (unhandled)",
+      "Rate limit / 429 from Anthropic → 500 (unhandled)"
+    ]
+  },
+
+  "historical_incidents": [
+    {
+      "type": "prior_fixture_b_failures",
+      "runs_inspected": ["20260723T035828Z_fixture-B", "20260723T042759Z_fixture-B"],
+      "finding": "Prior Fixture B failures pre-date the 5d-b-timeout-diagnostics network_diagnostics schema (their metadata.json lacks completion_state / first_non_2xx fields), so direct comparison of failure signatures is impossible.",
+      "known_context": "The AgentOps-5d-b-timeout-diagnostics loop (2026-07-23) addressed HARD_LATENCY_MS-scale hangs on /api/generate-report, NOT /api/classify 502s. That loop added the network_diagnostics artifact; today's classify-502 is the first case where that artifact captured a meaningful response body."
+    },
+    {
+      "type": "classify_502_precedent_in_governance",
+      "finding": "grep of .agent/regression_runs, .agent/daily_summaries, .agent/design_memos for 'classify 502' / '502 classify' / 'Classifier returned invalid JSON' returns matches ONLY in artifacts from this Phase 3 run and this diagnostics loop. No prior classify 502 has been documented.",
+      "implication": "This is the first documented /api/classify 502 in the repository's Phase 2/3 governance. There is no precedent to compare against — the incident is novel in the governance record."
+    }
+  ],
+
+  "hypotheses": [
+    {
+      "id": "H2",
+      "description": "Local classify route reached its explicit 502 branch (line 42-49) because Anthropic returned text that JSON.parse rejected.",
+      "supporting_evidence": [
+        "captured 502 response body contains 'Classifier returned invalid JSON' — verbatim string from route source line 44",
+        "captured 502 response body contains 'detail' and 'raw' fields — matches route source line 45-46",
+        "captured raw LLM text shows malformed key '\"company_preferences [],' at exactly the position (line 3 col 27) the JSON.parse error identifies",
+        "Next.js access log shows application-code: 3.6s — inconsistent with a fast route-side rejection (empty body would return in <50ms)",
+        "3.6s duration is consistent with a full Anthropic Sonnet 4.6 short-prompt round trip (Fixture A's classify took 4.3s and succeeded)"
+      ],
+      "contradicting_evidence": [],
+      "confidence": "high",
+      "diagnostic_evidence_still_needed": "None for identifying the immediate cause. Would need repeated runs to characterize the underlying LLM-output-malformation rate.",
+      "confirmation_method": "code inspection + captured response body (both already available)",
+      "future_fix_affects_production_runtime": "Yes — any change to classify's JSON handling would ship to production."
+    },
+    {
+      "id": "H1",
+      "description": "Transient Anthropic-side / provider-side failure (outage, rate limit, network hiccup).",
+      "supporting_evidence": ["3.6s duration could indicate a slow / troubled response"],
+      "contradicting_evidence": [
+        "Anthropic returned a 200-level response (route received text via generateText); a transient outage would produce an unhandled SDK rejection → 500, not 502",
+        "The response body was correctly-shaped LLM output starting with '{ \"archetype\": \"applied_ai\", ...' — the model DID reason correctly about the fixture and start producing the expected schema; it just dropped the '\":' between the second key and its value",
+        "No 429 / 5xx / ECONN in Next.js log",
+        "Fixture A's classify succeeded 2 minutes earlier — no provider-wide outage window"
+      ],
+      "confidence": "low",
+      "diagnostic_evidence_still_needed": "None — H2 is confirmed and supersedes H1.",
+      "confirmation_method": "n/a"
+    },
+    {
+      "id": "H3",
+      "description": "Fixture B payload violates an undocumented assumption in the classify route or upstream.",
+      "supporting_evidence": [],
+      "contradicting_evidence": [
+        "Fixture A and B payloads are structurally identical: both are { target: <string> } with target ~404 chars, plain text, no control characters",
+        "The captured raw LLM text shows the model successfully parsed and reasoned about Fixture B's target ('applied_ai' archetype was correctly chosen)",
+        "The failure is in the model's own OUTPUT format, not in the input handling"
+      ],
+      "confidence": "low",
+      "confirmation_method": "n/a — ruled out"
+    },
+    {
+      "id": "H4",
+      "description": "Payload size or parsing issue.",
+      "supporting_evidence": [],
+      "contradicting_evidence": [
+        "B payload is 404 chars, well under any conceivable size limit",
+        "Both fixtures use identical construction path (page.tsx → JSON.stringify → route.ts → req.json())"
+      ],
+      "confidence": "low",
+      "confirmation_method": "n/a — ruled out"
+    },
+    {
+      "id": "H5",
+      "description": "Configured timeout near 4.5 seconds.",
+      "supporting_evidence": [],
+      "contradicting_evidence": [
+        "Route has no explicit timeout; maxDuration is 30 seconds; no fetch/AbortController with a 4.5s deadline is visible",
+        "Fixture A's classify took 4.4s (more than B's 3.6s) and succeeded — a 4.5s timeout would have failed A too",
+        "The 502 body clearly identifies a JSON.parse error, not a timeout"
+      ],
+      "confidence": "low",
+      "confirmation_method": "n/a — ruled out"
+    },
+    {
+      "id": "H6",
+      "description": "Resource / process state after Fixture A degraded the server.",
+      "supporting_evidence": ["Fixture A ran ~2 minutes before B; some warm-state contamination is conceivable"],
+      "contradicting_evidence": [
+        "GET / and GET /api/companies for B's session returned normally (30ms / 3ms)",
+        "The 502 body is deterministic route output, not a process error",
+        "No Next.js recompile / restart between A and B in the log"
+      ],
+      "confidence": "low",
+      "confirmation_method": "n/a — ruled out"
+    },
+    {"id": "H7", "description": "Anthropic rate / capacity issue.", "supporting_evidence": [], "contradicting_evidence": ["A succeeded 2 minutes earlier; the SDK would surface 429 as an SDK exception → 500, not 502"], "confidence": "low"},
+    {"id": "H8", "description": "Internal route dependency failed.", "supporting_evidence": [], "contradicting_evidence": ["Classify route has no internal dependencies beyond @/lib/prompts (pure string) and @/lib/types (types only)"], "confidence": "low"},
+    {"id": "H9", "description": "Next.js / Turbopack transient route compilation failure.", "supporting_evidence": [], "contradicting_evidence": ["Route successfully served Fixture A; log shows no recompile between runs; 3.6s application-code is not consistent with a compile-time failure"], "confidence": "low"},
+    {"id": "H10", "description": "Proxy / network-layer error injecting 502.", "supporting_evidence": [], "contradicting_evidence": ["localhost target (no proxy); Next.js reports application-code: 3.6s meaning the route function itself responded; body matches route source verbatim"], "confidence": "low"}
+  ],
+
+  "diagnosis_confidence": {
+    "state": "root_cause_confirmed",
+    "confirmed_cause": "Anthropic (Sonnet 4.6) returned malformed JSON for the Fixture B classify prompt (missing '\":' between key '\"company_preferences\"' and value '[]' at line 3 col 27). The classify route's explicit 502 branch correctly returned that JSON.parse failure as an HTTP 502 response.",
+    "confirming_evidence": [
+      "Captured 502 response body verbatim contains the route's 'Classifier returned invalid JSON' string and the exact malformed key in the 'raw' field",
+      "The malformation position (line 3 col 27) matches the position identified in the response's 'detail' field",
+      "Route source code (src/app/api/classify/route.ts lines 42-49) has exactly one 502-returning path, and it can only fire when JSON.parse throws"
+    ],
+    "residual_unknowns": [
+      "How often does Sonnet 4.6 emit malformed JSON for a semantically similar target text? (Would need many trials to characterize the rate — outside this loop's scope)",
+      "Whether a targeted prompt refinement, a schema-constrained decoding call, or a tolerant JSON-repair helper would eliminate this class of failure (future implementation loop question)"
+    ]
+  },
+
+  "diagnostic_options": [
+    {
+      "id": "A_add_structured_error_logging",
+      "description": "Add server-side console.error logging in the classify route's 502 branch to capture the parse detail + raw text in dev-server logs (not just the HTTP response body).",
+      "cost_usd": 0,
+      "code_change_required": true,
+      "production_runtime_impact": "Adds one console.error line per parse failure. Logs would include the raw LLM output; low sensitivity (no API keys / user secrets).",
+      "expected_benefit": "Makes future classify 502s inspectable from /tmp/acr-dev-server.log alone, without needing the full network_diagnostics artifact. Marginal since we already have body_excerpt today.",
+      "recommendation": "Optional. Not needed for this incident (already diagnosed). Consider bundling into a broader classify hardening loop."
+    },
+    {
+      "id": "B_deterministic_unit_test_with_synthetic_llm_output",
+      "description": "Add scripts/test-classify-route.mjs that unit-tests the JSON.parse branch by mocking generateText to return known-malformed strings (e.g. the exact 'company_preferences [],' pattern). No LLM call.",
+      "cost_usd": 0,
+      "code_change_required": true,
+      "production_runtime_impact": "None — test-only.",
+      "expected_benefit": "Guards the 502 branch behavior; catches regressions if error mapping changes.",
+      "recommendation": "Reasonable. Would live under a separate implementation loop."
+    },
+    {
+      "id": "C_extract_pure_json_repair_helper",
+      "description": "Extract the 'strip ```', 'trim' logic into a pure helper and add a tolerant repair step (e.g. try/catch around a minimal repair — best-effort insertion of missing '\":' via a bounded regex, then re-parse).",
+      "cost_usd": 0,
+      "code_change_required": true,
+      "production_runtime_impact": "Adds one repair attempt per failure. Risk: over-correction could mask real model errors.",
+      "expected_benefit": "Would recover from this specific failure pattern. Does not eliminate the underlying probabilistic issue.",
+      "recommendation": "Weigh carefully. Repair heuristics are a slippery slope. Prefer Option D or E."
+    },
+    {
+      "id": "D_switch_classify_to_generateObject_with_schema",
+      "description": "Replace `generateText` + manual `JSON.parse` with the ai SDK's `generateObject({ schema })` (or Anthropic native structured output if newer SDK), providing a Zod schema for Classification. This uses constrained decoding to guarantee valid JSON matching the schema.",
+      "cost_usd": 0,
+      "code_change_required": true,
+      "production_runtime_impact": "Changes the classify request shape from Anthropic's perspective; slightly higher tokens; virtually eliminates JSON parse failures.",
+      "expected_benefit": "Root-cause fix. Prevents the entire class of malformed-JSON 502s.",
+      "recommendation": "Strongest option. Best done in a dedicated implementation loop with its own design + DECISION."
+    },
+    {
+      "id": "E_route_level_integration_test_with_stubbed_provider",
+      "description": "Add scripts/test-api-classify.mjs that spawns the Next.js route handler with a mocked @ai-sdk/anthropic module returning fixed strings. Exercises the whole route with no network call.",
+      "cost_usd": 0,
+      "code_change_required": true,
+      "production_runtime_impact": "None — test-only.",
+      "expected_benefit": "Broader coverage than Option B; catches request-parsing bugs too.",
+      "recommendation": "Reasonable but more work than B. Consider only if we want route-level test coverage generally."
+    },
+    {
+      "id": "F_passive_dev_server_reproduction_without_provider_call",
+      "description": "Start dev server, intercept the classify route via a stub, replay Fixture B's payload without touching Anthropic.",
+      "cost_usd": 0,
+      "code_change_required": false,
+      "production_runtime_impact": "None.",
+      "expected_benefit": "Confirms request-parsing path is fine. Since we already know request parsing succeeded (`application-code: 3.6s` indicates the parse and generateText call happened), this adds little.",
+      "recommendation": "Skip — evidence already sufficient."
+    }
+  ],
+
+  "selected_next_action": {
+    "recommended": "No additional zero-cost diagnostic is required for THIS incident — root cause is confirmed from existing evidence.",
+    "next_governance_step": "Author the diagnostics DECISION (verdict `approve` for the diagnostics design itself · outcome `root_cause_confirmed` for the underlying incident).",
+    "next_implementation_step_optional": "If the reviewer decides to harden the classify route against future probabilistic LLM output failures, initiate a SEPARATE implementation loop with its own design + DECISION. Recommended technical direction: Option D (switch to `generateObject({ schema })`). Estimated cost: $0 for design; a small amount (~$0.01) for a single validation call at implementation time.",
+    "next_paid_step_conditional": "If the reviewer chooses to complete the Phase 3 two-report validation, a SEPARATE cost-approved GO is required for Fixture B exactly once (not a retry). Given that H2 is a probabilistic LLM output error, a fresh B run has a reasonable chance of succeeding without any code change — but nothing guarantees it. Reviewer should decide whether to gate the rerun on the classify-hardening fix or not."
+  },
+
+  "completion_run_prerequisites": [
+    "The diagnostics DECISION is approved.",
+    "The reviewer chooses one of: (a) rerun Fixture B as-is on the probabilistic-recovery assumption, or (b) implement classify hardening (Option D) first via a separate loop.",
+    "Under path (a): the reviewer accepts the residual risk that a second identical failure is possible.",
+    "Under path (b): the hardening implementation is complete, reviewed, and committed before B is rerun.",
+    "Separate explicit human cost approval for the paid rerun (fresh $0.075 per-run cap, $0.15 total cap unchanged).",
+    "Fixture B exactly once. No retry. No Fixture A rerun (already validated).",
+    "Fresh run ID and fresh Phase 3 RUN_REPORT + DECISION.",
+    "If classify fails again, do NOT retry — stop and reassess with a new diagnostics loop.",
+    "No baseline mutation. No blocking promotion. No Phase 4 / 5 / 6. No `AgentOps-5f-promote`."
+  ],
+
+  "policy_resolutions": {
+    "Q1_was_generate_report_called": "no · generate_route_status: null · zero /api/generate-report lines in the dev server log for B",
+    "Q2_was_anthropic_called": "YES for the classify request — this corrects the prior 'Fixture B: $0' description. Anthropic Sonnet 4.6 was invoked for ~3.6s to produce the (malformed) classify response. No, however, for /api/generate-report — that route was never reached.",
+    "Q3_was_502_from_classify_or_upstream": "from classify itself · Next.js access log shows application-code: 3.6s and the 502 body matches classify route source verbatim",
+    "Q4_does_classify_have_explicit_502_branches": "yes · exactly one · lines 42-49 · triggered by JSON.parse(raw) throwing",
+    "Q5_was_stack_trace_logged": "no · route has no application-level logging; server log contains only Next.js default access lines",
+    "Q6_was_request_parsing_successful": "yes · req.json() succeeded (otherwise unhandled → 500, not 502)",
+    "Q7_was_request_validation_successful": "yes · target field was present and non-empty (otherwise 400, not 502)",
+    "Q8_is_fixture_b_payload_structurally_different_from_a": "no · both are { target: <string> } with ~405 chars, plain text, no control characters",
+    "Q9_is_payload_unusually_large": "no · ~450 bytes JSON payload",
+    "Q10_relevant_timeout_near_4561ms": "no · route has no explicit timeout and maxDuration is 30s; 3.6s was successful application execution (Anthropic responded, JSON.parse failed)",
+    "Q11_was_server_otherwise_healthy": "yes · A completed successfully ~2 minutes prior; other B-session requests (GET /, GET /api/companies) returned normally",
+    "Q12_has_this_exact_failure_happened_before": "no documented precedent for /api/classify 502 in Phase 2/3 governance · prior Fixture B failures were on /api/generate-report (AgentOps-5d-b-timeout-diagnostics loop, different route, different failure mode)",
+    "Q13_can_root_cause_be_confirmed_from_existing_evidence": "YES · root_cause_confirmed",
+    "Q14_leading_hypothesis": "H2 — local classify route reached its explicit 502 branch because Anthropic returned malformed JSON (missing '\":' at line 3 col 27, key '\"company_preferences\"')",
+    "Q15_evidence_contradicting_leading_hypothesis": "none · every field of the captured 502 body matches the route's own error-branch output, and the parse-error position matches the observable malformation in the raw text",
+    "Q16_safest_next_0_diagnostic_action": "No further $0 diagnostic is required for this incident. Proceed to DECISION.",
+    "Q17_does_diagnostics_require_code_modification": "no · root cause confirmed from existing evidence alone",
+    "Q18_is_paid_rerun_currently_justified": "conditional · a paid B rerun could succeed by chance since the failure is probabilistic, but nothing guarantees it. Justification depends on reviewer priorities: complete-Phase-3-fast (rerun as-is) vs. prevent-recurrence (implement hardening first). Neither is auto-authorized by this loop.",
+    "Q19_is_fixture_b_rerun_authorized": "no · this loop does NOT authorize any paid rerun · Fixture B rerun remains unauthorized",
+    "Q20_does_this_loop_authorize_phase_4_5_6_or_promotion": "no · Phase 4 / 5 / 6 / blocking promotion / AgentOps-5f-promote all remain further separately gated"
+  },
+
+  "risks": [
+    "Root cause is a probabilistic LLM output failure, not a deterministic bug. A rerun of Fixture B without code change may succeed or may fail again — impossible to predict without more trials.",
+    "The 502 response body echoes the first ~500 chars of the raw LLM text back to the client. In a public production context this could be considered information leakage, though the content is Anthropic's own classifier reasoning, not user secrets. Not a Phase 3 blocker; note for any future hardening loop.",
+    "Prior cost narrative ('Fixture B: $0') is technically wrong at the classify layer — Anthropic WAS invoked for ~3.6s of classify work, incurring a small (much less than a report generation) charge. Future documents should distinguish 'classify-layer cost' from 'generation-layer cost'.",
+    "The classify route has zero application-level logging on its 502 path; the only reason we could diagnose this incident is that the harness's network_diagnostics captured the response body. Any future 502 outside a harness run (e.g. from a real user) would not leave a diagnosable trace on the server side.",
+    "Test coverage for the classify route is zero. A future implementation loop should add deterministic tests (Option B or E) at the same time as any hardening (Option D).",
+    "Fixture B has now failed twice on the harness (once on /api/generate-report timeout in the 5d-b-timeout-diagnostics era, once on /api/classify 502 today) — the failure modes are unrelated but the pattern is worth noting for future stability planning."
+  ],
+
+  "open_questions": [],
+
+  "boundaries_respected": {
+    "no_rerun": true,
+    "no_paid_api_call": true,
+    "no_generation": true,
+    "no_dev_server_started_this_loop": true,
+    "no_code_change": true,
+    "no_prompt_change": true,
+    "no_test_added_this_loop": true,
+    "no_fixture_change": true,
+    "no_checker_change": true,
+    "no_harness_change": true,
+    "no_r1_r2_change": true,
+    "no_new_qi_tier": true,
+    "no_baseline_mutation": true,
+    "no_baseline_eligibility_change": true,
+    "no_telemetry_semantic_change": true,
+    "no_legacy_verdict_change": true,
+    "no_process_exit_change": true,
+    "no_retry_added": true,
+    "no_threshold_change": true,
+    "no_logging_code_added_this_loop": true,
+    "no_package_lockfile_workflow_env_vercel_change": true,
+    "no_pipeline_change": true,
+    "no_agent_scripts_change": true,
+    "no_push": true,
+    "no_deploy": true,
+    "no_phase_4_5_6": true,
+    "no_5f_promote": true,
+    "no_c_d_e_run": true,
+    "no_pdf_ingestion": true,
+    "no_openai_api": true,
+    "no_report_md_or_screenshot_or_secret_committed": true,
+    "no_log_copied_into_repo": true,
+    "cost_usd": 0
+  }
+}
