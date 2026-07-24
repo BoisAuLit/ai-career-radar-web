@@ -95,7 +95,7 @@ node scripts/report-regression-local.mjs --fixture B
 - **`report_char_count`**: 9339
 - **`checker_hash`**: `sha256:eb6193d9ea677cd8d5a6ca708b45b8b77480f38d30b8be17e23059bddf53cc73`
 - **Harness git SHA**: `f073c4f46ec2e6ae0186bd7d249bd51d5ddbd3b5`
-- **Measured cost**: harness `cost_measured=false`; **estimated ~$0.05** (one real generation via `/api/generate-report`; consistent with prior real-generation loops in this repo)
+- **Cost**: **estimated ~$0.05** (approximately) — harness `cost_measured=false`; not directly measured. Estimate based on one real generation via `/api/generate-report` and prior real-generation loops in this repo.
 
 ## Fixture A artifact matrix (7 required · 7 present)
 
@@ -159,7 +159,7 @@ Scratchpad-only (never committed): `/var/folders/.../acr-regression-runs/2026072
 - **`report_char_count`**: 0
 - **First non-2xx**: `http://localhost:3000/api/classify` **status 502** at `first_failure_elapsed_ms=4561`
 - **`generate_route_status`**: **`null`** — `/api/generate-report` **never called**
-- **Measured cost**: **$0** (Anthropic API never invoked because `/api/classify` failed pre-generation; harness `cost_measured=false` and 502 from classify → generation path unreached)
+- **Cost**: **estimated approximately $0** — harness `cost_measured=false`; not directly measured. Estimate based on the pre-generation 502: `/api/classify` failed before `/api/generate-report` was invoked (`generate_route_status: null`), so no Anthropic model invocation was reached.
 - **Harness git SHA**: `f073c4f46ec2e6ae0186bd7d249bd51d5ddbd3b5`
 
 ## Fixture B artifact matrix (4 present · 3 correctly absent by design)
@@ -189,17 +189,21 @@ Scratchpad-only (never committed): `/var/folders/.../acr-regression-runs/2026072
 
 ## Cost per run + total + cap compliance
 
-| run | measured API cost | source |
+**Cost was NOT directly measured by the harness.** `metadata.cost_measured=false` in both runs — the current harness does not read a per-generation cost figure back from the app. The values below are **estimates**, not measurements.
+
+| run | estimated API cost | source of estimate |
 |---|---|---|
-| **A** | **~$0.05** (estimated) | harness `cost_measured=false`; estimated from prior real-generation loops (`AgentOps-5e-followup-prompt-refinement-implement` etc.) — one Sonnet 4.6 generation via `/api/generate-report` |
-| **B** | **$0** | `/api/classify` returned 502 before `/api/generate-report` was called (`generate_route_status: null`); no Anthropic invocation reached the model |
-| **Total** | **~$0.05** | Both runs together |
+| **A** | **approximately ~$0.05** (estimated) | one Sonnet 4.6 generation via `/api/generate-report`, extrapolated from prior real-generation loops in this repo (e.g. `AgentOps-5e-followup-prompt-refinement-implement`) |
+| **B** | **approximately $0** (estimated) | `/api/classify` returned HTTP 502 at 4561ms before `/api/generate-report` was called (`generate_route_status: null` in `network_diagnostics.json`); no Anthropic model invocation was reached, so the estimate rests on the observed pre-generation abort rather than a measurement |
+| **Total** | **approximately ~$0.05** (estimated) | sum of the two estimates above |
 
-Cap compliance:
+Cap compliance (against estimates):
 
-- Per-run A: $0.05 < $0.075 hard cap ✅
-- Per-run B: $0.00 < $0.075 hard cap ✅
-- Total: $0.05 < $0.15 hard total cap ✅ (and < $0.10 expected total)
+- Per-run A: estimated $0.05 < $0.075 hard cap ✅ (with the caveat that the value is not measured)
+- Per-run B: estimated $0.00 < $0.075 hard cap ✅ (with the caveat that pre-generation failures normally imply zero paid tokens but this is not a direct receipt)
+- Total: estimated $0.05 < $0.15 hard total cap ✅ (and < $0.10 expected total)
+
+Because cost is estimated rather than measured, the Phase 3 DECISION should treat cap-compliance evidence as "consistent with the cap under standard cost per generation" rather than "measured within the cap." Future work may add a measured cost hook to the harness so this is unambiguous.
 
 ## Duration per run
 
@@ -247,8 +251,8 @@ Both correctly `display_only: true` · `affected_legacy_verdict: false` · `affe
 
 ## Integration verdict per run
 
-- **A**: **pass** — all 7 artifacts present · telemetry accurately reflects the generated report · legacy `checks[]` intact · process exit legacy-controlled · no baseline mutation · no retry · no report rewrite · combined precedence honored · verdict.md displays 4 sibling sections with required wording
-- **B**: **pass** — all applicable artifacts present (4 of 7; 3 correctly absent per design because report.md was never saved: `quote_integrity_summary.json` per 5c-integrate `blocked_no_report`, plus `structural_evidence_summary.json` + `structural_evidence_context.json` per Phase 2 `not_run`) · telemetry accurately reflects the external app failure via `blocked_no_report` + `not_run` + `not_evaluable` · legacy `checks[]` intact · process exit legacy-controlled · no baseline mutation · no retry · no report rewrite · combined precedence honored
+- **A**: **pass — end-to-end integration PASS.** All 7 artifacts present. Telemetry accurately reflects the generated report. The full report path was exercised: report captured → context derived from harness facts (category A only) → validator spawned → summary written → structural verdict emitted → metadata + verdict.md populated with 4 sibling sections and required wording. Legacy `checks[]` intact · process exit legacy-controlled · no baseline mutation · no retry · no report rewrite · combined precedence honored.
+- **B**: **pass (failure-path handling only) — NOT a full report integration PASS.** The pre-generation `/api/classify` 502 aborted the flow before any report was captured, so the full report integration path (report.md → validator invocation → structural summary + context → structural verdict) was **NEVER exercised** on B. What B did successfully demonstrate is graceful handling of the pre-generation failure path: `runQuoteIntegrity` correctly emitted `blocked_no_report` without invoking the QI checker; `runStructuralEvidence` correctly emitted `evaluation_status: not_run` without invoking the validator; combined telemetry correctly derived `not_evaluable`. Legacy `checks[]` intact · process exit legacy-controlled · no baseline mutation · no retry · no report rewrite · combined precedence honored. **B did NOT provide evidence for the report-emission integration path.**
 
 ## Capture context per run
 
@@ -309,11 +313,11 @@ Rule: `tool_error > red > amber > not_evaluable > green`.
 
 ## Structural checks set preservation
 
-- **A structural_checks.json**: 30 checks · 4 buckets (`structural: 17` · `fixture: 4` · `operational: 4` · `quote_integrity: 5`) · **no `structural_evidence` or `combined_telemetry` entry**.
-- **B structural_checks.json**: same 30-check shape · same 4 buckets · **no `structural_evidence` or `combined_telemetry` entry**.
-- Legacy check set is unchanged between A and B and vs Phase 2 baseline.
+- **A `structural_checks.json`**: **30 checks** · 4 buckets (`structural: 17` · `fixture: 4` · `operational: 4` · `quote_integrity: 5`) · **no `structural_evidence` or `combined_telemetry` entry**.
+- **B `structural_checks.json`**: same 30-check shape · same 4 buckets · **no `structural_evidence` or `combined_telemetry` entry**.
+- Legacy check set is unchanged between A and B and vs Phase 2 baseline (before Phase 2 landed, the same 30-check / 4-bucket shape held).
 
-(Note: the Phase 3 design memo referenced "legacy 25-check list only" — the actual current count is **30 checks** across the 4 legacy buckets. This was pre-existing Phase 2 shape and was not modified by Phase 3 execution. The number "25" in the memo was a rough estimate; the invariant that matters — "no structural / combined entry in checks[]" — holds.)
+**Note on the "25" figure**: the Phase 3 design memo (`.agent/design_memos/2026-07-24_AgentOps-5e-followup-baseline-lint-integrate-phase3-design.md` § 12) and the parent Phase 2 design memo (`.agent/design_memos/2026-07-24_AgentOps-5e-followup-baseline-lint-integrate-design.md`) both referenced a "legacy 25-check list." That assumption was **stale** — the actual current count of legacy `checks[]` entries in `scripts/report-regression-local.mjs` at HEAD `f073c4f` is **30**, spread across the 4 legacy buckets. The "25" figure appears to date from before the AgentOps-5c-integrate QI-telemetry expansion added the 5 `quote_integrity` bucket entries (plus historical growth in the `structural` and `operational` buckets). The **invariant that matters** — "no structural / combined entry in `checks[]`" — holds in both A and B and is what the Phase 3 acceptance criteria depend on. Future design artifacts should reference **30** (or programmatically inspect `structural_checks.json`) rather than **25**.
 
 ## Process-exit preservation
 
@@ -353,9 +357,22 @@ Rule: `tool_error > red > amber > not_evaluable > green`.
 
 ## Overall Phase 3 integration result
 
-**pass** for both runs.
+**incomplete / not_evaluable** as a full A/B validation.
 
-- The integrated harness produced accurate, internally consistent telemetry across two distinct scenarios (successful generation with a structurally deficient report; complete pre-generation app failure).
+The Phase 3 design called for two fresh generated reports so that the integrated telemetry path — report capture → validator spawn → structural summary → metadata + verdict.md — could be exercised twice. Only Fixture A actually exercised that path. Fixture B's `/api/classify` returned 502 before any report was generated, so the report-emission integration path was **NEVER exercised on B**. As a two-run validation, the plan therefore did not complete.
+
+What was demonstrated with confidence:
+
+- **Fixture A**: end-to-end integration PASS. One clean sample of the full report path shows the integrated telemetry path is internally consistent, honors the corrected capture-evaluability truth table (structural RED remains visible even when legacy is GREEN), and does not affect legacy `checks[]` or process exit.
+- **Fixture B**: failure-path handling PASS (not full-report PASS). One clean sample of the pre-generation-failure path shows the harness / QI / structural / combined telemetry each gracefully record the failure without producing spurious artifacts, without retrying, and without mutating legacy behavior.
+
+What was NOT demonstrated:
+
+- **A second independent sample of the full report integration path.** With `n=1` for that path, the sample size is too small to say the integration works reliably across fixtures — only that it worked correctly on Fixture A this once.
+- **Provider-side resilience.** The 502 was external and transient-looking; the plan explicitly avoided retries, so we cannot yet assert the integration path also works on B's characteristic (Fullstack → AI product) content.
+
+Invariants that DO hold across both runs (unaffected by the reclassification):
+
 - Legacy `checks[]`, `classify(checks)`, and `process.exit(classification.exit)` behaved identically to their pre-Phase-2 semantics.
 - Structural telemetry never entered `checks[]`.
 - Combined telemetry never entered `checks[]`.
@@ -363,20 +380,29 @@ Rule: `tool_error > red > amber > not_evaluable > green`.
 - No retries occurred.
 - No report rewriting occurred.
 - No forbidden files were modified.
-- Measured cost was **~$0.05 total**, well under the **$0.15 hard cap**.
+- `affected_legacy_verdict=false` in both runs.
+- Estimated total cost **approximately ~$0.05** (see cost section — harness `cost_measured=false`, so this is an estimate, not a measured value), well under the **$0.15 hard cap**.
 
-The product-vs-integration distinction defined in the Phase 3 design proved essential and correct: two distinct kinds of trouble (structural report gap for A; external app failure for B) were both handled correctly by the telemetry pipeline without ever conflating them with integration defects.
+The product-vs-integration distinction defined in the Phase 3 design proved essential and correct: two distinct kinds of trouble (structural report gap for A; external app failure for B) were both handled by the telemetry pipeline without ever being conflated with integration defects. What the design did NOT anticipate is that an external pre-generation failure can leave the full report integration path unexercised for one of the two planned samples.
 
 ## Recommended next step
 
-**Human + ChatGPT review** this RUN_REPORT, then say **"create DECISION for AgentOps-5e-followup-baseline-lint-integrate-phase3-execute"**. Executor will write DECISION (mild preference: **approve** for integration correctness · **required_fixes: none** for integration).
+**Human + ChatGPT review** this RUN_REPORT, then say **"create DECISION for AgentOps-5e-followup-baseline-lint-integrate-phase3-execute"**. Executor's mild preference for the DECISION: **`pause`** — the two-run validation did not complete on the full report integration path (only Fixture A exercised it; Fixture B aborted pre-generation with a 502 from `/api/classify`), so the plan's `n=2` sample was not achieved even though every individual invariant held on the samples that did complete.
 
-Product-quality follow-ups (out of scope for this DECISION):
+Options for the DECISION:
 
-- Fixture A structural RED could motivate a subsequent prompt / generator refinement loop (separately designed).
-- Fixture B `/api/classify` 502 could motivate a subsequent app-side diagnostics loop (separately designed).
+- **`pause`** — the recommended path. Design + implementation approved for the paths that were exercised; another paid run is needed to complete the two-sample validation.
+- **`revise`** — only if the reviewer sees an actual integration/tooling defect in what was observed (the executor did not find one).
+- **`approve`** — only if the reviewer explicitly accepts `n=1` for the full report integration path as sufficient evidence. The executor does not recommend this without an explicit statement to that effect.
 
-Phase 4 (baseline migration), Phase 5 (stability), Phase 6 (blocking promotion), and `AgentOps-5f-promote` remain **further separately gated**.
+Options for what to do AFTER the DECISION (each requires its own separate design + DECISION + explicit cost-approved GO):
+
+- **Re-run Fixture B once** to complete the two-sample validation, under a fresh cost-approved GO with the same $0.075 per-run cap. Ideally accompanied by a brief app-side check that `/api/classify` is currently healthy (no code change).
+- **Re-run Fixture A + Fixture B as a fresh pair** if the reviewer prefers a coherent same-session pair rather than a delta on top of run_09.
+- **Prompt / generator refinement** to address the A structural RED (report body does not match `/^##\s+Your top 5 gaps\b/im` or the `## Evidence Appendix` heading pattern).
+- **App-side diagnostics** to investigate the `/api/classify` 502.
+
+Phase 4 (baseline migration), Phase 5 (stability), Phase 6 (blocking promotion), and `AgentOps-5f-promote` remain **further separately gated** regardless of the Phase 3 outcome.
 
 ## Stop condition
 
