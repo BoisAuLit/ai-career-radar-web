@@ -1,0 +1,95 @@
+{
+  "run_id": "20260724T193349Z_fixture-B",
+  "fixture_id": "B",
+  "fixture_version": "1",
+  "base_url": "http://localhost:3000",
+  "started_at": "2026-07-24T19:33:49.386Z",
+  "finished_at": "2026-07-24T19:33:54.164Z",
+  "duration_ms": 4778,
+  "git_commit_sha": "f073c4f46ec2e6ae0186bd7d249bd51d5ddbd3b5",
+  "corpus_snapshot_date": "May 14, 2026",
+  "model_display": "Claude Sonnet 4.6",
+  "report_char_count": 0,
+  "report_length_soft_min": 1500,
+  "report_length_soft_max": 14000,
+  "page_body_char_count": 0,
+  "capture_scope": "unset",
+  "capture_strategy": "unset",
+  "candidate_count": 0,
+  "qualified_candidate_count": 0,
+  "selected_candidate_char_count": 0,
+  "selected_candidate_marker_count": 0,
+  "selected_candidate_has_evidence": false,
+  "fallback_used": false,
+  "capture_debug_top3": [],
+  "verdict": "red",
+  "exit_code": 1,
+  "cost_measured": false,
+  "cost_cap_enforced_by": "single_generation_limit",
+  "artifact_policy": {
+    "committed": [
+      "metadata.json",
+      "structural_checks.json",
+      "verdict.md",
+      "quote_integrity_summary.json",
+      "structural_evidence_summary.json",
+      "structural_evidence_context.json",
+      "network_diagnostics.json"
+    ],
+    "local_scratchpad": [
+      "report.md",
+      "report.png"
+    ]
+  },
+  "scratch_paths": {
+    "report_md": "/var/folders/xx/ypnl5f2n0y7b48w_pgxyhqt80000gn/T/acr-regression-runs/20260724T193349Z_fixture-B/report.md",
+    "screenshot_png": "/var/folders/xx/ypnl5f2n0y7b48w_pgxyhqt80000gn/T/acr-regression-runs/20260724T193349Z_fixture-B/report.png"
+  },
+  "console_errors": [
+    "console.error: Failed to load resource: the server responded with a status of 502 (Bad Gateway)",
+    "applicationErrorDetected: retry button visible after 3840ms"
+  ],
+  "completion_state": "application_error",
+  "completion_elapsed_ms": 3840,
+  "network_diagnostics_path": ".agent/regression_runs/20260724T193349Z_fixture-B/network_diagnostics.json",
+  "application_error_detected": true,
+  "application_error_excerpt": "nce × proximity to your current resume. 3 Evidence from real JDs Direct quotes from five matching job posts, with company + ID tags. 4 One project to build next Single highest-leverage deliverable, time-bounded, named tools. + Optional company deep-dive Contrast a specific company's JDs against the industry baseline. Something went wrong Please try again. The raw error is below for debugging. ↻ Retry ↺ Start over Show raw error (for debugging) How it wor",
+  "first_non_2xx_url": "http://localhost:3000/api/classify",
+  "first_non_2xx_status": 502,
+  "first_failure_elapsed_ms": 4561,
+  "quote_integrity": {
+    "enabled": true,
+    "checker_path": "scripts/quote-integrity-check.mjs",
+    "summary_path": ".agent/regression_runs/20260724T193349Z_fixture-B/quote_integrity_summary.json",
+    "verdict": "blocked_no_report",
+    "schema_version": null,
+    "counts": {},
+    "red_reasons": [],
+    "amber_reasons": [],
+    "blocking_mode": "telemetry_only"
+  },
+  "structural_evidence": {
+    "evaluation_status": "not_run",
+    "verdict": null,
+    "blocking_mode": "telemetry_only",
+    "schema_version": "0.1-phase1",
+    "context_schema_version": "0.1-phase2",
+    "checker_path": "scripts/structural-evidence-check.mjs",
+    "checker_hash": null,
+    "exit_code": null,
+    "duration_ms": 0,
+    "summary_path": null,
+    "context_path": null,
+    "capture_context": null,
+    "affected_legacy_verdict": false,
+    "tool_error": null
+  },
+  "combined_telemetry": {
+    "verdict": "not_evaluable",
+    "display_only": true,
+    "affected_legacy_verdict": false,
+    "affected_process_exit": false,
+    "quote_integrity_verdict": "blocked_no_report",
+    "structural_evidence_verdict": null
+  }
+}
