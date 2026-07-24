@@ -1,0 +1,540 @@
+{
+  "schema_version": "0.1-design",
+  "loop": "AgentOps-5e-followup-phase3-classify-json-hardening-design",
+  "generated_by": "AgentOps-5e-followup-phase3-classify-json-hardening-design (2026-07-24_run_11) · inspection only",
+  "parent_loop": "AgentOps-5e-followup-phase3-fixture-b-classify-502-diagnostics-design (2026-07-24_run_10)",
+  "authorizing_decision": ".agent/decisions/2026-07-24_run_10_DECISION.md",
+  "cost_this_loop_usd": 0,
+
+  "current_failure_mode": {
+    "route": "/api/classify",
+    "route_source": "src/app/api/classify/route.ts (53 lines)",
+    "explicit_502_paths": 1,
+    "trigger_condition": "JSON.parse(raw) throws where raw is the (fence-stripped) Anthropic response text",
+    "observed_at_run_id": "20260724T193349Z_fixture-B",
+    "observed_malformation": "\"company_preferences [],  (missing closing quote + colon between key and value; position line 3 col 27)",
+    "provider_model": "claude-sonnet-4-6",
+    "reason_semantically_correct_but_format_wrong": "raw output contained correct archetype (applied_ai) but the model dropped the ': separator between the second key and its value — a probabilistic formatting failure",
+    "corollary": "any future classify request where Sonnet 4.6 emits invalid JSON will produce the same 502 today"
+  },
+
+  "installed_dependencies": {
+    "ai": {"declared": "^6.0.182", "resolved": "6.0.182", "types_entry": "./dist/index.d.ts"},
+    "@ai-sdk/anthropic": {"declared": "^3.0.77", "resolved": "3.0.77"},
+    "@ai-sdk/provider": {"resolved": "3.0.10"},
+    "@ai-sdk/provider-utils": {"resolved": "4.0.27"},
+    "@ai-sdk/gateway": {"resolved": "3.0.114"},
+    "@ai-sdk/react": {"declared": "^3.0.184", "resolved": "3.0.184"},
+    "zod": {"declared": "not in package.json direct dependencies", "resolved": "4.4.3 (transitive via ai / @ai-sdk/*)", "note": "importable via `import { z } from \"zod\"` because module hoisting makes it resolvable; safer to add as a direct dependency in the implementation loop for clarity"},
+    "next": {"declared_or_resolved_hint": "16.2.6 (from dev server Ready line — Next.js 16.2.6 Turbopack)"}
+  },
+
+  "structured_output_api_inventory": {
+    "primary_exports_from_ai": {
+      "generateObject": {
+        "signature": "generateObject<SCHEMA extends FlexibleSchema<unknown>>({model, schema, schemaName?, schemaDescription?, system?, prompt?, messages?, output?: 'object'|'array'|'enum'|'no-schema', maxRetries?, abortSignal?, timeout?, experimental_repairText?, experimental_telemetry?, ...}) → Promise<GenerateObjectResult<Object>>",
+        "result_shape": "{ object: OBJECT, reasoning: string|undefined, finishReason, usage, warnings, request, response, ... }",
+        "throws": "NoObjectGeneratedError when the model output cannot be parsed into a valid object matching the schema",
+        "supported": true,
+        "official_and_current": true,
+        "deprecated": false
+      },
+      "Output (via `output as Output`)": {
+        "purpose": "used with generateText's `output` or `experimental_output` parameter to request structured output alongside tool calling",
+        "signature_hint": "Output.object({schema}) returns an Output descriptor consumed by generateText",
+        "supported": true,
+        "note": "less direct than generateObject for a route with no tool calls; generateObject is the cleaner choice"
+      },
+      "NoObjectGeneratedError": {
+        "purpose": "error class thrown by generateObject when object generation fails",
+        "fields": ["text (string|undefined — the raw model text)", "response (metadata)", "finishReason"],
+        "static_method": "NoObjectGeneratedError.isInstance(err) — for safe type discrimination"
+      },
+      "NoOutputGeneratedError": {
+        "purpose": "thrown when no LLM output at all is produced (empty response, provider silence)"
+      },
+      "RetryError": {
+        "purpose": "thrown when transport-level retries exhaust their budget"
+      },
+      "zodSchema": {
+        "purpose": "helper re-exported from @ai-sdk/provider-utils; converts a Zod schema into the FlexibleSchema shape generateObject expects",
+        "supported": true
+      },
+      "jsonSchema": {
+        "purpose": "helper for using raw JSON Schema (JSON Schema draft) as a FlexibleSchema — alternative to Zod",
+        "supported": true,
+        "advantage": "avoids introducing a direct Zod dependency if we want zero-new-dep hardening"
+      }
+    },
+    "retry_semantics": {
+      "generateObject_maxRetries_default": 2,
+      "meaning": "transport-level retry on provider errors (429, 5xx, timeouts) — retries the SAME request. Does NOT re-generate on model output that fails schema validation.",
+      "on_malformed_output": "generateObject throws NoObjectGeneratedError immediately; no implicit re-invocation of the model",
+      "recommended_setting_for_our_route": "maxRetries: 0 — to honor the 'one provider call per classify request' policy strictly and eliminate any transport-level retry ambiguity"
+    },
+    "repair_semantics": {
+      "experimental_repairText": "optional callback (RepairTextFunction). If set, invoked with the raw text on parse failure to attempt repair BEFORE throwing NoObjectGeneratedError. WE WILL NOT SET IT — violates 'no silent semantic repair' and 'no additional model call for repair' policies.",
+      "our_choice": "leave experimental_repairText unset"
+    },
+    "input_schema_options": {
+      "zod": "import { z } from 'zod'; then pass a Zod schema directly to `schema:`",
+      "json_schema_helper": "import { jsonSchema } from 'ai'; then pass jsonSchema({...JSON Schema object...})",
+      "note": "Zod produces better TypeScript inference for the returned `.object` typing"
+    },
+    "compatibility_with_current_runtime": {
+      "next_js_route_handler": "src/app/api/classify/route.ts is a Next.js Route Handler exporting async POST — generateObject is compatible; it is used across the ai SDK's normal server-side patterns",
+      "maxDuration_export": "current route sets `export const maxDuration = 30` — preserved unchanged in hardening"
+    }
+  },
+
+  "current_route_contract": {
+    "source": "src/app/api/classify/route.ts",
+    "request": {
+      "method": "POST",
+      "body_shape": "{ target: string }",
+      "required_fields": ["target"],
+      "validation": "trim(); if empty → 400 with body {error: \"Missing 'target' in request body\"}",
+      "assumed_target_length": "no explicit upper bound today; fixtures use ~405 chars each"
+    },
+    "success_response": {
+      "status": 200,
+      "body_shape": "{ archetype: Archetype, company_preferences: string[], level_hint: Seniority, reasoning: string } (== Classification)",
+      "returned_via": "Response.json(parsed)"
+    },
+    "failure_responses": {
+      "empty_target": {"status": 400, "body": "{ error: \"Missing 'target' in request body\" }"},
+      "json_parse_failure": {"status": 502, "body": "{ error: 'Classifier returned invalid JSON', detail: <parse error message>, raw: <first ~500 chars of raw LLM text> }", "explicit_branch": "route L42-49"},
+      "unhandled_exception_generateText_or_reqjson": {"status": 500, "body": "Next.js default 500 handling — not an explicit route branch"}
+    },
+    "caller_expectations": {
+      "primary_caller": "src/app/page.tsx line 549-559",
+      "success_path_reads": ["archetype", "company_preferences", "level_hint", "reasoning"],
+      "failure_path_reads": ["err.error only"],
+      "does_not_read": ["err.detail", "err.raw"],
+      "safety_of_removing_raw_and_detail": "SAFE — caller does not touch those fields; harness parses status code + Retry-button DOM state, not response body content"
+    },
+    "harness_behavior_on_classify_failure": {
+      "network_diagnostics_events_captures_body_excerpt_up_to_500_chars": true,
+      "harness_reads_body_functionally": false,
+      "harness_functionally_depends_on_status_and_dom_state": true
+    }
+  },
+
+  "classification_schema": {
+    "shape": "{ archetype, company_preferences, level_hint, reasoning }",
+    "archetype": {
+      "type": "enum string",
+      "allowed_values": ["applied_ai","agent_engineering","llm_infra","eval","research_engineer","forward_deployed","ml_engineer","other"],
+      "required": true,
+      "matches_existing_Archetype_type": true,
+      "on_invalid": "schema validation fails → hardening returns sanitized 502 with error category structured_output_invalid"
+    },
+    "company_preferences": {
+      "type": "string array",
+      "min_length": 0,
+      "max_length_recommendation": 10,
+      "per_item_min_length": 1,
+      "per_item_max_length_recommendation": 200,
+      "per_item_trim_behavior_recommendation": "trim leading/trailing whitespace at validation time; reject empty-after-trim",
+      "dedup_policy_recommendation": "deduplicate case-insensitively at the schema layer",
+      "empty_array_valid": true
+    },
+    "level_hint": {
+      "type": "enum string",
+      "allowed_values": ["junior","mid","senior","staff","principal","unknown"],
+      "required": true,
+      "nullable": false,
+      "matches_existing_Seniority_type": true
+    },
+    "reasoning": {
+      "type": "string",
+      "required": true,
+      "min_length_recommendation": 1,
+      "max_length_recommendation": 2000,
+      "trim_behavior": "trim leading/trailing whitespace",
+      "multiline_allowed": true
+    },
+    "unknown_key_policy": "STRICT: reject unknown top-level keys. Prevents silent contamination if the model invents fields.",
+    "coercion_policy": "NONE: no coercion. Wrong-type field → schema validation failure.",
+    "defaulting_policy": "NONE: no silent defaults. Missing required field → schema validation failure.",
+    "transform_policy": "MINIMAL: only whitespace trim + lowercase-dedup for company_preferences. No semantic rewriting.",
+    "object_mode": "STRICT (Zod: z.object({...}).strict() or JSON Schema: additionalProperties: false)"
+  },
+
+  "options": [
+    {
+      "id": "A",
+      "name": "Native schema-constrained structured generation (generateObject with strict schema)",
+      "malformed_json_prevention": "STRONG — SDK enforces schema; malformed → NoObjectGeneratedError not free-form parse",
+      "semantic_validation": "STRONG — enum values, string bounds, unknown-key rejection enforced at SDK boundary",
+      "provider_call_count": 1,
+      "hidden_retries": "transport-level maxRetries default 2; set to 0 for strict one-call",
+      "implementation_complexity": "LOW — replace generateText + JSON.parse with generateObject; delete the parse try/catch and stripping logic",
+      "sdk_compatibility": "supported in ai@6.0.182 (confirmed via node_modules/ai/dist/index.d.ts inspection)",
+      "deterministic_behavior": "STRONG — success returns typed .object; failure throws NoObjectGeneratedError with structured metadata",
+      "privacy_impact": "NEUTRAL — we control error path and can sanitize before responding to client",
+      "observability": "STRONG — GenerateObjectResult includes usage/finishReason/warnings",
+      "caller_compatibility": "PRESERVED — success shape unchanged; failure response can drop raw/detail without breaking caller (verified)",
+      "testability": "HIGH — helper can be extracted into a pure module and unit-tested with mocked model",
+      "residual_failure_modes": "provider outage (500) · rate limit (500) · schema validation still can fail if provider returns valid JSON with wrong-shape → NoObjectGeneratedError handled as sanitized 502",
+      "production_risk": "LOW — behavior change is strict-in / clean-error-out; no runtime dependency swap; well-typed",
+      "recommendation": "PREFERRED"
+    },
+    {
+      "id": "B",
+      "name": "generateText + strict runtime schema validation + no repair",
+      "malformed_json_prevention": "MODERATE — parse failure still possible; validation catches wrong-shape but not fundamentally-broken JSON",
+      "semantic_validation": "STRONG — Zod/JSON schema enforced",
+      "provider_call_count": 1,
+      "hidden_retries": "same maxRetries semantics",
+      "implementation_complexity": "MODERATE — keep generateText, add schema, replace explicit 502 with sanitized version",
+      "sdk_compatibility": "supported (generateText is a public API)",
+      "deterministic_behavior": "MODERATE — parse-then-validate; two error branches (parse failed vs schema failed)",
+      "privacy_impact": "SAME as Option A",
+      "observability": "SAME as Option A",
+      "caller_compatibility": "SAME as Option A",
+      "testability": "SAME as Option A",
+      "residual_failure_modes": "malformed JSON free-form still possible — the primary failure class from run_09 could still occur",
+      "production_risk": "LOW-MODERATE",
+      "recommendation": "FALLBACK ONLY (if Option A is unexpectedly unsuitable)"
+    },
+    {
+      "id": "C",
+      "name": "generateText + bounded local JSON extraction/repair",
+      "malformed_json_prevention": "MODERATE — depends on repair heuristics",
+      "semantic_validation": "STRONG (if schema added on top)",
+      "provider_call_count": 1,
+      "hidden_retries": "none if implemented cautiously",
+      "implementation_complexity": "MODERATE-HIGH — repair heuristics are inherently fragile",
+      "sdk_compatibility": "supported",
+      "deterministic_behavior": "WEAK — repair can change semantics (e.g. inserting missing quote → wrong archetype)",
+      "privacy_impact": "SAME as Option A",
+      "observability": "COMPLEX — must log both raw and repaired",
+      "caller_compatibility": "SAME as Option A",
+      "testability": "MODERATE — many edge cases",
+      "residual_failure_modes": "silent semantic drift (repair changes meaning); repair opens attack surface for prompt injection",
+      "production_risk": "MODERATE-HIGH",
+      "recommendation": "REJECT — violates 'no silent semantic repair' policy"
+    },
+    {
+      "id": "D",
+      "name": "Prompt-only hardening (stricter instructions)",
+      "malformed_json_prevention": "WEAK — probabilistic models still fail JSON compliance regardless of prompt strength",
+      "semantic_validation": "NONE (unless combined with Option B)",
+      "provider_call_count": 1,
+      "hidden_retries": "none",
+      "implementation_complexity": "LOW",
+      "sdk_compatibility": "N/A",
+      "deterministic_behavior": "N/A — prompt does not guarantee JSON",
+      "privacy_impact": "NEUTRAL",
+      "observability": "N/A",
+      "caller_compatibility": "PRESERVED",
+      "testability": "cannot deterministically test model behavior",
+      "residual_failure_modes": "identical to today's failure class",
+      "production_risk": "leaves the underlying failure class in place",
+      "recommendation": "REJECT — prompt-only is insufficient by policy"
+    },
+    {
+      "id": "E",
+      "name": "Retry the provider after malformed output",
+      "malformed_json_prevention": "PARTIAL — probability compounds over N attempts but does not vanish; N>=2 approximately doubles cost per failed request",
+      "semantic_validation": "orthogonal",
+      "provider_call_count": "2+ per failure",
+      "hidden_retries": "explicit retry",
+      "implementation_complexity": "LOW-MODERATE",
+      "sdk_compatibility": "would require adding retry loop OR configuring maxRetries > 0 with a schema retry (SDK does not natively re-generate on schema failure; only transport retry)",
+      "deterministic_behavior": "N/A — additional dice roll",
+      "privacy_impact": "raw output likely still handled the same",
+      "observability": "adds retry metrics",
+      "caller_compatibility": "PRESERVED",
+      "testability": "HARD (must mock provider sequence)",
+      "residual_failure_modes": "cost doubles per failure; two consecutive malformed responses still return 502; hides the underlying model weakness",
+      "production_risk": "MODERATE (cost inflation)",
+      "recommendation": "REJECT — violates 'no automatic model retry' and 'one provider call per classify request' policies"
+    }
+  ],
+
+  "selected_option": {
+    "primary": "A",
+    "primary_rationale": "generateObject is fully supported by ai@6.0.182; it schema-constrains at the SDK boundary; eliminates the free-form parse path; produces typed .object on success; NoObjectGeneratedError on failure; zero silent repair; one provider call with explicit maxRetries:0 policy; caller-compatible success shape; safe to strip raw/detail from client 502.",
+    "fallback": "B (generateText + explicit runtime schema validation, no repair) — chosen only if a specific interaction between generateObject and the installed @ai-sdk/anthropic path proves unsuitable during implementation-loop inspection",
+    "schema_input_choice_recommendation": "Zod (already installed at zod@4.4.3 as transitive dep) via `zodSchema()` helper OR direct `import { z } from 'zod'`. Advantages over JSON Schema helper: better TypeScript inference for the returned .object; more concise expression of enum + length bounds. If reviewer wants zero-new-direct-dep, use `jsonSchema()` helper instead; the schema definition is equivalent semantically.",
+    "dependency_addition": "PREFERRED: add `zod: ^4.4.3` to package.json direct dependencies (matches the already-resolved transitive version, no new install). ACCEPTABLE ALTERNATIVE: leave Zod as transitive and use `jsonSchema()` helper. Reviewer's call in the implementation-loop DECISION."
+  },
+
+  "provider_call_policy": {
+    "calls_per_request": 1,
+    "maxRetries_setting": 0,
+    "abortSignal_recommendation": "not required for the classify path today (short prompt, model responds in ~3-5s); may be added later for defense-in-depth",
+    "timeout_recommendation": "leave maxDuration=30s at Next.js layer; do not add an inner SDK timeout unless a specific issue emerges",
+    "no_manual_retry_in_route": true,
+    "no_second_model_call_for_repair": true,
+    "no_fallback_provider_call": true,
+    "no_recursive_generation": true,
+    "transport_retry_note": "with maxRetries:0 the SDK will NOT retry transport failures; any 429/5xx from Anthropic will surface as a thrown error and be mapped to sanitized 500 by our error taxonomy",
+    "consequence_of_maxRetries_0": "slightly less resilience against transient provider transport hiccups; acceptable because our regression harness is not real-time production traffic and the correctness of the one-call policy is more important"
+  },
+
+  "error_taxonomy": {
+    "invalid_request_json": {"http": 400, "client_message": "Invalid request body.", "retryable": false, "correlation_id": true, "server_severity": "warn", "raw_output_retained_server_side": false, "raw_output_returned_to_client": false},
+    "invalid_request_shape": {"http": 400, "client_message": "Missing or invalid required field.", "retryable": false, "correlation_id": true, "server_severity": "warn", "raw_output_retained_server_side": false, "raw_output_returned_to_client": false},
+    "provider_request_failed": {"http": 502, "client_message": "Upstream classifier unavailable.", "retryable": true, "correlation_id": true, "server_severity": "error", "raw_output_retained_server_side": "error message only", "raw_output_returned_to_client": false},
+    "provider_timeout": {"http": 504, "client_message": "Upstream classifier timed out.", "retryable": true, "correlation_id": true, "server_severity": "warn", "raw_output_retained_server_side": false, "raw_output_returned_to_client": false},
+    "provider_rate_limited": {"http": 429, "client_message": "Rate limited. Try again shortly.", "retryable": true, "correlation_id": true, "server_severity": "warn", "raw_output_retained_server_side": false, "raw_output_returned_to_client": false},
+    "structured_output_invalid": {"http": 502, "client_message": "Classifier returned an invalid response.", "retryable": false, "correlation_id": true, "server_severity": "error", "raw_output_retained_server_side": "bounded (~500 chars) with server-side redaction", "raw_output_returned_to_client": false, "note": "this replaces the current 'Classifier returned invalid JSON' 502 body; raw model output is dropped from the client response"},
+    "schema_validation_failed": {"http": 502, "client_message": "Classifier response did not match required shape.", "retryable": false, "correlation_id": true, "server_severity": "error", "raw_output_retained_server_side": "bounded field-summary only (which fields failed, not values)", "raw_output_returned_to_client": false},
+    "internal_error": {"http": 500, "client_message": "Internal server error.", "retryable": false, "correlation_id": true, "server_severity": "error", "raw_output_retained_server_side": "error class + stack (server logs only)", "raw_output_returned_to_client": false}
+  },
+
+  "observability": {
+    "correlation_id_format": "16-char base32 or ULID; server-generated; returned in client 500/502 body AND stamped on every server log line for the request",
+    "event_names": [
+      "classify.request.received",
+      "classify.provider.request.start",
+      "classify.provider.response.received",
+      "classify.schema.validation.result",
+      "classify.response.sent",
+      "classify.error"
+    ],
+    "structured_log_fields": ["ts","level","event","correlation_id","route","model","duration_ms","usage.input_tokens","usage.output_tokens","finish_reason","warnings_count","error_category","http_status"],
+    "redaction_rules": [
+      "never log the full `target` field",
+      "log target length + first 40 chars as metadata only IF genuinely needed for diagnosis (default OFF)",
+      "never log API keys · never log full request headers",
+      "never log full raw model output at info/warn levels",
+      "on structured_output_invalid, log a bounded (~500 chars) hash + snippet of the malformed output at ERROR level to server-side only",
+      "never include raw model output in client response bodies"
+    ],
+    "max_logged_text_length": {"target_snippet_if_ever_enabled": 40, "malformed_output_snippet": 500},
+    "token_usage_recording": "log input/output token counts from GenerateObjectResult.usage at info level per request",
+    "provider_model_name_recorded": true,
+    "duration_ms_recorded": true,
+    "route_status_recorded": true
+  },
+
+  "privacy": {
+    "raw_model_output_returned_to_client": false,
+    "client_error_bodies_contain_only": ["error (short string)", "category (enum)", "correlation_id (string)"],
+    "server_side_raw_output_retention": "bounded (~500 chars) at ERROR level with the correlation ID; redacted user-derived content is a future concern (the classify prompt input is the user's target text; the model output contains classifier reasoning about that text — bounded excerpts are acceptable for internal diagnostics but should not be persisted long-term or shipped externally)",
+    "target_text_logging_default": "OFF",
+    "api_keys_never_logged": true,
+    "headers_never_logged": true,
+    "provider_error_masking_at_client_boundary": "client sees generic sanitized message; server logs contain the specific SDK error class + message + correlation_id"
+  },
+
+  "response_compatibility": {
+    "success_shape_preserved": true,
+    "success_status_code_preserved": 200,
+    "success_body_fields": ["archetype","company_preferences","level_hint","reasoning"],
+    "success_field_types_preserved": true,
+    "failure_status_code_changes": {
+      "empty_target": "400 unchanged",
+      "invalid_json_body": "400 (was 500 implicit)",
+      "structured_output_invalid": "502 (unchanged status; body content changes — raw + detail removed, category + correlation_id added)",
+      "provider_request_failed": "502 (was 500 implicit)",
+      "provider_timeout": "504 (was 500 implicit)",
+      "provider_rate_limited": "429 (was 500 implicit)"
+    },
+    "removed_client_visible_fields": ["raw", "detail"],
+    "added_client_visible_fields": ["category", "correlation_id"],
+    "caller_impact": "NONE — src/app/page.tsx:555 reads only err.error which remains present; harness reads status code + DOM state, not body content; no caller change required",
+    "harness_impact": "harness still correctly classifies application_error via completion_state race with Retry button; network_diagnostics.events[0].body_excerpt would capture the sanitized 502 body (category + correlation_id + generic message); no functional harness change needed"
+  },
+
+  "test_plan": [
+    {"id": "T1", "category": "schema", "description": "valid complete Classification object accepted"},
+    {"id": "T2", "category": "schema", "description": "invalid archetype (not in enum) rejected"},
+    {"id": "T3", "category": "schema", "description": "company_preferences: non-array type rejected"},
+    {"id": "T4", "category": "schema", "description": "company_preferences: >10 items rejected"},
+    {"id": "T5", "category": "schema", "description": "company_preferences: item > per-item max chars rejected"},
+    {"id": "T6", "category": "schema", "description": "invalid level_hint (not in enum) rejected"},
+    {"id": "T7", "category": "schema", "description": "empty reasoning rejected"},
+    {"id": "T8", "category": "schema", "description": "overlong reasoning rejected"},
+    {"id": "T9", "category": "schema", "description": "extra unknown top-level key rejected (strict object)"},
+    {"id": "T10", "category": "schema", "description": "missing required key rejected"},
+    {"id": "T11", "category": "route_success", "description": "structured provider result via mocked generateObject returns 200 with Classification body"},
+    {"id": "T12", "category": "route_success", "description": "success response field byte-shape compatibility preserved vs current schema (archetype/company_preferences/level_hint/reasoning)"},
+    {"id": "T13", "category": "route_success", "description": "exactly one provider invocation on success (spy on mocked generateObject)"},
+    {"id": "T14", "category": "route_success", "description": "no retry after success (maxRetries: 0 verified via mock)"},
+    {"id": "T15", "category": "route_failure", "description": "provider throws generic Error → sanitized 502 with category provider_request_failed"},
+    {"id": "T16", "category": "route_failure", "description": "provider throws timeout-classed error → sanitized 504 with category provider_timeout"},
+    {"id": "T17", "category": "route_failure", "description": "provider throws rate-limit-classed error → sanitized 429 with category provider_rate_limited"},
+    {"id": "T18", "category": "route_failure", "description": "generateObject throws NoObjectGeneratedError → sanitized 502 with category structured_output_invalid; no raw model output in client body"},
+    {"id": "T19", "category": "route_failure", "description": "NoOutputGeneratedError → sanitized 502 with category structured_output_invalid"},
+    {"id": "T20", "category": "route_failure", "description": "internal exception outside SDK call → sanitized 500 with category internal_error"},
+    {"id": "T21", "category": "privacy", "description": "raw model output NOT present in any client response body across all failure paths"},
+    {"id": "T22", "category": "privacy", "description": "full target text NOT written to any log path"},
+    {"id": "T23", "category": "privacy", "description": "correlation_id returned in every non-2xx client body"},
+    {"id": "T24", "category": "privacy", "description": "server logs contain error_category + bounded metadata only (assert against test log capture)"},
+    {"id": "T25", "category": "compatibility", "description": "existing caller (page.tsx) success path accepts response unchanged (snapshot compare)"},
+    {"id": "T26", "category": "compatibility", "description": "harness still records classify failure correctly given sanitized 502 body (integration-shape stub of network_diagnostics)"},
+    {"id": "T27", "category": "compatibility", "description": "process.exit and Phase 2 telemetry behavior unchanged (harness legacy checks[] unaffected)"},
+    {"id": "T28", "category": "compatibility", "description": "no baseline file mutation across test run (snapshot mtimes)"},
+    {"id": "T29", "category": "fixture_shaped_synthetic", "description": "synthetic A-shaped target (Applied AI Engineer) → valid Classification (mocked model returns well-formed object)"},
+    {"id": "T30", "category": "fixture_shaped_synthetic", "description": "synthetic B-shaped target (AI Product Engineer) → valid Classification"},
+    {"id": "T31", "category": "fixture_shaped_synthetic", "description": "B-shaped target with empty company_preferences array → valid Classification"},
+    {"id": "T32", "category": "fixture_shaped_synthetic", "description": "static assertion: JSON.parse(raw) code path removed from route (grep source; no raw echo in error bodies)"},
+    {"tests_summary": {"total": 32, "categories": {"schema": 10, "route_success": 4, "route_failure": 6, "privacy": 4, "compatibility": 4, "fixture_shaped_synthetic": 4}, "real_provider_calls": 0, "network_calls": 0}}
+  ],
+
+  "migration_plan": [
+    {"phase": "H1", "description": "Introduce Classification Zod (or JSON Schema) definition in a new pure module (e.g. src/lib/classify-schema.ts) + T1-T10 schema tests. No route change yet. Deterministic; no provider call."},
+    {"phase": "H2", "description": "Switch classify route provider call from generateText+JSON.parse to generateObject({schema, model, system, prompt, maxRetries:0}). Remove the JSON.parse try/catch and markdown-fence stripping. Preserve success response shape."},
+    {"phase": "H3", "description": "Sanitize client error contract: replace `raw`/`detail` echo with `{error, category, correlation_id}`. Add structured server-side console.error (or logger of choice, no new dep) with bounded metadata."},
+    {"phase": "H4", "description": "Update route tests (T11-T20) with mocked generateObject. Add caller-compatibility test (T25) if reviewer wants explicit page.tsx snapshot coverage."},
+    {"phase": "H5", "description": "Deterministic local validation: node --check on changed files, npx tsc --noEmit, run the new test suite. Regression harness tests (test-structural-evidence-check + test-structural-evidence-integration) unaffected but confirmed via re-run."},
+    {"phase": "H6", "description": "Implementation DECISION (approve / revise / pause). No push yet unless approved."},
+    {"phase": "H7", "description": "Only under a SEPARATE explicit human cost-approved GO: Fixture B rerun (once) to complete Phase 3 two-report validation. New RUN_REPORT + Phase 3 reassessment."}
+  ],
+
+  "implementation_scope": {
+    "expected_files": [
+      "src/app/api/classify/route.ts (rewrite: generateObject + sanitized errors + maxRetries:0)",
+      "src/lib/classify-schema.ts (new: Zod or JSON Schema definition + pure exports)",
+      "scripts/test-classify-route.mjs (new: T11-T32 mocked tests)",
+      "scripts/test-classify-schema.mjs (new: T1-T10 pure schema tests)",
+      ".agent/tasks/2026-07-24_run_XX_TASK.md (hardening implementation TASK)",
+      ".agent/design_memos/2026-07-24_AgentOps-5e-followup-phase3-classify-json-hardening-implement.md (if a separate implementation memo is authored)",
+      ".agent/run_reports/2026-07-24_run_XX_RUN_REPORT.md",
+      ".agent/decisions/2026-07-24_run_XX_DECISION.md"
+    ],
+    "potentially_changed_package_files": {
+      "package.json": "OPTIONAL — add `zod: ^4.4.3` as a direct dependency to match already-resolved transitive version (no new install). If reviewer prefers zero-new-dep, use `jsonSchema()` helper from ai and skip.",
+      "package-lock.json": "if package.json is edited, lockfile will be auto-updated. Reviewer must approve the diff explicitly."
+    },
+    "explicitly_forbidden_scope": [
+      "src/lib/prompts.ts (no prompt change in hardening — classifySystemPrompt() may need one added JSON-hint line, evaluate in implementation loop; if changed, keep semantically equivalent)",
+      "scripts/quote-integrity-check.mjs",
+      "scripts/structural-evidence-check.mjs",
+      "scripts/lib/structural-evidence-integration.mjs",
+      "scripts/report-regression-local.mjs (should not need changes; verify)",
+      "any baseline file under .agent/regression_baselines/",
+      "any fixture file under .agent/regression_fixtures/",
+      "any run artifact under .agent/regression_runs/",
+      ".agent/scripts/**",
+      "workflows / env / vercel.json",
+      "pipeline repo"
+    ]
+  },
+
+  "performance_and_cost": {
+    "provider_calls_per_classify": 1,
+    "delta_vs_current_successful_path": "expected ~0 delta; generateObject uses the same Anthropic API path as generateText, with structured-output constraints applied at the request level",
+    "token_delta_estimate": "generateObject may add a small system-level schema description (~50-150 tokens) to the request; response tokens should be similar or slightly smaller because model no longer produces conversational scaffolding around the JSON",
+    "no_retry_cost": true,
+    "no_repair_call_cost": true,
+    "maxDuration_seconds_unchanged": 30,
+    "latency_impact_estimate": "no significant change; Fixture A's successful classify was 4.3s app-code — same order under generateObject",
+    "cost_recording_in_future_validation": "attach GenerateObjectResult.usage (input_tokens + output_tokens) to the RUN_REPORT for future paid runs; harness cost_measured=false today, so this design also implies adding a small metadata field if instrumentation is added later (out of this design's scope)"
+  },
+
+  "acceptance_criteria": [
+    "installed SDK API is used exactly as documented in installed types (generateObject signature match)",
+    "malformed free-form JSON parse path REMOVED from classify route (no JSON.parse of provider text)",
+    "strict Classification schema enforced (all enums, all string bounds, all array bounds, strict object mode)",
+    "exactly one provider call per classify request (maxRetries: 0)",
+    "no application retry",
+    "no silent semantic repair (experimental_repairText not used; no custom repair logic)",
+    "success response shape unchanged (archetype/company_preferences/level_hint/reasoning)",
+    "failure response sanitized (raw + detail removed; correlation_id + category added; error string preserved)",
+    "diagnostics server-side and redacted (no full target logging; bounded ~500-char malformed excerpt at ERROR only; correlation_id on every log line)",
+    "deterministic tests pass (32 tests, all mocked)",
+    "no real API call in tests",
+    "no baseline changes",
+    "no telemetry changes",
+    "no legacy verdict or process-exit changes"
+  ],
+
+  "completion_run_prerequisites": [
+    "hardening design DECISION approved",
+    "hardening implementation loop completed (its own TASK + memo + RUN_REPORT + DECISION)",
+    "implementation DECISION approved",
+    "all deterministic tests pass (T1-T32)",
+    "code pushed and clean on origin/main",
+    "separate explicit human cost-approved GO (fresh $0.075 per-run cap, $0.15 total cap unchanged)",
+    "Fixture B exactly once (no retry)",
+    "if classify fails again → stop, no retry, reassess with new diagnostics loop",
+    "new Phase 3 RUN_REPORT and Phase 3 reassessment DECISION",
+    "no baseline promotion",
+    "no Phase 4/5/6",
+    "no AgentOps-5f-promote"
+  ],
+
+  "policy_resolutions": {
+    "Q1_ai_version": "6.0.182 (declared ^6.0.182 · resolved 6.0.182)",
+    "Q2_ai_sdk_anthropic_version": "3.0.77 (declared ^3.0.77 · resolved 3.0.77)",
+    "Q3_zod_version": "4.4.3 (transitive dependency via ai/@ai-sdk/*; not currently in direct dependencies)",
+    "Q4_which_structured_output_api_is_exported": "generateObject (primary) · Output.object via generateText.output (alternative) · both officially exported from ai@6",
+    "Q5_generateObject_supported": "yes — full signature + return type + error class confirmed via node_modules/ai/dist/index.d.ts inspection",
+    "Q6_deprecated": "no — generateObject appears alongside generateText/streamText/streamObject as a first-class API in ai@6",
+    "Q7_output_object_supported": "yes (Output.object) — but generateObject is the cleaner fit for a route with no tool calls; Output would be needed only if we combined tool calls with structured output",
+    "Q8_chosen_api_retry_malformed_output_automatically": "no — generateObject throws NoObjectGeneratedError on malformed output; it does NOT re-invoke the model unless experimental_repairText is set (we will not set it)",
+    "Q9_chosen_api_validates_against_zod": "yes — pass Zod schema directly (or via zodSchema()); the SDK enforces the schema and provides typed .object on success",
+    "Q10_error_class_for_invalid_structured_output": "NoObjectGeneratedError (has .text, .response, .finishReason, .isInstance()) · also NoOutputGeneratedError if model returned nothing",
+    "Q11_success_response_can_remain_compatible": "yes — success body preserves { archetype, company_preferences, level_hint, reasoning }",
+    "Q12_should_raw_output_ever_be_returned_to_client": "NO — remove raw + detail from client-visible failure body; retain bounded excerpt server-side only",
+    "Q13_new_dependency_needed": "OPTIONAL — no if using jsonSchema() helper; recommended (add zod ^4.4.3 to direct deps) if reviewer wants Zod syntax + typed inference. Neither requires a new install (Zod already resolved as transitive).",
+    "Q14_selected_option": "A (generateObject with strict Zod or JSON Schema, maxRetries:0, no experimental_repairText)",
+    "Q15_fallback_if_A_unavailable": "B (generateText + strict runtime schema validation, no repair)",
+    "Q16_provider_calls_per_request": "1",
+    "Q17_retries_allowed": "no application retry · no model regeneration retry · maxRetries:0 for SDK transport retries",
+    "Q18_silent_repair_allowed": "no",
+    "Q19_fixture_b_rerun_authorized": "NO — this loop does not authorize any rerun; requires hardening implementation + implementation DECISION + separate cost-approved GO",
+    "Q20_authorizes_phase_4_5_6_or_promotion": "no · Phase 4 / 5 / 6 / blocking promotion / AgentOps-5f-promote all remain further separately gated"
+  },
+
+  "risks": [
+    "Small chance that a specific interaction between generateObject and @ai-sdk/anthropic's Sonnet 4.6 provider path is unsupported for a particular schema shape (e.g. deeply nested arrays). Mitigation: the classify schema is shallow (4 top-level fields, 3 primitives + 1 flat string array); this is well within any known constraint.",
+    "generateObject enforces schema at the SDK boundary but the Anthropic model must still emit output that the SDK can constrain. For providers without native structured-output support, the SDK falls back to prompt-based JSON extraction. Anthropic has native support for JSON via tool use / response_format; the ai SDK's Anthropic provider uses this. Verified indirectly via node_modules; explicit verification is worth doing during implementation-loop inspection.",
+    "Adding zod as a direct dep is a trivial diff but requires explicit approval; skipping the direct-dep addition and using jsonSchema() means slightly less ergonomic TypeScript for the schema author.",
+    "Removing `raw` from the 502 body loses one debugging lever. Mitigation: retain bounded server-side ~500-char excerpt at ERROR level with correlation_id; harness continues to capture body_excerpt which will now be sanitized text.",
+    "The current classify system prompt was written assuming free-form JSON output. Under generateObject the prompt should remain semantically identical (define archetypes + user intent) but may benefit from removing the 'Return ONE JSON object' instruction because the SDK enforces JSON. If prompt is changed at all in the implementation loop, the design must justify it.",
+    "Setting maxRetries:0 removes transport-level retry, so a transient Anthropic 429 or 5xx during classify would immediately propagate as 429/502/504 in our error taxonomy. This is aligned with the 'one call per request' policy and is preferable to hidden retries.",
+    "Adding correlation_id changes the failure body shape; while the caller reads only err.error, external monitoring or log-scrape tools (none currently exist for this app) might parse other fields. Low risk.",
+    "The reasoning field's 2000-char upper bound is a guess; if the Anthropic model tends to write longer reasoning under structured output, the implementation loop may need to raise the bound. Mitigation: pick a bound that comfortably fits observed A-run reasoning + margin.",
+    "The company_preferences 10-item upper bound is a guess; if fixtures ever legitimately name >10 companies, we would reject valid output. Mitigation: sample observed A-run outputs during implementation.",
+    "Tests are mocked; no real API interaction means we can't catch a specific provider-side regression. Acceptable for the hardening design because the SEPARATE cost-approved Fixture B rerun (after implementation) provides the end-to-end validation."
+  ],
+
+  "open_questions": [],
+
+  "boundaries_respected": {
+    "no_implementation": true,
+    "no_rerun": true,
+    "no_paid_api_call": true,
+    "no_dev_server_started_this_loop": true,
+    "no_provider_call": true,
+    "no_generation": true,
+    "no_code_change": true,
+    "no_prompt_change": true,
+    "no_test_added_this_loop": true,
+    "no_fixture_change": true,
+    "no_checker_change": true,
+    "no_harness_change": true,
+    "no_r1_r2_change": true,
+    "no_new_qi_tier": true,
+    "no_baseline_mutation": true,
+    "no_baseline_eligibility_change": true,
+    "no_telemetry_semantic_change": true,
+    "no_legacy_verdict_change": true,
+    "no_process_exit_change": true,
+    "no_retry_added": true,
+    "no_threshold_change": true,
+    "no_logging_code_added_this_loop": true,
+    "no_package_lockfile_change": true,
+    "no_workflow_env_vercel_change": true,
+    "no_pipeline_change": true,
+    "no_agent_scripts_change": true,
+    "no_push": true,
+    "no_deploy": true,
+    "no_phase_4_5_6": true,
+    "no_5f_promote": true,
+    "no_c_d_e_run": true,
+    "no_pdf_ingestion": true,
+    "no_openai_api": true,
+    "no_report_md_or_screenshot_or_secret_committed": true,
+    "no_log_copied_into_repo": true,
+    "cost_usd": 0,
+    "fixture_b_rerun_remains_unauthorized": true
+  }
+}
