@@ -1,0 +1,50 @@
+{
+  "schema_version": "0.3-r2-terminal-punctuation",
+  "status": "integration_prototype",
+  "fixture_id": "B",
+  "source_run_id": "20260724T010756Z_fixture-B",
+  "source_report_path": "/var/folders/xx/ypnl5f2n0y7b48w_pgxyhqt80000gn/T/acr-regression-runs/20260724T010756Z_fixture-B/report.md",
+  "corpus_path": "/Users/bohaoli/Desktop/ai-career-radar-web/src/data/web_bundle.json",
+  "corpus_record_count": 443,
+  "ground_truth": "cleaned_served_corpus",
+  "verdict": "red",
+  "counts": {
+    "quote_candidates": 21,
+    "evidence_entries": 0,
+    "evidence_quotes_with_citation": 0,
+    "verbatim_matches": 0,
+    "normalized_matches": 0,
+    "case_insensitive_matches": 0,
+    "ellipsis_fragment_matches": 0,
+    "terminal_punctuation_only_matches": 0,
+    "missing_source_id": 0,
+    "unresolved_source_id": 0,
+    "wrong_company": 0,
+    "wrong_role": 0,
+    "fabricated_or_unmatched_quotes": 0,
+    "duplicates": 0,
+    "appendix_entries_not_cited": 0
+  },
+  "red_reasons": [
+    "Evidence Appendix missing while report contains evidence/citation language"
+  ],
+  "amber_reasons": [],
+  "sample_items": [],
+  "appendix_entries": [],
+  "cross_check": {
+    "in_appendix_not_quoted": [],
+    "in_quoted_not_appendix": []
+  },
+  "limitations": [
+    "Integration prototype; not wired into scripts/report-regression-local.mjs.",
+    "v1 ground truth = cleaned served corpus (web_bundle.records[].body); NOT raw live JD pages.",
+    "Role check is a loose containment placeholder; only confirms corpus record has a title.",
+    "Body newlines in corpus are stored as '|' pipes; normalized to newlines before matching.",
+    "Only 'Evidence quote:' pattern is treated as citation-bearing; other double-quoted spans are informational.",
+    "No edit-distance matching (5a DECISION #1).",
+    "No LLM judge (5a DECISION #6).",
+    "No semantic equivalence in v1.",
+    "R2 tier applies only when all 8 strict conditions hold (5c DECISION §Policy decision R2).",
+    "R1 policy locked: inserted connector word in ellipsis fragment stays RED."
+  ]
+}
