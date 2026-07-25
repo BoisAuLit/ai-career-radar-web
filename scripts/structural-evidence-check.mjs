@@ -264,8 +264,19 @@ function summarizeContext(ctx) {
 }
 
 // -------- Structural constants --------
-const APPENDIX_HEADING = "## Evidence Appendix";
-const GAP_SECTION_HEADING_PATTERN = /^##\s+Your top 5 gaps\b/im;
+// AgentOps-5e rendered-text contract fix (DECISION 2026-07-25_run_03):
+// grammar accepts both raw Markdown source form (`## X`) and rendered
+// plain-text form (no `##`) that browser innerText produces. Grammar
+// remains deterministic, complete-line, exact-phrase, approved suffixes
+// only. NO fuzzy / edit-distance / substring / semantic-variant / LLM
+// matching. Citation regex + thresholds are intentionally byte-identical.
+const APPENDIX_HEADING = "## Evidence Appendix"; // retained for downstream tests/observability
+// Whole-line, line-anchored, optional exact `## ` prefix, exact phrase.
+const APPENDIX_HEADING_LINE_PATTERN = /^\s*(?:##\s+)?Evidence Appendix\s*$/im;
+// Whole-line, line-anchored, optional exact `## ` prefix, exact phrase,
+// approved suffixes only (none · `, ranked` · `, ranked (5 numbered items)`).
+const GAP_SECTION_HEADING_PATTERN =
+  /^\s*(?:##\s+)?Your top 5 gaps(?:,\s*ranked(?:\s*\(5 numbered items\))?)?\s*$/im;
 const EVIDENCE_QUOTE_REGEX =
   /Evidence quote:\s*["“]([^"”\n]{5,})["”]\s*[—–\-]\s*([^,\n]{1,120}?),\s*(jd_\d{4,})/g;
 const REQUIRED_GAP_COUNT = 5;
@@ -278,13 +289,38 @@ const MIN_CITATION_LINE_COUNT = 5;
 const EXPLICIT_TRUNCATION_MARKER = "<!-- STRUCTURAL_EVIDENCE_TRUNCATED -->";
 
 // -------- Section extraction --------
+// Compute the end position (offset from beginning of `tail`) of the gap
+// section by looking for the earliest boundary that matches EITHER a
+// Markdown-source `## ` heading OR a known follow-on rendered-form
+// heading (`Skills you might be over-prioritizing`,
+// `Your single highest-leverage next action`, `Evidence Appendix`).
+// This lets the gap section terminate correctly whether the input is
+// raw Markdown source or browser innerText (rendered plain text).
+function findNextSectionBoundary(tail) {
+  let earliest = -1;
+  const candidates = [
+    /^##\s+.+$/m,
+    /^\s*Skills you might be over-prioritizing\s*$/im,
+    /^\s*Your single highest-leverage next action\s*$/im,
+    /^\s*Evidence Appendix\s*$/im,
+  ];
+  for (const re of candidates) {
+    const m = tail.match(re);
+    if (m && (earliest === -1 || m.index < earliest)) {
+      earliest = m.index;
+    }
+  }
+  return earliest;
+}
+
 function extractGapSection(text) {
   const m = text.match(GAP_SECTION_HEADING_PATTERN);
   if (!m) return null;
   const start = m.index + m[0].length;
-  // Section ends at next `## ` heading (any subsequent H2) or EOF.
+  // Section ends at the earliest follow-on heading (Markdown OR rendered)
+  // or EOF.
   const tail = text.slice(start);
-  const nextHeading = tail.search(/^##\s+/m);
+  const nextHeading = findNextSectionBoundary(tail);
   const sectionEnd = nextHeading < 0 ? tail.length : nextHeading;
   return {
     start,
@@ -343,39 +379,105 @@ function looksLikeMalformedCitation(line) {
 }
 
 // -------- Appendix parsing --------
-function extractAppendix(text) {
-  const idx = text.indexOf(APPENDIX_HEADING);
-  if (idx === -1) return { present: false, heading_exact: false, rows: [], malformed_rows: [], duplicate_rows: [], conflicting_rows: [] };
-  // Confirm exact heading (start of line).
-  const headingLineStart = text.lastIndexOf("\n", idx) + 1;
-  const headingLineEnd = text.indexOf("\n", idx);
-  const headingLine = text.slice(headingLineStart, headingLineEnd === -1 ? text.length : headingLineEnd).trim();
-  const heading_exact = headingLine === APPENDIX_HEADING;
+// Deterministic 3-column row parser used as a fixed-order fallback chain:
+//   1. tab-separated                                (`jd\tCo\tTitle`)
+//   2. pipe-separated with optional outer delimiters (`| jd | Co | Title |`
+//                                                     or `jd | Co | Title`)
+//   3. two-or-more whitespace-separated              (`jd  Co  Title`)
+// Returns {jd_id, company, title} on success or null on any rejection.
+// Mirrors QI's proven deterministic whitespace/pipe tolerance without
+// broadening semantics. NO fuzzy / semantic / substring matching.
+function parseAppendixRow(rawLine) {
+  const trimmed = rawLine.trim();
+  if (!trimmed) return null;
 
-  const tail = text.slice(idx + APPENDIX_HEADING.length);
-  const lines = tail.split(/\r?\n/).map((l) => l.replace(/\s+$/, "")); // trim trailing whitespace only
+  // 1. Tab-separated
+  if (trimmed.includes("\t")) {
+    const parts = trimmed.split("\t").map((p) => p.trim());
+    if (parts.length === 3 && /^jd_\d{4,}$/i.test(parts[0]) && parts[1] && parts[2]) {
+      return { jd_id: parts[0], company: parts[1], title: parts[2] };
+    }
+    return null;
+  }
+
+  // 2. Pipe-separated (accept optional outer `|` delimiters). Split on
+  //    `|`, trim each part, then discard leading/trailing EMPTY parts
+  //    that come from outer pipes ONLY. Require the remaining count to
+  //    be EXACTLY 3. Reject GFM separator rows (`|---|---|---|`) via the
+  //    jd_id validity check on the first field.
+  if (trimmed.includes("|")) {
+    const rawParts = trimmed.split("|").map((p) => p.trim());
+    let parts = rawParts.slice();
+    if (parts.length > 0 && parts[0] === "") parts.shift();
+    if (parts.length > 0 && parts[parts.length - 1] === "") parts.pop();
+    if (parts.length === 3 && /^jd_\d{4,}$/i.test(parts[0]) && parts[1] && parts[2]) {
+      return { jd_id: parts[0], company: parts[1], title: parts[2] };
+    }
+    return null;
+  }
+
+  // 3. Two-or-more-whitespace-separated (rendered browser innerText from
+  //    tab-separated GFM tables typically collapses tabs to multiple
+  //    spaces). Require exactly 3 logical fields.
+  if (/\s{2,}/.test(trimmed)) {
+    const parts = trimmed.split(/\s{2,}/).map((p) => p.trim());
+    if (parts.length === 3 && /^jd_\d{4,}$/i.test(parts[0]) && parts[1] && parts[2]) {
+      return { jd_id: parts[0], company: parts[1], title: parts[2] };
+    }
+    return null;
+  }
+
+  return null;
+}
+
+function extractAppendix(text) {
+  // Locate appendix heading line (either `## Evidence Appendix` OR
+  // rendered `Evidence Appendix`) — whole-line, line-anchored,
+  // exact-phrase match. Prose mentions and unrelated headings must not
+  // trigger.
+  const m = text.match(APPENDIX_HEADING_LINE_PATTERN);
+  if (!m) {
+    return {
+      present: false,
+      heading_exact: false,
+      rows: [],
+      malformed_rows: [],
+      duplicate_rows: [],
+      conflicting_rows: [],
+    };
+  }
+  const headingEnd = m.index + m[0].length;
+  const headingLine = m[0].trim();
+  // heading_exact retained for parity with prior artifact schema; both
+  // accepted forms (`## Evidence Appendix` and `Evidence Appendix`)
+  // are considered exact for the purposes of the downstream RED check.
+  const heading_exact =
+    headingLine === APPENDIX_HEADING || headingLine === "Evidence Appendix";
+
+  const tail = text.slice(headingEnd);
+  const lines = tail.split(/\r?\n/).map((l) => l.replace(/\s+$/, ""));
 
   const rows = [];
   const malformed = [];
-  const seen = new Map(); // jd_id -> [company, title]
+  const seen = new Map();
   const dupIdentical = [];
   const conflicting = [];
 
   for (const rawLine of lines) {
     const trimmedLeft = rawLine.replace(/^\s+/, "");
-    if (!trimmedLeft) continue; // blank line
-    // Optional header row starting with JD_ID or jd_id header.
+    if (!trimmedLeft) continue;
+    // Optional table header row (raw Markdown `| jd_id | company | title |`
+    // OR plain `JD_ID ...`) — skip deterministically.
     if (/^JD_ID\b/i.test(trimmedLeft)) continue;
+    if (/^\|\s*jd_id\b/i.test(trimmedLeft)) continue;
+    // GFM table separator row: `|---|---|---|` (or variants). Skip.
+    if (/^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(trimmedLeft)) continue;
     // Stop the table when a new `## ` heading appears.
     if (/^##\s+/.test(trimmedLeft)) break;
 
-    // Canonical row: tab-separated with exactly 3 columns.
-    const parts = trimmedLeft.split("\t");
-    if (parts.length === 3 && /^jd_\d{4,}$/i.test(parts[0]) && parts[1] && parts[2]) {
-      const jdId = parts[0];
-      const company = parts[1].trim();
-      const title = parts[2].trim();
-      const rowSig = `${jdId}\t${company}\t${title}`;
+    const parsed = parseAppendixRow(trimmedLeft);
+    if (parsed) {
+      const { jd_id: jdId, company, title } = parsed;
       if (seen.has(jdId)) {
         const prev = seen.get(jdId);
         if (prev.company === company && prev.title === title) {
@@ -394,12 +496,11 @@ function extractAppendix(text) {
       continue;
     }
 
-    // Not a canonical row; treat as malformed if it looks jd-like.
+    // Not a canonical row; treat as malformed only if it looks jd-like.
     if (/^jd_\d/i.test(trimmedLeft)) {
       malformed.push({ raw: rawLine });
     }
-    // Non jd-like lines (prose paragraphs) are ignored deterministically
-    // to allow harmless surrounding text.
+    // Non jd-like lines (prose paragraphs) are ignored deterministically.
   }
 
   return {

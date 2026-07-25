@@ -830,6 +830,576 @@ test("CTX14 · missing --context file · tool_error exit 2", () => {
   assert.ok(/context_unreadable/.test(r.stderr));
 });
 
+// ==========================================================================
+// AgentOps-5e-followup-phase3-structural-rendered-text-contract-implement
+// Rendered-text contract tests (RTC).
+//
+// Motivation: harness captures browser innerText via
+// page.locator(...).innerText(). ReactMarkdown renders `## X` as `<h2>X</h2>`,
+// so innerText contains `X` with no leading `##`. The current checker
+// required literal `##`, so it never matched rendered-text captures.
+// These tests add both accept- and reject-cases for the rendered-text
+// grammar, plus reinforce that Markdown-source grammar keeps working.
+// Grammar is deterministic, complete-line, exact-phrase, approved
+// suffixes only. No fuzzy / edit-distance / substring / LLM matching.
+// ==========================================================================
+
+function renderedGapHeading(suffix = "") {
+  return `Your top 5 gaps${suffix}`;
+}
+
+// Builds a rendered-text report (no `## ` prefixes anywhere) using the
+// same section names, gap numbering, citation shape, and appendix
+// structure the harness observes on real captures.
+function renderedReport({
+  gapHeadingLine = "Your top 5 gaps, ranked",
+  appendixHeadingLine = "Evidence Appendix",
+  appendixRows = null, // array of {jd_id, company, title} OR raw string OR null (omit)
+  appendixSeparator = "tab", // "tab" | "pipe" | "pipe-outer" | "multispace"
+  citations = null, // 5-item array; default matches jd_100001..jd_100005 rows
+} = {}) {
+  const cits =
+    citations || [
+      'Evidence quote: "agentic RAG at scale" — ExampleCo, jd_100001.',
+      'Evidence quote: "hands-on production experience with LLM tool use" — NovaAI, jd_100002.',
+      'Evidence quote: "shipping evaluation harnesses" — HelixLabs, jd_100003.',
+      'Evidence quote: "prompt engineering for retrieval" — Zenith, jd_100004.',
+      'Evidence quote: "fine-tuning open-source models" — Draft, jd_100005.',
+    ];
+  const defaultRows = [
+    { jd_id: "jd_100001", company: "ExampleCo", title: "Senior AI Engineer" },
+    { jd_id: "jd_100002", company: "NovaAI", title: "ML Solutions" },
+    { jd_id: "jd_100003", company: "HelixLabs", title: "LLM Ops" },
+    { jd_id: "jd_100004", company: "Zenith", title: "Applied Research" },
+    { jd_id: "jd_100005", company: "Draft", title: "Fine-tuning Lead" },
+  ];
+  const rows = appendixRows === null ? defaultRows : appendixRows;
+  let appendixBlock = "";
+  if (rows === undefined) {
+    appendixBlock = "";
+  } else if (typeof rows === "string") {
+    appendixBlock = `\n${appendixHeadingLine}\n${rows}\n`;
+  } else if (Array.isArray(rows)) {
+    const body = rows
+      .map((r) => {
+        if (appendixSeparator === "tab") return `${r.jd_id}\t${r.company}\t${r.title}`;
+        if (appendixSeparator === "pipe") return `${r.jd_id} | ${r.company} | ${r.title}`;
+        if (appendixSeparator === "pipe-outer") return `| ${r.jd_id} | ${r.company} | ${r.title} |`;
+        if (appendixSeparator === "multispace") return `${r.jd_id}  ${r.company}  ${r.title}`;
+        throw new Error(`unknown separator ${appendixSeparator}`);
+      })
+      .join("\n");
+    appendixBlock = `\n${appendixHeadingLine}\n${body}\n`;
+  }
+  return (
+    "Personal Gap Report — synthetic\n\n" +
+    "Some introduction.\n\n" +
+    "Target role\n" +
+    "AI Engineer, applied_ai.\n\n" +
+    "What you already have — don't re-learn this\n" +
+    "- Python\n" +
+    "- SQL\n\n" +
+    `${gapHeadingLine}\n\n` +
+    cits
+      .map(
+        (c, i) =>
+          `${i + 1}. Gap topic ${i + 1}\n` +
+          `- Skill name — 50% of applied_ai JDs\n` +
+          `- Why it's a gap for THIS user (missing from resume)\n` +
+          `- Suggested first step this week\n` +
+          `${c}\n`,
+      )
+      .join("\n") +
+    "\nSkills you might be over-prioritizing\nNothing flagged.\n\n" +
+    "Your single highest-leverage next action\nReassess in 4 weeks.\n" +
+    appendixBlock
+  );
+}
+
+// -------- RTC · gap heading (rendered form) --------
+
+test("RTC01 · rendered exact gap heading accepted", () => {
+  const rp = writeFixture("RTC01", renderedReport({ gapHeadingLine: "Your top 5 gaps" }));
+  const r = invoke(rp, tmpOut("RTC01"));
+  assert.equal(r.exitCode, 0, `stderr: ${r.stderr}`);
+  assert.ok(r.artifact);
+  assert.equal(r.artifact.verdict, "green");
+  assert.equal(r.artifact.observed_gap_count, 5);
+  assert.equal(r.artifact.recognized_citation_line_count, 5);
+});
+
+test("RTC02 · rendered heading with approved suffix ', ranked' accepted", () => {
+  const rp = writeFixture("RTC02", renderedReport({ gapHeadingLine: "Your top 5 gaps, ranked" }));
+  const r = invoke(rp, tmpOut("RTC02"));
+  assert.equal(r.exitCode, 0, `stderr: ${r.stderr}`);
+  assert.equal(r.artifact.verdict, "green");
+});
+
+test("RTC03 · rendered heading with full approved suffix accepted", () => {
+  const rp = writeFixture(
+    "RTC03",
+    renderedReport({ gapHeadingLine: "Your top 5 gaps, ranked (5 numbered items)" }),
+  );
+  const r = invoke(rp, tmpOut("RTC03"));
+  assert.equal(r.exitCode, 0, `stderr: ${r.stderr}`);
+  assert.equal(r.artifact.verdict, "green");
+});
+
+// -------- RTC · gap heading (Markdown-source form still works) --------
+
+test("RTC04 · markdown-source exact gap heading still accepted", () => {
+  // Same content but keep `## ` on the gap heading; rest still rendered-ish.
+  const body = renderedReport({ gapHeadingLine: "## Your top 5 gaps" });
+  const rp = writeFixture("RTC04", body);
+  const r = invoke(rp, tmpOut("RTC04"));
+  assert.equal(r.exitCode, 0, `stderr: ${r.stderr}`);
+  assert.equal(r.artifact.verdict, "green");
+});
+
+test("RTC05 · markdown-source heading with approved suffix still accepted", () => {
+  const body = renderedReport({ gapHeadingLine: "## Your top 5 gaps, ranked (5 numbered items)" });
+  const rp = writeFixture("RTC05", body);
+  const r = invoke(rp, tmpOut("RTC05"));
+  assert.equal(r.exitCode, 0, `stderr: ${r.stderr}`);
+  assert.equal(r.artifact.verdict, "green");
+});
+
+// -------- RTC · gap heading rejection --------
+
+test("RTC06 · wrong semantic heading rejected", () => {
+  const rp = writeFixture("RTC06", renderedReport({ gapHeadingLine: "Your biggest weaknesses" }));
+  const r = invoke(rp, tmpOut("RTC06"));
+  assert.equal(r.exitCode, 1);
+  assert.ok(r.artifact.red_reasons.includes("gap_section_missing_or_unrecognized"));
+});
+
+test("RTC07 · partial phrase 'Top 5 gaps' rejected", () => {
+  const rp = writeFixture("RTC07", renderedReport({ gapHeadingLine: "Top 5 gaps" }));
+  const r = invoke(rp, tmpOut("RTC07"));
+  assert.equal(r.exitCode, 1);
+  assert.ok(r.artifact.red_reasons.includes("gap_section_missing_or_unrecognized"));
+});
+
+test("RTC08 · prose sentence containing phrase rejected", () => {
+  const rp = writeFixture(
+    "RTC08",
+    renderedReport({ gapHeadingLine: "Below are Your top 5 gaps" }),
+  );
+  const r = invoke(rp, tmpOut("RTC08"));
+  assert.equal(r.exitCode, 1);
+  assert.ok(r.artifact.red_reasons.includes("gap_section_missing_or_unrecognized"));
+});
+
+test("RTC09 · trailing prose 'are listed below' rejected", () => {
+  const rp = writeFixture(
+    "RTC09",
+    renderedReport({ gapHeadingLine: "Your top 5 gaps are listed below" }),
+  );
+  const r = invoke(rp, tmpOut("RTC09"));
+  assert.equal(r.exitCode, 1);
+  assert.ok(r.artifact.red_reasons.includes("gap_section_missing_or_unrecognized"));
+});
+
+test("RTC10 · unsupported suffix 'for this year' rejected", () => {
+  const rp = writeFixture(
+    "RTC10",
+    renderedReport({ gapHeadingLine: "Your top 5 gaps for this year" }),
+  );
+  const r = invoke(rp, tmpOut("RTC10"));
+  assert.equal(r.exitCode, 1);
+  assert.ok(r.artifact.red_reasons.includes("gap_section_missing_or_unrecognized"));
+});
+
+test("RTC11 · phrase embedded in paragraph rejected", () => {
+  const rp = writeFixture(
+    "RTC11",
+    renderedReport({
+      gapHeadingLine: "Based on the analysis, Your top 5 gaps, ranked, are shown below",
+    }),
+  );
+  const r = invoke(rp, tmpOut("RTC11"));
+  assert.equal(r.exitCode, 1);
+  assert.ok(r.artifact.red_reasons.includes("gap_section_missing_or_unrecognized"));
+});
+
+test("RTC12 · non-H2 markdown level '# Your top 5 gaps' rejected", () => {
+  // Policy: accept only exact `## ` Markdown prefix (or no prefix); reject
+  // other heading levels to keep the grammar narrow.
+  const rp = writeFixture(
+    "RTC12",
+    renderedReport({ gapHeadingLine: "# Your top 5 gaps" }),
+  );
+  const r = invoke(rp, tmpOut("RTC12"));
+  assert.equal(r.exitCode, 1);
+  assert.ok(r.artifact.red_reasons.includes("gap_section_missing_or_unrecognized"));
+});
+
+test("RTC13 · non-H2 markdown level '### Your top 5 gaps' rejected", () => {
+  const rp = writeFixture(
+    "RTC13",
+    renderedReport({ gapHeadingLine: "### Your top 5 gaps" }),
+  );
+  const r = invoke(rp, tmpOut("RTC13"));
+  assert.equal(r.exitCode, 1);
+});
+
+test("RTC14 · leading/trailing whitespace tolerated on rendered heading line", () => {
+  // Deterministic policy: trim leading/trailing whitespace on the line
+  // before matching (mirrors how innerText may include incidental spaces).
+  const rp = writeFixture(
+    "RTC14",
+    renderedReport({ gapHeadingLine: "   Your top 5 gaps, ranked   " }),
+  );
+  const r = invoke(rp, tmpOut("RTC14"));
+  assert.equal(r.exitCode, 0, `stderr: ${r.stderr}`);
+  assert.equal(r.artifact.verdict, "green");
+});
+
+// -------- RTC · appendix heading --------
+
+test("RTC15 · rendered 'Evidence Appendix' heading accepted", () => {
+  const rp = writeFixture(
+    "RTC15",
+    renderedReport({ appendixHeadingLine: "Evidence Appendix" }),
+  );
+  const r = invoke(rp, tmpOut("RTC15"));
+  assert.equal(r.exitCode, 0, `stderr: ${r.stderr}`);
+  assert.equal(r.artifact.appendix.present, true);
+  assert.equal(r.artifact.appendix.row_count, 5);
+});
+
+test("RTC16 · markdown-source '## Evidence Appendix' still accepted", () => {
+  const rp = writeFixture(
+    "RTC16",
+    renderedReport({ appendixHeadingLine: "## Evidence Appendix" }),
+  );
+  const r = invoke(rp, tmpOut("RTC16"));
+  assert.equal(r.exitCode, 0, `stderr: ${r.stderr}`);
+  assert.equal(r.artifact.appendix.present, true);
+});
+
+test("RTC17 · prose mention 'See the Evidence Appendix below.' rejected", () => {
+  // Prose mention must not activate appendix detection. Build a report
+  // that has NO appendix heading line and only contains the phrase
+  // mid-sentence. Assert appendix.present=false and RED via
+  // evidence_appendix_missing.
+  const body =
+    "Personal Gap Report — synthetic\n\n" +
+    "Target role\nAI Engineer.\n\n" +
+    "What you already have — don't re-learn this\n- Python\n\n" +
+    "Your top 5 gaps, ranked\n" +
+    [1, 2, 3, 4, 5]
+      .map(
+        (i) =>
+          `\n${i}. Gap topic ${i}\n- Skill — 50%\nEvidence quote: "content ${i}" — Co${i}, jd_10000${i}.\n`,
+      )
+      .join("") +
+    "\nSkills you might be over-prioritizing\nNothing flagged.\n\n" +
+    "Your single highest-leverage next action\n" +
+    "Reassess in 4 weeks. See the Evidence Appendix below for context.\n";
+  const rp = writeFixture("RTC17", body);
+  const r = invoke(rp, tmpOut("RTC17"));
+  assert.equal(r.exitCode, 1, `stderr: ${r.stderr}`);
+  assert.equal(r.artifact.appendix.present, false);
+  assert.ok(r.artifact.red_reasons.includes("evidence_appendix_missing"));
+});
+
+test("RTC18 · unrelated 'Supporting Evidence Appendix' rejected", () => {
+  const rp = writeFixture(
+    "RTC18",
+    renderedReport({ appendixHeadingLine: "Supporting Evidence Appendix" }),
+  );
+  const r = invoke(rp, tmpOut("RTC18"));
+  assert.equal(r.exitCode, 1);
+  assert.ok(r.artifact.red_reasons.includes("evidence_appendix_missing"));
+});
+
+test("RTC19 · extra suffix 'Evidence Appendix Notes' rejected", () => {
+  const rp = writeFixture(
+    "RTC19",
+    renderedReport({ appendixHeadingLine: "Evidence Appendix Notes" }),
+  );
+  const r = invoke(rp, tmpOut("RTC19"));
+  assert.equal(r.exitCode, 1);
+  assert.ok(r.artifact.red_reasons.includes("evidence_appendix_missing"));
+});
+
+// -------- RTC · appendix rows --------
+
+test("RTC20 · tab-separated rows still accepted", () => {
+  const rp = writeFixture("RTC20", renderedReport({ appendixSeparator: "tab" }));
+  const r = invoke(rp, tmpOut("RTC20"));
+  assert.equal(r.exitCode, 0);
+  assert.equal(r.artifact.appendix.row_count, 5);
+});
+
+test("RTC21 · multi-space (2+ spaces) rows accepted", () => {
+  const rp = writeFixture("RTC21", renderedReport({ appendixSeparator: "multispace" }));
+  const r = invoke(rp, tmpOut("RTC21"));
+  assert.equal(r.exitCode, 0, `stderr: ${r.stderr}`);
+  assert.equal(r.artifact.appendix.row_count, 5);
+});
+
+test("RTC22 · pipe-separated rows (outer delimiters) accepted", () => {
+  const rp = writeFixture("RTC22", renderedReport({ appendixSeparator: "pipe-outer" }));
+  const r = invoke(rp, tmpOut("RTC22"));
+  assert.equal(r.exitCode, 0, `stderr: ${r.stderr}`);
+  assert.equal(r.artifact.appendix.row_count, 5);
+});
+
+test("RTC23 · pipe-separated rows (no outer delimiters) accepted", () => {
+  const rp = writeFixture("RTC23", renderedReport({ appendixSeparator: "pipe" }));
+  const r = invoke(rp, tmpOut("RTC23"));
+  assert.equal(r.exitCode, 0, `stderr: ${r.stderr}`);
+  assert.equal(r.artifact.appendix.row_count, 5);
+});
+
+test("RTC24 · two-column row rejected as malformed", () => {
+  const raw =
+    "jd_100001\tExampleCo\n" +
+    "jd_100002\tNovaAI\n" +
+    "jd_100003\tHelixLabs\n" +
+    "jd_100004\tZenith\n" +
+    "jd_100005\tDraft\n";
+  const rp = writeFixture("RTC24", renderedReport({ appendixRows: raw }));
+  const r = invoke(rp, tmpOut("RTC24"));
+  // No canonical rows → checker treats as malformed jd-like lines and
+  // appendix as empty (or malformed). Verdict is RED via appendix defect.
+  assert.equal(r.exitCode, 1);
+  assert.equal(r.artifact.appendix.present, true);
+  const isBad =
+    r.artifact.appendix.row_count === 0 ||
+    (r.artifact.appendix.malformed_rows && r.artifact.appendix.malformed_rows.length > 0);
+  assert.ok(isBad, `expected malformed/empty rows; got ${JSON.stringify(r.artifact.appendix)}`);
+});
+
+test("RTC25 · four-column row rejected", () => {
+  const raw =
+    "jd_100001\tExampleCo\tSenior AI Engineer\tExtraField\n" +
+    "jd_100002\tNovaAI\tML Solutions\tExtraField\n";
+  const rp = writeFixture("RTC25", renderedReport({ appendixRows: raw }));
+  const r = invoke(rp, tmpOut("RTC25"));
+  assert.equal(r.exitCode, 1);
+  const isBad =
+    r.artifact.appendix.row_count === 0 ||
+    (r.artifact.appendix.malformed_rows && r.artifact.appendix.malformed_rows.length > 0);
+  assert.ok(isBad);
+});
+
+test("RTC26 · invalid jd_id rejected", () => {
+  const raw =
+    "jd_1\tExampleCo\tSenior AI Engineer\n" + // too few digits
+    "notjd_100002\tNovaAI\tML Solutions\n";
+  const rp = writeFixture("RTC26", renderedReport({ appendixRows: raw }));
+  const r = invoke(rp, tmpOut("RTC26"));
+  assert.equal(r.exitCode, 1);
+  // No valid rows parsed
+  assert.equal(r.artifact.appendix.row_count, 0);
+});
+
+test("RTC27 · empty company field rejected", () => {
+  const raw =
+    "jd_100001\t\tSenior AI Engineer\n" +
+    "jd_100002\t\tML Solutions\n";
+  const rp = writeFixture("RTC27", renderedReport({ appendixRows: raw }));
+  const r = invoke(rp, tmpOut("RTC27"));
+  assert.equal(r.exitCode, 1);
+  assert.equal(r.artifact.appendix.row_count, 0);
+});
+
+test("RTC28 · empty title field rejected", () => {
+  const raw =
+    "jd_100001\tExampleCo\t\n" +
+    "jd_100002\tNovaAI\t\n";
+  const rp = writeFixture("RTC28", renderedReport({ appendixRows: raw }));
+  const r = invoke(rp, tmpOut("RTC28"));
+  assert.equal(r.exitCode, 1);
+  assert.equal(r.artifact.appendix.row_count, 0);
+});
+
+test("RTC29 · prose with incidental multiple spaces NOT counted as row", () => {
+  // A paragraph after the appendix heading with double-spaces must not be
+  // mis-parsed as a row. Adding 5 valid tab-separated rows so overall
+  // report is GREEN; the prose is decorative.
+  const raw =
+    "This  is  a  short  prose  paragraph.\n" +
+    "jd_100001\tExampleCo\tSenior AI Engineer\n" +
+    "jd_100002\tNovaAI\tML Solutions\n" +
+    "jd_100003\tHelixLabs\tLLM Ops\n" +
+    "jd_100004\tZenith\tApplied Research\n" +
+    "jd_100005\tDraft\tFine-tuning Lead\n";
+  const rp = writeFixture("RTC29", renderedReport({ appendixRows: raw }));
+  const r = invoke(rp, tmpOut("RTC29"));
+  assert.equal(r.exitCode, 0, `stderr: ${r.stderr}`);
+  assert.equal(r.artifact.appendix.row_count, 5);
+});
+
+test("RTC30 · GFM separator row |---|---|---| rejected", () => {
+  const raw =
+    "| jd_id | company | title |\n" +
+    "|---|---|---|\n" +
+    "| jd_100001 | ExampleCo | Senior AI Engineer |\n" +
+    "| jd_100002 | NovaAI | ML Solutions |\n" +
+    "| jd_100003 | HelixLabs | LLM Ops |\n" +
+    "| jd_100004 | Zenith | Applied Research |\n" +
+    "| jd_100005 | Draft | Fine-tuning Lead |\n";
+  const rp = writeFixture("RTC30", renderedReport({ appendixRows: raw }));
+  const r = invoke(rp, tmpOut("RTC30"));
+  assert.equal(r.exitCode, 0, `stderr: ${r.stderr}`);
+  assert.equal(r.artifact.appendix.row_count, 5);
+  // Separator row must NOT appear as a data row.
+  assert.equal(
+    r.artifact.appendix.jd_ids.includes("---"),
+    false,
+    "separator row leaked into jd_ids",
+  );
+});
+
+test("RTC31 · pipe row where company contains extra pipe rejected as malformed", () => {
+  // `| jd_100001 | Anthropic|Cohere | AI Engineer |` splits to 4 fields
+  // after pipe removal → rejected. Provide otherwise-valid data.
+  const raw =
+    "| jd_100001 | Anthropic|Cohere | AI Engineer |\n" +
+    "| jd_100002 | NovaAI | ML Solutions |\n" +
+    "| jd_100003 | HelixLabs | LLM Ops |\n" +
+    "| jd_100004 | Zenith | Applied Research |\n" +
+    "| jd_100005 | Draft | Fine-tuning Lead |\n";
+  const rp = writeFixture("RTC31", renderedReport({ appendixRows: raw }));
+  const r = invoke(rp, tmpOut("RTC31"));
+  // Ambiguous row must not silently expand — either rejected as malformed
+  // or not counted. Remaining 4 rows still valid so verdict may be RED
+  // (row count 4 < 5 expected) but the key assertion is that the bad row
+  // does NOT appear as a valid entry.
+  assert.ok(
+    !r.artifact.appendix.jd_ids.includes("Anthropic") &&
+      !r.artifact.appendix.jd_ids.includes("Cohere"),
+    "extra pipe field leaked into jd_ids",
+  );
+});
+
+// -------- RTC · citation scoping --------
+
+test("RTC32 · 5 citations inside rendered gap section counted", () => {
+  const rp = writeFixture("RTC32", renderedReport({ gapHeadingLine: "Your top 5 gaps, ranked" }));
+  const r = invoke(rp, tmpOut("RTC32"));
+  assert.equal(r.exitCode, 0);
+  assert.equal(r.artifact.recognized_citation_line_count, 5);
+});
+
+test("RTC33 · citations outside gap section not counted toward recognized_citation_line_count", () => {
+  // Build a report where the gap section has no citations but the
+  // appendix area contains lines that look like Evidence quote:. Confirm
+  // citations in gap section = 0 → RED via citation threshold.
+  const noCitationsInGaps = ["", "", "", "", ""];
+  const body =
+    renderedReport({
+      gapHeadingLine: "Your top 5 gaps, ranked",
+      citations: noCitationsInGaps,
+    }) +
+    '\nEvidence quote: "outside gap" — ExampleCo, jd_100001.\n' +
+    'Evidence quote: "outside gap 2" — NovaAI, jd_100002.\n' +
+    'Evidence quote: "outside gap 3" — HelixLabs, jd_100003.\n' +
+    'Evidence quote: "outside gap 4" — Zenith, jd_100004.\n' +
+    'Evidence quote: "outside gap 5" — Draft, jd_100005.\n';
+  const rp = writeFixture("RTC33", body);
+  const r = invoke(rp, tmpOut("RTC33"));
+  assert.equal(r.exitCode, 1);
+  assert.equal(r.artifact.recognized_citation_line_count, 0);
+  assert.ok(r.artifact.red_reasons.some((x) => x.startsWith("citation_line_count=")));
+});
+
+test("RTC34 · fewer than 5 citations remains RED", () => {
+  // Note: EVIDENCE_QUOTE_REGEX requires the inner quoted content to be
+  // at least 5 characters; use full-length quote strings so all three
+  // citations are recognized (short strings like "one" would fail the
+  // regex and give a misleading count, not a broadening bug).
+  const only3 = [
+    'Evidence quote: "agentic retrieval work" — ExampleCo, jd_100001.',
+    'Evidence quote: "hands-on tool use" — NovaAI, jd_100002.',
+    'Evidence quote: "shipping evals" — HelixLabs, jd_100003.',
+    "",
+    "",
+  ];
+  const rp = writeFixture(
+    "RTC34",
+    renderedReport({ gapHeadingLine: "Your top 5 gaps, ranked", citations: only3 }),
+  );
+  const r = invoke(rp, tmpOut("RTC34"));
+  assert.equal(r.exitCode, 1);
+  assert.equal(r.artifact.recognized_citation_line_count, 3);
+});
+
+test("RTC35 · invalid citation syntax remains uncounted", () => {
+  // Malformed shape — missing quotes and jd_ID structure. Should not count.
+  const badCitations = [
+    "Evidence: agentic RAG at scale — ExampleCo, jd_100001.",
+    "Evidence: hands on — NovaAI, jd_100002.",
+    "Evidence: shipping harnesses — HelixLabs, jd_100003.",
+    "Evidence: prompt engineering — Zenith, jd_100004.",
+    "Evidence: fine-tuning — Draft, jd_100005.",
+  ];
+  const rp = writeFixture(
+    "RTC35",
+    renderedReport({ gapHeadingLine: "Your top 5 gaps, ranked", citations: badCitations }),
+  );
+  const r = invoke(rp, tmpOut("RTC35"));
+  assert.equal(r.exitCode, 1);
+  assert.equal(r.artifact.recognized_citation_line_count, 0);
+});
+
+// -------- RTC · non-broadening / determinism guards --------
+
+test("RTC36 · gap section without body citations still RED even if appendix is valid", () => {
+  const rp = writeFixture(
+    "RTC36",
+    renderedReport({
+      gapHeadingLine: "Your top 5 gaps, ranked",
+      citations: ["", "", "", "", ""],
+    }),
+  );
+  const r = invoke(rp, tmpOut("RTC36"));
+  assert.equal(r.exitCode, 1);
+});
+
+test("RTC37 · citation regex byte-identical (structural checker source unchanged)", () => {
+  // Guard: exact literal must not drift. Reads the source line directly.
+  const src = readFileSync(resolve("scripts/structural-evidence-check.mjs"), "utf8");
+  // The literal appears near the top of the file. Assert exact substring.
+  const expected =
+    'const EVIDENCE_QUOTE_REGEX =\n' +
+    '  /Evidence quote:\\s*["“]([^"”\\n]{5,})["”]\\s*[—–\\-]\\s*([^,\\n]{1,120}?),\\s*(jd_\\d{4,})/g;';
+  assert.ok(
+    src.includes(expected),
+    "EVIDENCE_QUOTE_REGEX literal changed — citation regex must remain byte-identical",
+  );
+});
+
+test("RTC38 · thresholds byte-identical (5 gaps, 5 citations)", () => {
+  const src = readFileSync(resolve("scripts/structural-evidence-check.mjs"), "utf8");
+  assert.ok(
+    src.includes("const REQUIRED_GAP_COUNT = 5;"),
+    "REQUIRED_GAP_COUNT constant changed or removed",
+  );
+  assert.ok(
+    src.includes("const MIN_CITATION_LINE_COUNT = 5;"),
+    "MIN_CITATION_LINE_COUNT constant changed or removed",
+  );
+});
+
+test("RTC39 · structural blocking_mode remains telemetry_only", () => {
+  const rp = writeFixture("RTC39", renderedReport({ gapHeadingLine: "Your top 5 gaps, ranked" }));
+  const r = invoke(rp, tmpOut("RTC39"));
+  assert.equal(r.artifact.blocking_mode, "telemetry_only");
+});
+
+test("RTC40 · network_used and llm_used remain false on rendered reports", () => {
+  const rp = writeFixture("RTC40", renderedReport({ gapHeadingLine: "Your top 5 gaps, ranked" }));
+  const r = invoke(rp, tmpOut("RTC40"));
+  assert.equal(r.artifact.network_used, false);
+  assert.equal(r.artifact.llm_used, false);
+  assert.equal(r.artifact.source_rewritten, false);
+});
+
 // -------- Summary --------
 process.stdout.write(`\nSTRUCTURAL-EVIDENCE-CHECK TESTS: ${passed} passed, ${failed} failed\n`);
 if (failed > 0) {
