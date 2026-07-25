@@ -1,0 +1,426 @@
+{
+  "schema_version": "0.1-diagnostics-design",
+  "loop": "AgentOps-5e-followup-phase3-structural-product-quality-diagnostics-design",
+  "generated_at_date": "2026-07-25",
+  "based_on_task": ".agent/tasks/2026-07-25_run_03_TASK.md",
+  "authorizing_decision": ".agent/decisions/2026-07-25_run_02_DECISION.md",
+  "phase_3_context": {
+    "phase_3_status": "complete",
+    "fixture_a_run_id": "20260724T193135Z_fixture-A",
+    "fixture_b_run_id": "20260725T041414Z_fixture-B",
+    "structural_blocking_mode": "telemetry_only",
+    "combined_display_only": true,
+    "legacy_verdict_both_fixtures": "green (A) / green (B)",
+    "process_exit_both_fixtures": "0 / 0",
+    "hardened_classify_direct_validation": "Fixture B only"
+  },
+  "intended_contract": {
+    "source_prompts": "src/lib/prompts.ts::reportSystemPrompt",
+    "gap_section": {
+      "required_heading_source_form": "## Your top 5 gaps, ranked (5 numbered items)",
+      "required_semantic_purpose": "exactly 5 numbered ranked gaps",
+      "wording_variants_explicitly_allowed_by_prompt": "none stated; prompt shows this literal heading",
+      "numbering_required": true,
+      "checker_word_boundary_after_gaps": "compatible with `, ranked (5 numbered items)` suffix",
+      "authority": "prompt"
+    },
+    "citation": {
+      "required_form": "Evidence quote: \"TEXT\" — Company, jd_XXXXXX.",
+      "minimum_count": 5,
+      "one_per_gap": true,
+      "authority": "prompt (Part 1, Positive example)"
+    },
+    "evidence_appendix": {
+      "required_heading_source_form": "## Evidence Appendix",
+      "required_row_form": "jd_id\\tcompany\\ttitle",
+      "required_position": "end of report",
+      "prompt_has_final_paragraph_conflict": "prompt also says at end: 'End the report with a short evidence appendix listing the JDs cited (jd_id + company + title only).' — lowercased 'evidence appendix' without `##`. Non-normative sentence; the mandatory-structure section (Part 1) still requires `## Evidence Appendix`. Recorded as a minor prompt duplication, not a mismatch.",
+      "authority": "prompt (Part 1)"
+    }
+  },
+  "checker_contract": {
+    "source_file": "scripts/structural-evidence-check.mjs",
+    "checker_commit_id": "structural-evidence-check.mjs@0.1-phase1",
+    "gap_section": {
+      "regex": "/^##\\s+Your top 5 gaps\\b/im",
+      "flags": "i (case-insensitive), m (multiline)",
+      "line_anchor": true,
+      "requires_literal_markdown_hash_hash": true,
+      "matches_prompt_wording_when_hash_present": true
+    },
+    "citation": {
+      "regex": "/Evidence quote:\\s*[\"“]([^\"”\\n]{5,})[\"”]\\s*[—–\\-]\\s*([^,\\n]{1,120}?),\\s*(jd_\\d{4,})/g",
+      "identical_to_qi_checker": true,
+      "does_not_require_markdown_syntax": true
+    },
+    "evidence_appendix": {
+      "heading_literal": "## Evidence Appendix",
+      "heading_lookup_method": "text.indexOf(...) — literal substring",
+      "requires_literal_markdown_hash_hash": true,
+      "row_parser": "line.split('\\t') — tabs ONLY, no fallback",
+      "no_multi_space_fallback": true,
+      "no_pipe_fallback": true
+    },
+    "thresholds": {
+      "REQUIRED_GAP_COUNT": 5,
+      "MIN_CITATION_LINE_COUNT": 5
+    }
+  },
+  "qi_checker_contract_for_comparison": {
+    "source_file": "scripts/quote-integrity-check.mjs",
+    "appendix_heading_search": "text.indexOf('Evidence Appendix') — NO leading `##`",
+    "appendix_row_parser": "line.split('\\t') PRIMARY, PLUS fallback line.split(/\\s{2,}|\\|/)",
+    "evidence_quote_regex": "same as structural checker",
+    "consequence": "QI succeeds on rendered plain text; structural checker fails."
+  },
+  "checker_tests": {
+    "existing_suites": [
+      "scripts/test-structural-evidence-check.mjs (40/40 pass)",
+      "scripts/test-structural-evidence-integration.mjs (26/26 pass)"
+    ],
+    "coverage_note": "Existing tests supply raw Markdown source with `##` prefixes to the checker. There is NO existing test covering the case of rendered plain-text input (no `##` prefixes, tabs possibly collapsed) — the exact input shape produced by the harness `page.locator(...).innerText()` pipeline.",
+    "gap_identified": "no rendered-text input tests"
+  },
+  "capture_contract": {
+    "source_file": "scripts/report-regression-local.mjs",
+    "selector_list": [
+      "[data-testid*='report']",
+      "[data-report]",
+      "article",
+      "main section",
+      "main",
+      "section",
+      "div[class*='prose']",
+      "div[class*='markdown']",
+      "div[class*='report']"
+    ],
+    "extraction_method": "page.locator(selector).innerText()",
+    "extraction_source_of_truth": "rendered HTML text (Markdown syntax stripped by ReactMarkdown)",
+    "candidate_scoring": "case-insensitive substring match against 5 REPORT_SECTION_MARKERS + Evidence Appendix regex /evidence appendix|## evidence/i",
+    "candidate_scoring_does_not_require_markdown_hash": true,
+    "min_candidate_length": 500,
+    "capture_complete_semantics": "harness-mechanism facts only (Category A) — not structural-content signals. capture_complete=true means a qualified DOM candidate was extracted, NOT that the extracted text passes the structural checker's Markdown grammar.",
+    "fallback_scope": "body_fallback if no candidate has all 5 markers + evidence"
+  },
+  "rendering_contract": {
+    "source_file": "src/app/page.tsx",
+    "renderer": "ReactMarkdown with remark-gfm",
+    "h2_component": "<h2>{children}</h2> — no `##` prefix in rendered output",
+    "table_component": "GFM table rendering — pipe/tab source may be parsed as table; innerText output loses `\\t` structure",
+    "code_block_preserves_text": true,
+    "raw_markdown_available_in_page_state": "true — `report` state variable in page.tsx line 438; posted to /api/eval-report as `report_markdown`",
+    "harness_does_not_use_raw_markdown_source": true
+  },
+  "prompt_contract": {
+    "source_file": "src/lib/prompts.ts::reportSystemPrompt",
+    "gap_section_instruction_exact": "## Your top 5 gaps, ranked (5 numbered items)",
+    "gap_section_wording_deviation_room": "prompt shows literal heading; model may add or vary suffix after `gaps`",
+    "citation_instruction_exact": "Evidence quote: \"TEXT\" — Company, jd_XXXXXX.",
+    "appendix_instruction_primary_exact": "## Evidence Appendix",
+    "appendix_instruction_secondary_conflicting_wording": "End the report with a short evidence appendix listing the JDs cited (jd_id + company + title only).",
+    "prompt_final_self_check_present": true,
+    "prompt_examples_present": true,
+    "prompt_is_consistent_with_structural_checker_on_markdown_source": true,
+    "prompt_is_NOT_consistent_with_the_harness_capture_path": "the capture path strips the Markdown syntax the prompt was designed to produce"
+  },
+  "fixture_a": {
+    "run_id": "20260724T193135Z_fixture-A",
+    "structural_verdict": "red",
+    "structural_reasons": [
+      "gap_section_missing_or_unrecognized",
+      "citation_line_count=0_lt_5",
+      "evidence_appendix_missing"
+    ],
+    "structural_observed_gap_count": 0,
+    "structural_recognized_citation_line_count": 0,
+    "structural_appendix_present": false,
+    "structural_appendix_row_count": 0,
+    "capture_scope": "main section",
+    "capture_strategy": "shortest-qualified-candidate",
+    "capture_fallback_used": false,
+    "capture_complete": true,
+    "expected_sections_captured": true,
+    "report_char_count": 9339,
+    "candidate_count": 9,
+    "qualified_candidate_count": 2,
+    "selected_candidate_marker_count": 5,
+    "selected_candidate_has_evidence": true,
+    "completion_state": "success",
+    "cross_check_qi_on_same_captured_text": "not directly available in Fixture A artifacts (QI run separately); Fixture B cross-check applies same mechanism"
+  },
+  "fixture_b": {
+    "run_id": "20260725T041414Z_fixture-B",
+    "structural_verdict": "red",
+    "structural_reasons": [
+      "gap_section_missing_or_unrecognized",
+      "citation_line_count=0_lt_5",
+      "evidence_appendix_missing"
+    ],
+    "structural_observed_gap_count": 0,
+    "structural_recognized_citation_line_count": 0,
+    "structural_appendix_present": false,
+    "structural_appendix_row_count": 0,
+    "capture_scope": "main section",
+    "capture_strategy": "shortest-qualified-candidate",
+    "capture_fallback_used": false,
+    "capture_complete": true,
+    "expected_sections_captured": true,
+    "report_char_count": 10448,
+    "candidate_count": 8,
+    "qualified_candidate_count": 2,
+    "selected_candidate_marker_count": 5,
+    "selected_candidate_has_evidence": true,
+    "completion_state": "success",
+    "qi_on_same_captured_text": {
+      "evidence_entries_in_appendix": 4,
+      "evidence_quotes_with_citation": 5,
+      "verbatim_matches": 4,
+      "case_insensitive_matches": 1,
+      "fabricated": 0,
+      "wrong_company": 0,
+      "wrong_role": 0,
+      "duplicates": 0,
+      "consequence": "QI parsed 5 citations and 4 appendix entries from the SAME captured text where structural parsed 0 citations and 0 appendix entries. Difference is contract, not content."
+    }
+  },
+  "fixture_comparison": {
+    "same_capture_scope": true,
+    "same_capture_strategy": true,
+    "same_marker_count": true,
+    "same_qualified_candidate_count": true,
+    "same_structural_verdict": true,
+    "same_structural_reasons_exactly": true,
+    "same_checker_commit": true,
+    "same_prompt_version": true,
+    "difference_in_report_char_count": "A=9339, B=10448 — variance-normal for different targets",
+    "difference_in_candidate_count": "A=9, B=8 — DOM shape variance-normal",
+    "shared_mechanism_confidence": "high — both fixtures fail on identical checker vs harness contract mismatch"
+  },
+  "evidence_matrix": {
+    "gap_section_missing_or_unrecognized": {
+      "fixture_a_evidence_class": "confirmed_capture_mismatch",
+      "fixture_b_evidence_class": "confirmed_capture_mismatch",
+      "reason": "Capture-marker scoring found 'Top 5 gaps' as substring in all 5 required markers (selected_candidate_marker_count=5). Content exists. Checker regex `/^##\\s+Your top 5 gaps\\b/im` requires literal `##` line prefix, which ReactMarkdown/innerText renders as plain-text `<h2>` and strips."
+    },
+    "citation_line_count=0_lt_5": {
+      "fixture_a_evidence_class": "confirmed_contract_mismatch (downstream consequence)",
+      "fixture_b_evidence_class": "confirmed_contract_mismatch (downstream consequence)",
+      "reason": "Structural checker only counts citations WITHIN a recognized gap section. Because gap section is not recognized (see previous row), citationsInGapSection is empty. Fixture B QI (using identical Evidence-quote regex on same captured text) found 5 citations — proving citations exist and the regex works when scoped correctly."
+    },
+    "evidence_appendix_missing": {
+      "fixture_a_evidence_class": "confirmed_contract_mismatch",
+      "fixture_b_evidence_class": "confirmed_contract_mismatch",
+      "reason": "Structural checker uses `text.indexOf('## Evidence Appendix')` — literal `##` required. QI checker uses `text.indexOf('Evidence Appendix')` (no `##`) and successfully found the section AND parsed 4 appendix rows on Fixture B. Additionally the structural row parser uses tabs only; QI has a whitespace/pipe fallback."
+    }
+  },
+  "hypotheses": [
+    {
+      "id": "H1",
+      "text": "Model genuinely omitted the gap section.",
+      "supporting_evidence": "none",
+      "contradicting_evidence": "selected_candidate_marker_count=5 on both fixtures — 'Top 5 gaps' substring present in captured text",
+      "confidence": "refuted",
+      "future_confirmation_requires": null
+    },
+    {
+      "id": "H2",
+      "text": "Model emitted a semantically valid gap section under an unrecognized heading.",
+      "supporting_evidence": "possible — model may vary heading suffix",
+      "contradicting_evidence": "checker regex uses `\\b` word boundary, so `## Your top 5 gaps, ranked (5 numbered items)` matches; if the model emitted `## Your top 5 gaps` in raw markdown, the checker would find it — but the checker never sees `##` due to rendering",
+      "confidence": "not the primary cause; secondary contribution possible",
+      "future_confirmation_requires": "compare captured text against raw model output (raw markdown available in page state but not sent to harness)"
+    },
+    {
+      "id": "H3",
+      "text": "Model emitted citations in a format the line-based checker does not count.",
+      "supporting_evidence": "possible in theory",
+      "contradicting_evidence": "QI checker uses IDENTICAL Evidence-quote regex and found 5 citations on Fixture B captured text",
+      "confidence": "refuted — citation regex works; problem is upstream gap-section anchor"
+    },
+    {
+      "id": "H4",
+      "text": "Model genuinely emitted no citations.",
+      "supporting_evidence": "none",
+      "contradicting_evidence": "QI parsed 5 citations on Fixture B",
+      "confidence": "refuted"
+    },
+    {
+      "id": "H5",
+      "text": "Evidence Appendix was generated but lies outside main-section capture.",
+      "supporting_evidence": "possible if appendix is rendered outside `main section`",
+      "contradicting_evidence": "selected_candidate_has_evidence=true — the chosen main-section candidate contains 'Evidence Appendix' (case-insensitive) — appendix IS in captured text. QI parsed 4 appendix rows from that captured text.",
+      "confidence": "refuted for main-section scope; appendix is present in captured region"
+    },
+    {
+      "id": "H6",
+      "text": "Evidence Appendix was genuinely omitted.",
+      "supporting_evidence": "none",
+      "contradicting_evidence": "QI parsed 4 appendix rows on Fixture B",
+      "confidence": "refuted"
+    },
+    {
+      "id": "H7",
+      "text": "Prompt and checker require different heading/citation contracts.",
+      "supporting_evidence": "prompt says `## Your top 5 gaps, ranked (5 numbered items)`; checker regex matches. Prompt appendix says `## Evidence Appendix`; checker matches. Contracts agree on Markdown source form.",
+      "contradicting_evidence": "reframed: the real mismatch is harness capture vs checker, NOT prompt vs checker",
+      "confidence": "reframed — prompt and checker AGREE on Markdown-source form; the divergence is with the harness capture path"
+    },
+    {
+      "id": "H8",
+      "text": "Rendered text extraction removed Markdown structure needed by checker.",
+      "supporting_evidence": [
+        "ReactMarkdown renders `## X` as `<h2>X</h2>` — no `##` in output",
+        "harness uses page.locator(...).innerText() — reads rendered text",
+        "checker gap regex requires literal `##`",
+        "checker appendix heading is literal `## Evidence Appendix`",
+        "QI checker on same captured text (without `##` requirement) successfully finds appendix + citations"
+      ],
+      "contradicting_evidence": "none",
+      "confidence": "confirmed_high"
+    },
+    {
+      "id": "H9",
+      "text": "Checker contract is correct and generator simply failed twice.",
+      "supporting_evidence": "none",
+      "contradicting_evidence": "both QI and capture markers show gap-section text + evidence appendix + citations present in captured text",
+      "confidence": "refuted"
+    },
+    {
+      "id": "H10",
+      "text": "Capture metadata overstates completeness relative to structural-evaluation scope.",
+      "supporting_evidence": "capture_complete=true (Category A: harness mechanism) but structural evaluation fails on captured text",
+      "contradicting_evidence": "capture_complete has a documented Category-A semantic (harness mechanism only) — it doesn't claim structural passability. Not a defect in itself.",
+      "confidence": "not a defect; a semantic distinction that is currently correct but non-obvious to reviewers"
+    },
+    {
+      "id": "H11_new",
+      "text": "Appendix row tab-only parser is fragile — even if `##` requirement were relaxed, innerText may collapse `\\t` to spaces.",
+      "supporting_evidence": "QI checker has a `line.split(/\\s{2,}|\\|/)` fallback; structural checker does not",
+      "contradicting_evidence": "we did not directly inspect a captured appendix line to confirm whitespace collapse",
+      "confidence": "likely — secondary defect activated once #2 is fixed",
+      "future_confirmation_requires": "read-only inspection of a locally available uncommitted report file OR structured deterministic test with rendered-text input"
+    }
+  ],
+  "diagnosis_confidence": {
+    "verdict": "multiple_root_causes_confirmed",
+    "primary_confirmed": [
+      "gap_section_pattern_requires_literal_markdown_hash_hash",
+      "appendix_heading_literal_requires_hash_hash"
+    ],
+    "secondary_likely": [
+      "appendix_row_parser_tab_only_lacks_whitespace_or_pipe_fallback"
+    ],
+    "not_root_cause": [
+      "product-output omission (both refuted by QI + capture markers)",
+      "citation regex bug (regex is correct; scoping is the issue)",
+      "capture-scope-excludes-appendix (appendix is inside selected main-section scope)",
+      "prompt-vs-checker mismatch on Markdown source form (they agree)"
+    ]
+  },
+  "selected_next_path": {
+    "chosen_path": "instrumentation-first-then-either-A-or-B (Path E leading to A or B)",
+    "rationale": "Diagnosis is confirmed multi-cause with high confidence, but two implementation paths remain valid and mutually exclusive. Path A (relax checker regexes to accept rendered plain text) preserves the harness architecture but weakens the Markdown-source contract the checker was designed for. Path B (feed the checker raw Markdown source instead of innerText) preserves the checker's original grammar and matches what the prompt actually produces, but requires a small harness change to extract raw markdown from a data attribute or window global. Choice between A and B is a small design decision that should be authored in a separate design loop under its own DECISION. Path C/D not indicated. Path E (instrumentation-only, e.g. add tests with rendered-text input) is a mechanically safe intermediate.",
+    "candidate_paths_open_for_next_loop": [
+      {
+        "id": "A",
+        "name": "Checker grammar correction to accept rendered plain text",
+        "changes": "structural-evidence-check.mjs: (1) gap heading regex drops `##` requirement, e.g. `/^(?:##\\s+)?Your top 5 gaps\\b/im`; (2) appendix heading string drops `##`; (3) appendix row parser adds whitespace/pipe fallback matching QI",
+        "risks": "weakens the checker's coupling to raw Markdown; would accept renderer-flattened text where structure is genuinely ambiguous"
+      },
+      {
+        "id": "B",
+        "name": "Harness feeds raw Markdown source to structural checker",
+        "changes": "expose raw `report` state (already present in page.tsx line 438) via a data attribute (e.g. `<script type=\"application/x-report-markdown\">`) or a hidden `<pre data-report-markdown>` element; harness reads that in addition to (or instead of) innerText for structural evaluation ONLY; QI + legacy paths continue to use current capture",
+        "risks": "requires small src/app/page.tsx change + small harness change; must not leak into legacy checks[] or process exit"
+      }
+    ],
+    "explicitly_deferred_paths": [
+      "C prompt/report contract reinforcement (not applicable — prompt is consistent)",
+      "D deterministic checker tests first (would be Step 1 of Path A regardless)",
+      "F fuzzy/edit-distance/LLM judge (explicitly not authorized)"
+    ]
+  },
+  "policy_resolutions": {
+    "Q1_gap_content_genuinely_absent": "no",
+    "Q2_exact_gap_heading_generated": "unknown at source-Markdown level (raw output not captured); rendered form contains 'Top 5 gaps' substring",
+    "Q3_exact_headings_checker_accepts": "^## Your top 5 gaps<word-boundary> — case-insensitive multiline",
+    "Q4_checker_grammar_consistent_with_prompt": "yes on Markdown source; no vs harness-rendered plain text",
+    "Q5_citations_genuinely_absent": "no",
+    "Q6_citation_syntax_generated": "Evidence quote: \"...\" — Company, jd_XXXXXX. (5 instances on Fixture B via QI)",
+    "Q7_citation_syntax_checker_counts": "same regex — but only WITHIN a recognized gap section",
+    "Q8_evidence_appendix_genuinely_absent": "no",
+    "Q9_could_appendix_exist_outside_main_section": "no — capture found evidence inside main-section scope",
+    "Q10_capture_complete_semantics": "complete for harness mechanism (Category A) — does not claim structural passability",
+    "Q11_checker_evaluates_rendered_or_raw": "rendered plain-text (via page.locator(...).innerText())",
+    "Q12_A_and_B_same_reason": "yes — confirmed identical mechanism",
+    "Q13_checker_change_justified": "yes — but only under a separate DECISION",
+    "Q14_prompt_change_justified": "no — prompt is consistent with checker on Markdown source; minor duplicate wording noted but not causal",
+    "Q15_capture_change_justified": "yes — Path B (raw markdown source) is a valid alternative; requires separate DECISION",
+    "Q16_instrumentation_needed_before_deciding": "recommended — add deterministic tests with rendered-text input to codify contract before choosing A vs B",
+    "Q17_paid_rerun_justified_now": "no",
+    "Q18_fixture_rerun_authorized": "no",
+    "Q19_structural_blocking_promotion_authorized": "no",
+    "Q20_loop_authorizes_phase_4_5_6_or_5f_promote": "no"
+  },
+  "risks": [
+    {
+      "id": "R1",
+      "text": "Choosing Path A too broadly could accept renderer-flattened text where genuine structural ambiguity exists (e.g. tab collapse could conceal malformed rows).",
+      "severity": "medium",
+      "mitigation": "add deterministic test coverage for rendered-text input BEFORE any regex/parser relaxation"
+    },
+    {
+      "id": "R2",
+      "text": "Choosing Path B requires touching src/app/page.tsx to expose raw markdown to harness; risks accidentally exposing raw report content to end users if implemented via visible element.",
+      "severity": "medium",
+      "mitigation": "use a hidden `<script type=\"application/x-report-markdown\">` element with content that is already present client-side; no additional information leaked"
+    },
+    {
+      "id": "R3",
+      "text": "Silently broadening the checker without a companion DECISION would violate the promotion posture recorded in the Phase 3 completion DECISION.",
+      "severity": "high",
+      "mitigation": "no implementation in this loop; the next loop MUST author its own DECISION and MUST NOT promote structural to blocking without separate design"
+    },
+    {
+      "id": "R4",
+      "text": "Fixing the checker/capture will change the structural verdict from RED to (likely) GREEN on both fixtures. Under current telemetry-only mode this does not affect legacy verdict, process exit, or push eligibility — but reviewers may interpret the flip as improved product quality when it is really a contract fix.",
+      "severity": "low",
+      "mitigation": "the implementation DECISION must explicitly document that the flip is contract-only, not a product-quality improvement"
+    }
+  ],
+  "open_questions": [
+    "Would the checker also fail on raw-markdown input if the model emits `## Your top 5 gaps, ranked (5 numbered items)` (with the `, ranked ...` suffix)? Word-boundary analysis says no, but a deterministic test would confirm.",
+    "Do captured appendix lines still contain `\\t` characters after innerText, or does the browser collapse them to spaces? Requires read-only inspection of a locally available uncommitted report file, OR a rendered-text integration test.",
+    "Is there a governance-safe way to expose raw report markdown to the harness that does not modify page.tsx?",
+    "Under Path A, should the checker keep the `##` variant as a stricter Markdown-source path (used by future tests) and add a rendered-text path? Or replace outright?"
+  ],
+  "boundaries_respected": {
+    "no_source_change": true,
+    "no_prompt_change": true,
+    "no_checker_change": true,
+    "no_capture_change": true,
+    "no_harness_change": true,
+    "no_fixture_change": true,
+    "no_baseline_change": true,
+    "no_telemetry_change": true,
+    "no_test_change": true,
+    "no_package_change": true,
+    "no_workflow_change": true,
+    "no_env_change": true,
+    "no_vercel_change": true,
+    "no_pipeline_change": true,
+    "no_agent_scripts_change": true,
+    "no_regression_run_change": true,
+    "no_provider_call": true,
+    "no_fixture_rerun": true,
+    "no_dev_server_started": true,
+    "no_playwright_started": true,
+    "no_promotion": true,
+    "no_5f_promote_start": true,
+    "no_phase_4_5_6_start": true,
+    "no_push": true,
+    "no_decision_created": true,
+    "structural_remains_telemetry_only": true,
+    "cost_this_loop_usd": 0
+  }
+}
