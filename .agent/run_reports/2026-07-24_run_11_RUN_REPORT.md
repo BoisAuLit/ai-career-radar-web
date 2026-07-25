@@ -63,13 +63,25 @@ Pending. This turn will produce two commits:
 - Fallback API considered: `generateText({ output: Output.object({schema}) })` — supported but cleaner to use `generateObject` for a route with no tool calls
 - Related exports: `NoObjectGeneratedError`, `NoOutputGeneratedError`, `RetryError`, `zodSchema`, `jsonSchema`
 
-## Schema
+### Guarantee clarification
 
-- `archetype` — enum of 8 (`applied_ai` · `agent_engineering` · `llm_infra` · `eval` · `research_engineer` · `forward_deployed` · `ml_engineer` · `other`) · required
-- `company_preferences` — string array · min 0 · max 10 · per-item [1, 200] chars · trim + case-insensitive dedup
-- `level_hint` — enum of 6 (`junior` · `mid` · `senior` · `staff` · `principal` · `unknown`) · required
-- `reasoning` — string · required · [1, 2000] chars · trimmed
-- **Strict object** (`.strict()` / `additionalProperties: false`) · no coercion · no defaulting · minimal transform (whitespace + dedup only)
+`generateObject` validates output at the SDK boundary. For providers with native structured-output support, the SDK requests it; for providers without, the SDK requests JSON and validates. Either way, invalid/missing structured output surfaces as a **typed failure** (`NoObjectGeneratedError` / `NoOutputGeneratedError`), NOT as raw text parsed by application code.
+
+- We do NOT claim the provider itself guarantees native JSON-schema enforcement in every execution mode.
+- We do NOT claim invalid structured output can never occur.
+- We DO claim: the application no longer performs manual `JSON.parse` on unrestricted free-form provider text · the SDK layer produces/validates against the schema · invalid output is surfaced as a typed failure · the route handles that typed failure safely · residual structured-output failure remains possible but no longer produces the current raw-JSON parsing architecture.
+
+## Schema (VALIDATION ONLY — no transforms)
+
+**Overall policy**: validation only. No trim, no lowercase, no dedup, no defaults, no coercion, no enum normalization, no semantic rewriting, no silent removal of duplicates, no silent stripping of unknown keys. All deviations surface as typed schema failures.
+
+- `archetype` — enum of 8 (`applied_ai` · `agent_engineering` · `llm_infra` · `eval` · `research_engineer` · `forward_deployed` · `ml_engineer` · `other`) · required · **NO transform**
+- `company_preferences` — string array · min 0 · **max 10** items · per-item [1, 200] chars · **NO trim** · **NO dedup transform** · **duplicate policy: REJECT** via deterministic refinement · **case-different values remain distinct** (`'anthropic'` vs `'Anthropic'` both accepted)
+- `level_hint` — enum of 6 (`junior` · `mid` · `senior` · `staff` · `principal` · `unknown`) · required · **NO default**
+- `reasoning` — string · required · [1, 2000] chars · **NO trim transform** · **whitespace-only strings REJECTED** via refinement
+- **STRICT object** (`.strict()` / `additionalProperties: false`) — unknown keys REJECTED · no coercion · no defaulting · **NO transforms**
+
+**Correction note**: earlier draft proposed silent trim + case-insensitive dedup + trimmed reasoning. Corrected here per reviewer feedback: validation only.
 
 ## Option comparison
 
@@ -88,38 +100,49 @@ Pending. This turn will produce two commits:
 
 8 categories: `invalid_request_json` (400) · `invalid_request_shape` (400) · `provider_request_failed` (502) · `provider_timeout` (504) · `provider_rate_limited` (429) · `structured_output_invalid` (502) · `schema_validation_failed` (502) · `internal_error` (500). All non-2xx include `correlation_id`. Raw model output NEVER returned to client.
 
-## Privacy plan
+## Privacy plan (default production)
 
 - **Never** return raw model output to client
-- **Never** log full `target`
-- **Never** log API keys or headers
-- **Never** log full raw model output at info/warn levels
-- On `structured_output_invalid` ERROR: bounded ~500-char excerpt server-side with correlation_id
-- Retention: server-side only, no long-term persistence, no external shipment
+- Client bodies contain ONLY: `error` · `category` · `correlation_id`
+- **Never** log raw model output in default server logs
+- **Never** log full `target` · full `reasoning` · `company_preferences` values · API keys · headers
+- Bounded server-side raw-output excerpt is available ONLY via an **optional restricted diagnostic mode** — **disabled by default** · requires explicit activation · scope server-side only · never returned to client · never persists sensitive user-derived content long-term
 
-## Observability plan
+**Correction note**: earlier draft permitted a default ~500-char raw excerpt at ERROR. Corrected here per reviewer feedback: schema issue paths + expected/received type names + output char count + SHA-256 hash together identify the failure class deterministically without exposing model text.
 
-- Server-generated `correlation_id` per request (16-char base32 or ULID) · stamped on every log line + returned in all non-2xx client bodies
+## Observability plan (default)
+
+- Server-generated `correlation_id` per request (16-char base32 or ULID) · stamped on every server log line + returned in every non-2xx client body
 - Event names: `classify.request.received` · `classify.provider.request.start` · `classify.provider.response.received` · `classify.schema.validation.result` · `classify.response.sent` · `classify.error`
-- Structured log fields: `ts` · `level` · `event` · `correlation_id` · `route` · `model` · `duration_ms` · `usage.input_tokens` · `usage.output_tokens` · `finish_reason` · `warnings_count` · `error_category` · `http_status`
+- **Always-permitted log fields**: `ts` · `level` · `event` · `correlation_id` · `route` · `provider` · `model` · `duration_ms` · `usage.input_tokens` · `usage.output_tokens` · `finish_reason` · `warnings_count` · `error_category` · `http_status` · **`schema_issue_paths`** (Zod issue `.path` only — JSON pointer / dotted path; NOT offending values) · **`schema_expected_type_names`** · **`schema_received_type_names`** · **`model_output_char_count`** · **`model_output_sha256`** (hex fingerprint; NOT the output itself) · `output_existed` · `structured_output_rejected`
 - Token usage from `GenerateObjectResult.usage` recorded at info level
 
 ## Response compatibility
 
-- **Success shape**: unchanged (`{archetype, company_preferences, level_hint, reasoning}`)
-- **Failure shape**: **removed** `raw` + `detail` · **added** `category` + `correlation_id` · `error` preserved
+**Flavor**: **FIELD-COMPATIBLE and TYPE-COMPATIBLE** (contract-compatible / semantically compatible for existing callers). **NOT byte-identical.**
+
+- **Explicitly NOT guaranteed**: JSON property ordering · whitespace · byte-identical serialization · internal SDK serialization behavior
+- **Explicitly guaranteed**: success status 200 · exactly 4 fields (`archetype`, `company_preferences`, `level_hint`, `reasoning`) with correct types · no additional fields on success
+- **Failure body**: **removed** `raw` + `detail` · **added** `category` + `correlation_id` · `error` preserved
 - **Caller impact**: NONE — `src/app/page.tsx:555` reads only `err.error` (verified)
-- **Harness impact**: NONE — harness classifies via status code + DOM state, not body content
+- **Harness impact**: NONE — classifies via status code + DOM state, not body content
 - **Status changes**: `req.json()` fail 500 → 400 · provider errors 500 → 429/502/504 per category · empty target 400 unchanged · success 200 unchanged · structured_output_invalid 502 unchanged (body content differs)
+- **Test guidance**: compatibility tests PARSE the response and assert fields + types; do NOT compare raw bytes or JSON property order
 
-## Deterministic test matrix (32 tests · all mocked · no real provider call · no network)
+**Correction note**: earlier draft said "success shape unchanged (byte-compatible)" and used "byte-shape compat" language. Corrected here per reviewer feedback: field + type compatibility only, not byte-identical.
 
-- **Schema (T1-T10)**: valid · invalid archetype · non-array preferences · too many preferences · overlong preference · invalid level_hint · empty reasoning · overlong reasoning · unknown key · missing required key
-- **Route success (T11-T14)**: 200 body · byte-shape compat · exactly one invocation · no retry on success
-- **Route failure (T15-T20)**: provider throw · timeout throw · rate-limit throw · NoObjectGeneratedError · NoOutputGeneratedError · internal exception
-- **Privacy (T21-T24)**: raw NOT in client body · target NOT logged · correlation_id in body · logs redacted
-- **Compatibility (T25-T28)**: page.tsx success snapshot · harness classify-failure recording · Phase 2 telemetry unchanged · no baseline mtime change
-- **Fixture-shaped synthetic (T29-T32)**: A-shaped valid · B-shaped valid · B-like empty-preferences valid · **static assertion: `JSON.parse(raw)` code path removed**
+## Deterministic test matrix (at least 37 tests · all mocked · no real provider call · no network)
+
+- **Schema (T1-T10 + T10a/b/c)**: valid · invalid archetype · non-array preferences · too many preferences · overlong preference · invalid level_hint · empty reasoning · overlong reasoning · unknown key · missing required key · **T10a exact-duplicate preferences REJECTED via refinement** · **T10b case-different values ACCEPTED** (`'anthropic'` vs `'Anthropic'`) · **T10c whitespace-only reasoning REJECTED via refinement** (not silently trimmed)
+- **No-transform assertions (T-NOTRANS-1..4)**: strings NOT silently trimmed · duplicates NOT silently removed · enum values NOT normalized · defaults NOT inserted
+- **Route success (T11-T14 + T14a)**: 200 body · **field-compatible + type-compatible** (parse-and-assert; no byte-identical) · exactly one invocation · `maxRetries: 0` passed to options (spy) · **`experimental_repairText` absent** from options (spy)
+- **Route failure (T15-T20)**: provider throw · timeout throw · rate-limit throw · `NoObjectGeneratedError` · `NoOutputGeneratedError` · internal exception
+- **Privacy (T21-T24 + T21a)**: raw NOT in client body · **raw NOT in ordinary (default-mode) server logs** · target NOT logged · correlation_id in body · logs contain schema issue paths + expected/received type names + `model_output_char_count` + `model_output_sha256` (not raw values)
+- **Compatibility (T25-T28)**: page.tsx success path parses response and reads fields (no raw-bytes snapshot) · harness classify-failure recording · Phase 2 telemetry unchanged (rerun structural-evidence integration tests) · no baseline mtime change
+- **Fixture-shaped synthetic (T29-T31)**: A-shaped valid · B-shaped valid · B-like empty-preferences valid
+- **Static assertions (T32 + T32a/b/c/d)**: `JSON.parse(raw)` REMOVED · `experimental_repairText` NOT present · no application-level retry loop · exactly ONE `generateObject(` / `generateText(` invocation in route · **`zod` listed in `package.json` `dependencies`** (direct dep)
+
+**Correction note**: earlier draft listed 32 tests without duplicate-refinement, whitespace-only, no-transform assertions, `experimental_repairText` absence, raw-not-in-logs, or the Zod-direct-dep static assertion. Corrected here per reviewer feedback.
 
 ## Migration plan (Phases H1-H7)
 
@@ -127,11 +150,18 @@ H1 add schema module + T1-T10 · H2 rewrite route to `generateObject` · H3 sani
 
 ## Implementation scope
 
-**Expected**: `src/app/api/classify/route.ts` (rewrite) · `src/lib/classify-schema.ts` (new) · `scripts/test-classify-route.mjs` (new) · `scripts/test-classify-schema.mjs` (new) · governance artifacts.
+**Expected files** (implementation loop): `src/app/api/classify/route.ts` (rewrite) · `src/lib/classify-schema.ts` (new · **Zod** schema module) · `scripts/test-classify-route.mjs` (new) · `scripts/test-classify-schema.mjs` (new) · governance artifacts.
 
-**Optional**: `package.json` add `zod: ^4.4.3` direct dep (matches transitive; no new install). Skip if reviewer prefers zero-new-dep and use `jsonSchema()` helper.
+**Package files (implementation loop, REQUIRED)**:
 
-**Explicitly forbidden**: `src/lib/prompts.ts` (evaluate carefully; keep semantically equivalent if touched) · QI checker · structural checker · harness · report-regression-local · baselines · fixtures · regression runs · `.agent/scripts/**` · workflows / env / vercel.json · pipeline.
+- `package.json` — **REQUIRED**: add `zod` (recommended range `^4.4.3`, matches already-resolved transitive 4.4.3) to `dependencies`. Definitive declaration for a direct `import { z } from "zod"`.
+- `package-lock.json` — **REQUIRED**: auto-updated by the standard `npm install`.
+
+**Package files THIS design loop**: UNCHANGED.
+
+**Explicitly forbidden**: `src/lib/prompts.ts` (evaluate carefully; keep semantically equivalent if touched at all) · QI checker · structural checker · harness · `report-regression-local.mjs` · baselines · fixtures · regression runs · `.agent/scripts/**` · workflows / env / vercel.json · pipeline.
+
+**Correction note**: earlier draft marked `package.json` as OPTIONAL and left the Zod-vs-jsonSchema choice unresolved. Corrected here per reviewer feedback: Zod is the definitive schema input; adding it as a direct dependency is REQUIRED in the implementation loop.
 
 ## Performance/cost
 
@@ -148,7 +178,7 @@ Hardening design DECISION approved → hardening implementation loop (own TASK +
 
 ## Policy resolutions
 
-All Q1-Q20 answered in findings JSON `policy_resolutions{}`. Highlights: **Q1** ai 6.0.182 · **Q2** @ai-sdk/anthropic 3.0.77 · **Q3** zod 4.4.3 (transitive) · **Q4** generateObject primary · **Q5** yes · **Q6** not deprecated · **Q7** Output.object supported but generateObject cleaner · **Q8** no auto model retry on parse failure · **Q9** yes Zod supported · **Q10** NoObjectGeneratedError · **Q11** success compat yes · **Q12** never return raw · **Q13** dependency optional · **Q14** Option A · **Q15** fallback B · **Q16** 1 call · **Q17** no retries · **Q18** no silent repair · **Q19** B rerun NOT authorized · **Q20** no Phase 4/5/6/promotion authorized.
+All Q1-Q20 answered in findings JSON `policy_resolutions{}`. Highlights: **Q1** ai 6.0.182 · **Q2** @ai-sdk/anthropic 3.0.77 · **Q3** zod 4.4.3 (transitive today; DIRECT dep required at implementation) · **Q4** generateObject primary · **Q5** yes · **Q6** not deprecated · **Q7** Output.object supported but generateObject cleaner · **Q8** no auto model retry on parse failure · **Q9** yes Zod supported · **Q10** NoObjectGeneratedError · **Q11** success field/type compat yes (not byte-identical) · **Q12** never return raw · **Q13** **DEFINITIVE YES — add zod as DIRECT dep in implementation loop** · **Q14** Option A (generateObject + strict Zod, validation only) · **Q15** fallback B (generateText + strict Zod validation, no repair, no retry) · **Q16** 1 call · **Q17** no retries · **Q18** no silent repair · **Q19** B rerun NOT authorized · **Q20** no Phase 4/5/6/promotion authorized.
 
 ## No implementation
 

@@ -34,10 +34,11 @@
       "generateObject": {
         "signature": "generateObject<SCHEMA extends FlexibleSchema<unknown>>({model, schema, schemaName?, schemaDescription?, system?, prompt?, messages?, output?: 'object'|'array'|'enum'|'no-schema', maxRetries?, abortSignal?, timeout?, experimental_repairText?, experimental_telemetry?, ...}) → Promise<GenerateObjectResult<Object>>",
         "result_shape": "{ object: OBJECT, reasoning: string|undefined, finishReason, usage, warnings, request, response, ... }",
-        "throws": "NoObjectGeneratedError when the model output cannot be parsed into a valid object matching the schema",
+        "throws": "NoObjectGeneratedError when the SDK cannot produce or validate an object matching the supplied schema",
         "supported": true,
         "official_and_current": true,
-        "deprecated": false
+        "deprecated": false,
+        "guarantee_clarification": "generateObject VALIDATES model output against the supplied schema at the SDK boundary — for providers with native structured-output support, the SDK requests structured output; for providers without, the SDK requests JSON and validates. Either way, invalid or missing structured output surfaces as a typed failure (NoObjectGeneratedError / NoOutputGeneratedError), NOT as a raw text that must be parsed by application code. We do NOT claim: (a) that the provider itself guarantees native JSON-schema enforcement in every execution mode, or (b) that invalid structured output can never occur. What we DO claim: the application no longer performs manual JSON.parse on unrestricted free-form provider text; residual structured-output failure remains possible but is now surfaced as a typed error and handled via our sanitized error taxonomy — never as a JSON.parse crash echoed to the client."
       },
       "Output (via `output as Output`)": {
         "purpose": "used with generateText's `output` or `experimental_output` parameter to request structured output alongside tool calling",
@@ -122,43 +123,51 @@
 
   "classification_schema": {
     "shape": "{ archetype, company_preferences, level_hint, reasoning }",
+    "policy": "VALIDATION ONLY — no transforms of any kind. No trim, no lowercase, no dedup, no defaults, no enum normalization, no coercion, no repair, no semantic rewriting, no silent removal of duplicate entries, no silent stripping of unknown keys. All non-conforming output must fail schema validation and be surfaced as a typed failure via the route's error taxonomy.",
     "archetype": {
       "type": "enum string",
       "allowed_values": ["applied_ai","agent_engineering","llm_infra","eval","research_engineer","forward_deployed","ml_engineer","other"],
       "required": true,
+      "transform": "NONE",
       "matches_existing_Archetype_type": true,
-      "on_invalid": "schema validation fails → hardening returns sanitized 502 with error category structured_output_invalid"
+      "on_invalid": "schema validation fails → hardening returns sanitized 502 with error category structured_output_invalid (raw output NOT echoed to client)"
     },
     "company_preferences": {
       "type": "string array",
+      "required": true,
       "min_length": 0,
-      "max_length_recommendation": 10,
+      "max_length": 10,
       "per_item_min_length": 1,
-      "per_item_max_length_recommendation": 200,
-      "per_item_trim_behavior_recommendation": "trim leading/trailing whitespace at validation time; reject empty-after-trim",
-      "dedup_policy_recommendation": "deduplicate case-insensitively at the schema layer",
-      "empty_array_valid": true
+      "per_item_max_length": 200,
+      "trim_transform": "NONE",
+      "dedup_transform": "NONE",
+      "duplicate_policy": "REJECT via deterministic refinement — exact-duplicate entries within the array fail schema validation. Case-different values (e.g. 'anthropic' vs 'Anthropic') REMAIN DISTINCT and pass; the product contract does not currently forbid case-different variants.",
+      "empty_array_valid": true,
+      "note": "Prior draft proposed silent trim + case-insensitive dedup; corrected here per reviewer feedback: validation only, no silent transforms."
     },
     "level_hint": {
       "type": "enum string",
       "allowed_values": ["junior","mid","senior","staff","principal","unknown"],
       "required": true,
       "nullable": false,
+      "transform": "NONE",
+      "default": "NONE (missing → schema failure)",
       "matches_existing_Seniority_type": true
     },
     "reasoning": {
       "type": "string",
       "required": true,
-      "min_length_recommendation": 1,
-      "max_length_recommendation": 2000,
-      "trim_behavior": "trim leading/trailing whitespace",
+      "min_length": 1,
+      "max_length": 2000,
+      "trim_transform": "NONE",
+      "whitespace_only_policy": "REJECT via deterministic refinement — a string consisting only of whitespace fails schema validation. It is NOT silently rewritten or trimmed.",
       "multiline_allowed": true
     },
-    "unknown_key_policy": "STRICT: reject unknown top-level keys. Prevents silent contamination if the model invents fields.",
-    "coercion_policy": "NONE: no coercion. Wrong-type field → schema validation failure.",
-    "defaulting_policy": "NONE: no silent defaults. Missing required field → schema validation failure.",
-    "transform_policy": "MINIMAL: only whitespace trim + lowercase-dedup for company_preferences. No semantic rewriting.",
-    "object_mode": "STRICT (Zod: z.object({...}).strict() or JSON Schema: additionalProperties: false)"
+    "unknown_key_policy": "STRICT REJECTION — reject unknown top-level keys via schema failure. Prevents silent contamination if the model invents fields. Unknown keys are NOT silently dropped.",
+    "coercion_policy": "NONE — wrong-type field fails schema validation.",
+    "defaulting_policy": "NONE — no silent defaults. Missing required field fails schema validation.",
+    "transform_policy": "NONE — the schema performs validation only. No trim, no lowercase, no dedup, no normalization, no repair.",
+    "object_mode": "STRICT — `z.object({...}).strict()` (Zod) or `additionalProperties: false` (JSON Schema fallback). Unknown keys cause validation failure."
   },
 
   "options": [
@@ -256,10 +265,19 @@
 
   "selected_option": {
     "primary": "A",
-    "primary_rationale": "generateObject is fully supported by ai@6.0.182; it schema-constrains at the SDK boundary; eliminates the free-form parse path; produces typed .object on success; NoObjectGeneratedError on failure; zero silent repair; one provider call with explicit maxRetries:0 policy; caller-compatible success shape; safe to strip raw/detail from client 502.",
-    "fallback": "B (generateText + explicit runtime schema validation, no repair) — chosen only if a specific interaction between generateObject and the installed @ai-sdk/anthropic path proves unsuitable during implementation-loop inspection",
-    "schema_input_choice_recommendation": "Zod (already installed at zod@4.4.3 as transitive dep) via `zodSchema()` helper OR direct `import { z } from 'zod'`. Advantages over JSON Schema helper: better TypeScript inference for the returned .object; more concise expression of enum + length bounds. If reviewer wants zero-new-direct-dep, use `jsonSchema()` helper instead; the schema definition is equivalent semantically.",
-    "dependency_addition": "PREFERRED: add `zod: ^4.4.3` to package.json direct dependencies (matches the already-resolved transitive version, no new install). ACCEPTABLE ALTERNATIVE: leave Zod as transitive and use `jsonSchema()` helper. Reviewer's call in the implementation-loop DECISION."
+    "primary_rationale": "generateObject is fully supported by ai@6.0.182; it validates model output against the supplied schema at the SDK boundary; eliminates the current manual JSON.parse of unrestricted free-form provider text; produces typed .object on success; surfaces schema/generation failure as a typed error (NoObjectGeneratedError); zero silent repair; one provider call with explicit maxRetries:0 policy; caller-compatible success contract (field + type compatible, not byte-identical); safe to strip raw/detail from client 502 (verified against caller and harness dependencies).",
+    "fallback": "B (generateText + explicit runtime schema validation, no repair, no retry) — reserved for the specific case where a demonstrated generateObject × @ai-sdk/anthropic incompatibility is discovered before the code change lands. Not a preference; only a compatibility escape hatch.",
+    "schema_input_choice": "Zod, imported directly as `import { z } from \"zod\"`. Passed to generateObject as `schema: <ZodSchema>`.",
+    "dependency_strategy": {
+      "policy": "DEFINITIVE — add `zod` as a DIRECT project dependency during the implementation loop. Not this loop.",
+      "reason_1": "The classify route will directly `import { z } from \"zod\"`. A source file must not directly import a package that the application does not directly declare.",
+      "reason_2": "npm transitive hoisting is not an API or dependency guarantee — a future transitive-tree change could remove Zod's hoisted resolution and silently break the route.",
+      "reason_3": "Dependency ownership must be explicit for auditability, security scanning, and lockfile stability.",
+      "target_version_range": "^4.4.3 (matches the already-resolved transitive version 4.4.3; a narrower range may be selected by the implementation-loop DECISION if reviewer prefers)",
+      "when_added": "Implementation loop only — not this design loop. This design loop does not touch package.json or package-lock.json.",
+      "expected_scope_delta_in_implementation_loop": "package.json (add zod to dependencies) and package-lock.json (auto-updated by npm install --package-lock-only or the reviewer's chosen equivalent)",
+      "jsonSchema_helper_status": "Documented FALLBACK only, activated iff a demonstrated implementation compatibility defect with Zod is discovered before code change; not a co-primary path"
+    }
   },
 
   "provider_call_policy": {
@@ -281,13 +299,13 @@
     "provider_request_failed": {"http": 502, "client_message": "Upstream classifier unavailable.", "retryable": true, "correlation_id": true, "server_severity": "error", "raw_output_retained_server_side": "error message only", "raw_output_returned_to_client": false},
     "provider_timeout": {"http": 504, "client_message": "Upstream classifier timed out.", "retryable": true, "correlation_id": true, "server_severity": "warn", "raw_output_retained_server_side": false, "raw_output_returned_to_client": false},
     "provider_rate_limited": {"http": 429, "client_message": "Rate limited. Try again shortly.", "retryable": true, "correlation_id": true, "server_severity": "warn", "raw_output_retained_server_side": false, "raw_output_returned_to_client": false},
-    "structured_output_invalid": {"http": 502, "client_message": "Classifier returned an invalid response.", "retryable": false, "correlation_id": true, "server_severity": "error", "raw_output_retained_server_side": "bounded (~500 chars) with server-side redaction", "raw_output_returned_to_client": false, "note": "this replaces the current 'Classifier returned invalid JSON' 502 body; raw model output is dropped from the client response"},
-    "schema_validation_failed": {"http": 502, "client_message": "Classifier response did not match required shape.", "retryable": false, "correlation_id": true, "server_severity": "error", "raw_output_retained_server_side": "bounded field-summary only (which fields failed, not values)", "raw_output_returned_to_client": false},
+    "structured_output_invalid": {"http": 502, "client_message": "Classifier returned an invalid response.", "retryable": false, "correlation_id": true, "server_severity": "error", "raw_output_retained_server_side_default": "NO — only structured metadata (schema issue paths, expected/received type names, model_output_char_count, model_output_sha256, output_existed, structured_output_rejected). No raw excerpt in default logs.", "raw_output_retained_server_side_optional_diagnostic_mode": "may be enabled explicitly for a specific investigation — see observability.optional_restricted_diagnostic_mode; disabled by default", "raw_output_returned_to_client": false, "note": "this replaces the current 'Classifier returned invalid JSON' 502 body; raw model output is dropped from both the client response AND the default server logs"},
+    "schema_validation_failed": {"http": 502, "client_message": "Classifier response did not match required shape.", "retryable": false, "correlation_id": true, "server_severity": "error", "raw_output_retained_server_side_default": "NO — only schema issue paths (Zod issue.path array) + expected/received type names are logged; no offending values", "raw_output_returned_to_client": false},
     "internal_error": {"http": 500, "client_message": "Internal server error.", "retryable": false, "correlation_id": true, "server_severity": "error", "raw_output_retained_server_side": "error class + stack (server logs only)", "raw_output_returned_to_client": false}
   },
 
   "observability": {
-    "correlation_id_format": "16-char base32 or ULID; server-generated; returned in client 500/502 body AND stamped on every server log line for the request",
+    "correlation_id_format": "16-char base32 or ULID; server-generated per request; returned in every non-2xx client body AND stamped on every server log line for the request",
     "event_names": [
       "classify.request.received",
       "classify.provider.request.start",
@@ -296,16 +314,36 @@
       "classify.response.sent",
       "classify.error"
     ],
-    "structured_log_fields": ["ts","level","event","correlation_id","route","model","duration_ms","usage.input_tokens","usage.output_tokens","finish_reason","warnings_count","error_category","http_status"],
-    "redaction_rules": [
-      "never log the full `target` field",
-      "log target length + first 40 chars as metadata only IF genuinely needed for diagnosis (default OFF)",
-      "never log API keys · never log full request headers",
-      "never log full raw model output at info/warn levels",
-      "on structured_output_invalid, log a bounded (~500 chars) hash + snippet of the malformed output at ERROR level to server-side only",
-      "never include raw model output in client response bodies"
+    "always_permitted_log_fields": [
+      "ts","level","event","correlation_id","route","provider","model","duration_ms",
+      "usage.input_tokens","usage.output_tokens","finish_reason","warnings_count",
+      "error_category","http_status",
+      "schema_issue_paths (Zod issue array's `path` fields only — a JSON pointer / dotted path — NOT the offending values)",
+      "schema_expected_type_names","schema_received_type_names",
+      "model_output_char_count",
+      "model_output_sha256 (hex — a stable content fingerprint of the raw model output; NOT the output itself)",
+      "output_existed (boolean)",
+      "structured_output_rejected (boolean)"
     ],
-    "max_logged_text_length": {"target_snippet_if_ever_enabled": 40, "malformed_output_snippet": 500},
+    "not_logged_by_default": [
+      "raw model output",
+      "raw malformed-output excerpt",
+      "full target text",
+      "full reasoning",
+      "company_preferences values",
+      "request headers",
+      "API keys",
+      "complete provider response"
+    ],
+    "optional_restricted_diagnostic_mode": {
+      "status": "DISABLED BY DEFAULT",
+      "activation": "must be explicitly configured (environment flag or admin toggle in a separately-designed loop; not enabled in normal production)",
+      "scope": "server-side only",
+      "bound": "tightly bounded (e.g. length cap · SHA-256 header · REDACTED user-derived content)",
+      "never_returned_to_client": true,
+      "never_persist_sensitive_user_derived_content_long_term": true,
+      "note": "the selected Option A design does NOT require raw-output logging for normal diagnosability — schema issue paths + expected/received type names + output char count + SHA-256 hash together identify the failure class deterministically without exposing model text"
+    },
     "token_usage_recording": "log input/output token counts from GenerateObjectResult.usage at info level per request",
     "provider_model_name_recorded": true,
     "duration_ms_recorded": true,
@@ -315,15 +353,30 @@
   "privacy": {
     "raw_model_output_returned_to_client": false,
     "client_error_bodies_contain_only": ["error (short string)", "category (enum)", "correlation_id (string)"],
-    "server_side_raw_output_retention": "bounded (~500 chars) at ERROR level with the correlation ID; redacted user-derived content is a future concern (the classify prompt input is the user's target text; the model output contains classifier reasoning about that text — bounded excerpts are acceptable for internal diagnostics but should not be persisted long-term or shipped externally)",
+    "client_error_bodies_never_contain": ["raw", "detail containing provider output", "any user-derived content"],
+    "server_side_default_raw_output_retention": "NONE — the raw model output is NOT retained in normal server logs. Only structured metadata (schema issue paths, expected/received type names, output char count, SHA-256 hash of output) is logged by default.",
+    "server_side_optional_restricted_diagnostic_mode": "if explicitly enabled for a specific investigation, may retain a tightly bounded redacted excerpt with correlation ID; disabled by default; never returned to client; no long-term persistence; requires its own approval",
     "target_text_logging_default": "OFF",
     "api_keys_never_logged": true,
     "headers_never_logged": true,
-    "provider_error_masking_at_client_boundary": "client sees generic sanitized message; server logs contain the specific SDK error class + message + correlation_id"
+    "provider_error_masking_at_client_boundary": "client sees generic sanitized message + category + correlation_id; server logs contain SDK error class + short message + correlation_id + schema issue paths (no raw values)",
+    "rationale": "prior draft permitted a default ~500-char raw excerpt at ERROR; corrected here per reviewer feedback: schema issue paths + SHA-256 + char count are sufficient to identify the failure class without exposing model text"
   },
 
   "response_compatibility": {
-    "success_shape_preserved": true,
+    "compatibility_flavor": "FIELD-COMPATIBLE and TYPE-COMPATIBLE (also called CONTRACT-COMPATIBLE / SEMANTICALLY COMPATIBLE for existing callers). NOT byte-identical.",
+    "explicitly_not_guaranteed": [
+      "JSON property ordering",
+      "whitespace in serialized output",
+      "byte-identical serialization",
+      "internal SDK serialization behavior"
+    ],
+    "explicitly_guaranteed": [
+      "success status code 200",
+      "success body parses to an object containing exactly the four fields: archetype, company_preferences, level_hint, reasoning",
+      "field types: archetype string∈Archetype enum, company_preferences string[], level_hint string∈Seniority enum, reasoning string",
+      "no additional fields on success"
+    ],
     "success_status_code_preserved": 200,
     "success_body_fields": ["archetype","company_preferences","level_hint","reasoning"],
     "success_field_types_preserved": true,
@@ -337,44 +390,66 @@
     },
     "removed_client_visible_fields": ["raw", "detail"],
     "added_client_visible_fields": ["category", "correlation_id"],
-    "caller_impact": "NONE — src/app/page.tsx:555 reads only err.error which remains present; harness reads status code + DOM state, not body content; no caller change required",
-    "harness_impact": "harness still correctly classifies application_error via completion_state race with Retry button; network_diagnostics.events[0].body_excerpt would capture the sanitized 502 body (category + correlation_id + generic message); no functional harness change needed"
+    "caller_impact": "NONE — src/app/page.tsx:555 reads only err.error which remains present; harness reads status code + DOM state, not body content; no caller change required. Existing callers depend on the field/type contract, not on byte-identical serialization.",
+    "harness_impact": "harness still correctly classifies application_error via completion_state race with Retry button; network_diagnostics.events[0].body_excerpt would capture the sanitized 502 body (short and structured — no raw model output); no functional harness change needed",
+    "test_guidance": "Compatibility tests must PARSE the response and assert fields + types. They must NOT compare raw bytes or JSON property order."
   },
 
   "test_plan": [
     {"id": "T1", "category": "schema", "description": "valid complete Classification object accepted"},
-    {"id": "T2", "category": "schema", "description": "invalid archetype (not in enum) rejected"},
-    {"id": "T3", "category": "schema", "description": "company_preferences: non-array type rejected"},
+    {"id": "T2", "category": "schema", "description": "invalid archetype (not in Archetype enum) rejected"},
+    {"id": "T3", "category": "schema", "description": "company_preferences: non-array type (e.g. string) rejected"},
     {"id": "T4", "category": "schema", "description": "company_preferences: >10 items rejected"},
-    {"id": "T5", "category": "schema", "description": "company_preferences: item > per-item max chars rejected"},
-    {"id": "T6", "category": "schema", "description": "invalid level_hint (not in enum) rejected"},
-    {"id": "T7", "category": "schema", "description": "empty reasoning rejected"},
-    {"id": "T8", "category": "schema", "description": "overlong reasoning rejected"},
+    {"id": "T5", "category": "schema", "description": "company_preferences: any item >200 chars rejected"},
+    {"id": "T6", "category": "schema", "description": "invalid level_hint (not in Seniority enum) rejected"},
+    {"id": "T7", "category": "schema", "description": "empty reasoning ('') rejected (min length 1)"},
+    {"id": "T8", "category": "schema", "description": "overlong reasoning (>2000 chars) rejected"},
     {"id": "T9", "category": "schema", "description": "extra unknown top-level key rejected (strict object)"},
     {"id": "T10", "category": "schema", "description": "missing required key rejected"},
+    {"id": "T10a", "category": "schema", "description": "DUPLICATE POLICY: company_preferences contains exact-duplicate entries (['Anthropic','Anthropic']) → rejected via deterministic refinement"},
+    {"id": "T10b", "category": "schema", "description": "CASE-DIFFERENT VALUES: company_preferences contains case-different entries (['anthropic','Anthropic']) → ACCEPTED (case-different values remain distinct; product contract does not forbid them)"},
+    {"id": "T10c", "category": "schema", "description": "WHITESPACE-ONLY REASONING: reasoning of only spaces/tabs/newlines → rejected via deterministic refinement (NOT silently trimmed or rewritten)"},
+
+    {"id": "T-NOTRANS-1", "category": "no_transform_assertion", "description": "returned company_preferences strings are NOT silently trimmed (input '  Anthropic  ' passes through as '  Anthropic  ' if within 200 chars; assert exact string equality)"},
+    {"id": "T-NOTRANS-2", "category": "no_transform_assertion", "description": "duplicate company_preferences are NOT silently removed (dedup transform is NOT applied — instead rejected per T10a)"},
+    {"id": "T-NOTRANS-3", "category": "no_transform_assertion", "description": "archetype enum values are NOT normalized (any case-variant of an enum value is either an exact match or a rejection — not normalized to canonical)"},
+    {"id": "T-NOTRANS-4", "category": "no_transform_assertion", "description": "missing optional fields are NOT filled by defaults (no defaulting policy)"},
+
     {"id": "T11", "category": "route_success", "description": "structured provider result via mocked generateObject returns 200 with Classification body"},
-    {"id": "T12", "category": "route_success", "description": "success response field byte-shape compatibility preserved vs current schema (archetype/company_preferences/level_hint/reasoning)"},
+    {"id": "T12", "category": "route_success", "description": "success response is FIELD-COMPATIBLE and TYPE-COMPATIBLE with the existing Classification contract: parse the response body, assert all four fields present with correct types (archetype string∈enum, company_preferences string[], level_hint string∈enum, reasoning string). Do NOT assert byte-identical serialization, JSON property ordering, or whitespace."},
     {"id": "T13", "category": "route_success", "description": "exactly one provider invocation on success (spy on mocked generateObject)"},
-    {"id": "T14", "category": "route_success", "description": "no retry after success (maxRetries: 0 verified via mock)"},
+    {"id": "T14", "category": "route_success", "description": "maxRetries: 0 is passed to generateObject options (spy on the options argument)"},
+    {"id": "T14a", "category": "route_success", "description": "experimental_repairText is NOT passed (options argument does not contain the key)"},
+
     {"id": "T15", "category": "route_failure", "description": "provider throws generic Error → sanitized 502 with category provider_request_failed"},
     {"id": "T16", "category": "route_failure", "description": "provider throws timeout-classed error → sanitized 504 with category provider_timeout"},
     {"id": "T17", "category": "route_failure", "description": "provider throws rate-limit-classed error → sanitized 429 with category provider_rate_limited"},
     {"id": "T18", "category": "route_failure", "description": "generateObject throws NoObjectGeneratedError → sanitized 502 with category structured_output_invalid; no raw model output in client body"},
     {"id": "T19", "category": "route_failure", "description": "NoOutputGeneratedError → sanitized 502 with category structured_output_invalid"},
     {"id": "T20", "category": "route_failure", "description": "internal exception outside SDK call → sanitized 500 with category internal_error"},
+
     {"id": "T21", "category": "privacy", "description": "raw model output NOT present in any client response body across all failure paths"},
+    {"id": "T21a", "category": "privacy", "description": "raw model output NOT present in ordinary (default-mode) server logs across all failure paths"},
     {"id": "T22", "category": "privacy", "description": "full target text NOT written to any log path"},
     {"id": "T23", "category": "privacy", "description": "correlation_id returned in every non-2xx client body"},
-    {"id": "T24", "category": "privacy", "description": "server logs contain error_category + bounded metadata only (assert against test log capture)"},
-    {"id": "T25", "category": "compatibility", "description": "existing caller (page.tsx) success path accepts response unchanged (snapshot compare)"},
-    {"id": "T26", "category": "compatibility", "description": "harness still records classify failure correctly given sanitized 502 body (integration-shape stub of network_diagnostics)"},
-    {"id": "T27", "category": "compatibility", "description": "process.exit and Phase 2 telemetry behavior unchanged (harness legacy checks[] unaffected)"},
-    {"id": "T28", "category": "compatibility", "description": "no baseline file mutation across test run (snapshot mtimes)"},
+    {"id": "T24", "category": "privacy", "description": "on structured_output_invalid or schema_validation_failed: server logs contain error_category, correlation_id, schema_issue_paths (JSON pointer / dotted path only), schema_expected_type_names, schema_received_type_names, model_output_char_count, model_output_sha256 — but NOT raw output values"},
+
+    {"id": "T25", "category": "compatibility", "description": "existing caller (page.tsx) success path parses response and reads {archetype, company_preferences, level_hint, reasoning}; assert field presence + types; do NOT snapshot raw JSON bytes or property order"},
+    {"id": "T26", "category": "compatibility", "description": "harness still records classify failure correctly given sanitized 502 body (integration-shape stub of network_diagnostics; assert completion_state == 'application_error' derivation is unaffected)"},
+    {"id": "T27", "category": "compatibility", "description": "process.exit and Phase 2 telemetry behavior unchanged (harness legacy checks[] unaffected; verified via re-run of scripts/test-structural-evidence-integration.mjs)"},
+    {"id": "T28", "category": "compatibility", "description": "no baseline file mutation across test run (snapshot mtimes under .agent/regression_baselines/)"},
+
     {"id": "T29", "category": "fixture_shaped_synthetic", "description": "synthetic A-shaped target (Applied AI Engineer) → valid Classification (mocked model returns well-formed object)"},
     {"id": "T30", "category": "fixture_shaped_synthetic", "description": "synthetic B-shaped target (AI Product Engineer) → valid Classification"},
     {"id": "T31", "category": "fixture_shaped_synthetic", "description": "B-shaped target with empty company_preferences array → valid Classification"},
-    {"id": "T32", "category": "fixture_shaped_synthetic", "description": "static assertion: JSON.parse(raw) code path removed from route (grep source; no raw echo in error bodies)"},
-    {"tests_summary": {"total": 32, "categories": {"schema": 10, "route_success": 4, "route_failure": 6, "privacy": 4, "compatibility": 4, "fixture_shaped_synthetic": 4}, "real_provider_calls": 0, "network_calls": 0}}
+
+    {"id": "T32", "category": "static_assertion", "description": "STATIC: grep-assert that `JSON.parse(raw)` is REMOVED from src/app/api/classify/route.ts (0 matches)"},
+    {"id": "T32a", "category": "static_assertion", "description": "STATIC: grep-assert that `experimental_repairText` does NOT appear in src/app/api/classify/route.ts (0 matches)"},
+    {"id": "T32b", "category": "static_assertion", "description": "STATIC: grep-assert that no application-level retry loop appears around the classify provider call (patterns like /for\\s*\\(.*retry|while.*retry|catch.*retry.*generateObject/i must return 0 matches)"},
+    {"id": "T32c", "category": "static_assertion", "description": "STATIC: grep-assert that only ONE `generateObject(` or `generateText(` invocation exists in src/app/api/classify/route.ts (exactly 1 match)"},
+    {"id": "T32d", "category": "static_assertion", "description": "STATIC: assert that `zod` is listed in package.json `dependencies` (direct dep) — reads package.json in the test and asserts key presence"},
+
+    {"tests_summary": {"total": "at least 37 (32 baseline + T10a/T10b/T10c duplicate + whitespace-only + T-NOTRANS-1..4 no-transform + T14a repairText-absent + T21a raw-not-in-logs + T32a/T32b/T32c/T32d static assertions)", "categories": {"schema": 13, "no_transform_assertion": 4, "route_success": 5, "route_failure": 6, "privacy": 5, "compatibility": 4, "fixture_shaped_synthetic": 3, "static_assertion": 5}, "real_provider_calls": 0, "network_calls": 0}}
   ],
 
   "migration_plan": [
@@ -398,9 +473,13 @@
       ".agent/run_reports/2026-07-24_run_XX_RUN_REPORT.md",
       ".agent/decisions/2026-07-24_run_XX_DECISION.md"
     ],
-    "potentially_changed_package_files": {
-      "package.json": "OPTIONAL — add `zod: ^4.4.3` as a direct dependency to match already-resolved transitive version (no new install). If reviewer prefers zero-new-dep, use `jsonSchema()` helper from ai and skip.",
-      "package-lock.json": "if package.json is edited, lockfile will be auto-updated. Reviewer must approve the diff explicitly."
+    "package_files_changed_in_implementation_loop": {
+      "package.json": "REQUIRED — add `zod` (recommended range `^4.4.3`, matches already-resolved transitive 4.4.3) to `dependencies`. This is a definitive dependency declaration for a direct import.",
+      "package-lock.json": "REQUIRED — auto-updated by the standard `npm install` (or `npm i --package-lock-only`) that follows the package.json edit. The implementation-loop DECISION must approve the diff explicitly."
+    },
+    "package_files_in_this_design_loop": {
+      "package.json": "UNCHANGED (this design loop does not touch package.json)",
+      "package-lock.json": "UNCHANGED"
     },
     "explicitly_forbidden_scope": [
       "src/lib/prompts.ts (no prompt change in hardening — classifySystemPrompt() may need one added JSON-hint line, evaluate in implementation loop; if changed, keep semantically equivalent)",
@@ -430,19 +509,23 @@
 
   "acceptance_criteria": [
     "installed SDK API is used exactly as documented in installed types (generateObject signature match)",
-    "malformed free-form JSON parse path REMOVED from classify route (no JSON.parse of provider text)",
-    "strict Classification schema enforced (all enums, all string bounds, all array bounds, strict object mode)",
+    "manual JSON.parse of unrestricted free-form provider text is REMOVED from classify route",
+    "strict Classification schema enforced (all enums, all string bounds, all array bounds, strict object mode) — VALIDATION ONLY, no transforms",
+    "no silent transforms: no trim, no lowercase, no dedup, no defaults, no coercion, no enum normalization, no semantic rewriting, no silent removal of duplicate entries, no silent stripping of unknown keys",
+    "duplicate policy: exact-duplicate company_preferences entries REJECTED via deterministic refinement (not silently removed); case-different values REMAIN DISTINCT",
+    "whitespace-only reasoning REJECTED via deterministic refinement (not silently trimmed or rewritten)",
+    "unknown top-level keys REJECTED (not silently dropped)",
     "exactly one provider call per classify request (maxRetries: 0)",
-    "no application retry",
+    "no application retry · no second generateObject/generateText call · no manual retry loop",
     "no silent semantic repair (experimental_repairText not used; no custom repair logic)",
-    "success response shape unchanged (archetype/company_preferences/level_hint/reasoning)",
-    "failure response sanitized (raw + detail removed; correlation_id + category added; error string preserved)",
-    "diagnostics server-side and redacted (no full target logging; bounded ~500-char malformed excerpt at ERROR only; correlation_id on every log line)",
-    "deterministic tests pass (32 tests, all mocked)",
-    "no real API call in tests",
-    "no baseline changes",
-    "no telemetry changes",
-    "no legacy verdict or process-exit changes"
+    "success response contract: FIELD-COMPATIBLE and TYPE-COMPATIBLE (parse-and-assert only; no byte-identical or JSON-order requirement)",
+    "failure response sanitized (raw + detail removed from client body; correlation_id + category added; error string preserved)",
+    "diagnostics server-side and redacted: schema issue paths + expected/received type names + model output char count + SHA-256 hash are logged; raw output NOT logged by default; optional restricted diagnostic mode disabled by default",
+    "correlation_id present on every non-2xx client body and every server log line for the request",
+    "zod is declared as a DIRECT dependency in package.json (implementation-loop change) — target range `^4.4.3`; this design loop does not touch package.json",
+    "deterministic tests pass (at least 37 tests including T10a duplicate-refinement, T10b case-different, T10c whitespace-only, T-NOTRANS-1..4, T14a repairText-absent, T21a raw-not-in-logs, T32a-d static assertions), all mocked",
+    "no real API call in tests · no network call in tests",
+    "no baseline changes · no telemetry-semantic changes · no legacy verdict or process-exit changes"
   ],
 
   "completion_run_prerequisites": [
@@ -473,9 +556,9 @@
     "Q10_error_class_for_invalid_structured_output": "NoObjectGeneratedError (has .text, .response, .finishReason, .isInstance()) · also NoOutputGeneratedError if model returned nothing",
     "Q11_success_response_can_remain_compatible": "yes — success body preserves { archetype, company_preferences, level_hint, reasoning }",
     "Q12_should_raw_output_ever_be_returned_to_client": "NO — remove raw + detail from client-visible failure body; retain bounded excerpt server-side only",
-    "Q13_new_dependency_needed": "OPTIONAL — no if using jsonSchema() helper; recommended (add zod ^4.4.3 to direct deps) if reviewer wants Zod syntax + typed inference. Neither requires a new install (Zod already resolved as transitive).",
-    "Q14_selected_option": "A (generateObject with strict Zod or JSON Schema, maxRetries:0, no experimental_repairText)",
-    "Q15_fallback_if_A_unavailable": "B (generateText + strict runtime schema validation, no repair)",
+    "Q13_new_dependency_needed": "DEFINITIVE YES — add `zod` as a DIRECT dependency in the implementation loop (target range `^4.4.3`, matches already-resolved transitive 4.4.3; no new npm install required beyond re-recording the declaration). Reason: the route will directly `import { z } from \"zod\"` and a source file must not depend on a transitively-hoisted package. This design loop does not touch package.json; the implementation loop DECISION must approve the diff explicitly.",
+    "Q14_selected_option": "A (generateObject with strict Zod validation-only schema, maxRetries:0, no experimental_repairText). Fallback B (generateText + strict Zod runtime validation + no repair + no retry) is reserved for demonstrated generateObject × @ai-sdk/anthropic incompatibility before code change.",
+    "Q15_fallback_if_A_unavailable": "B (generateText + strict Zod runtime schema validation, no repair, no retry) — activated only if implementation-loop inspection demonstrates a specific incompatibility with the installed provider path",
     "Q16_provider_calls_per_request": "1",
     "Q17_retries_allowed": "no application retry · no model regeneration retry · maxRetries:0 for SDK transport retries",
     "Q18_silent_repair_allowed": "no",
