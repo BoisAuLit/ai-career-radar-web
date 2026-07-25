@@ -1,53 +1,61 @@
-import { anthropic } from "@ai-sdk/anthropic";
-import { generateText } from "ai";
-import { classifySystemPrompt } from "@/lib/prompts";
-import type { Classification } from "@/lib/types";
+// AgentOps-5e-followup-phase3-classify-json-hardening-implement.
+//
+// Thin Next.js route wrapper. All logic lives in the pure ESM handler
+// `src/lib/classify-handler.mjs` so it can be unit-tested with mocked
+// dependencies without spawning a Next.js runtime or making a real
+// provider call.
+//
+// Guarantees enforced by the handler (and asserted by
+// scripts/test-classify-route.mjs):
+//   - exactly ONE provider call per classify request (`maxRetries: 0`)
+//   - no `experimental_repairText` (silent repair prohibited)
+//   - manual `JSON.parse(raw)` of unrestricted free-form provider text
+//     is REMOVED — generateObject validates against the Zod schema
+//   - raw model output NEVER returned to client
+//   - raw model output NEVER logged by default (bounded structured
+//     metadata + correlation_id only)
+//   - success response contract preserved at field + type level
+//   - client failure bodies contain ONLY { error, category, correlation_id }
+//
+// References:
+//   - .agent/decisions/2026-07-24_run_11_DECISION.md
+//   - .agent/design_memos/2026-07-24_AgentOps-5e-followup-phase3-classify-json-hardening-design.md
 
-export const maxDuration = 30;
+import { anthropic } from "@ai-sdk/anthropic";
+import { generateObject } from "ai";
+import { classifySystemPrompt } from "@/lib/prompts";
+import { handleClassify } from "@/lib/classify-handler.mjs";
 
 const MODEL = "claude-sonnet-4-6";
 
-export async function POST(req: Request): Promise<Response> {
-  const body: { target?: string } = await req.json();
-  const target = (body.target || "").trim();
-  if (!target) {
-    return Response.json(
-      { error: "Missing 'target' in request body" },
-      { status: 400 },
-    );
-  }
+export const maxDuration = 30;
 
-  const result = await generateText({
-    model: anthropic(MODEL),
-    system: classifySystemPrompt(),
-    messages: [
-      {
-        role: "user",
-        content: `User says they want: "${target}"`,
-      },
-    ],
-  });
+function generateCorrelationId(): string {
+  // crypto.randomUUID is a Node/Web global on Node 22.
+  return globalThis.crypto.randomUUID();
+}
 
-  // Parse JSON from the response, stripping markdown fences if any
-  let raw = result.text.trim();
-  if (raw.startsWith("```")) {
-    raw = raw.replace(/^```[a-z]*\n/i, "").replace(/\n```$/i, "");
-    raw = raw.trim();
-  }
-
-  let parsed: Classification;
+// Structured redacted logger. Emits JSON lines to stderr for server
+// observability. Field allowlist enforced at call sites in the handler
+// (see src/lib/classify-handler.mjs). No user-derived content (target,
+// reasoning, company_preferences values) is ever logged here.
+function serverLogger(event: object): void {
   try {
-    parsed = JSON.parse(raw) as Classification;
-  } catch (e) {
-    return Response.json(
-      {
-        error: "Classifier returned invalid JSON",
-        detail: e instanceof Error ? e.message : String(e),
-        raw,
-      },
-      { status: 502 },
-    );
+    process.stderr.write(JSON.stringify(event) + "\n");
+  } catch {
+    /* logging must never throw */
   }
+}
 
-  return Response.json(parsed);
+export async function POST(req: Request): Promise<Response> {
+  return handleClassify({
+    req,
+    deps: {
+      generateObject,
+      model: anthropic(MODEL),
+      systemPrompt: classifySystemPrompt(),
+      generateCorrelationId,
+      logger: serverLogger,
+    },
+  });
 }
