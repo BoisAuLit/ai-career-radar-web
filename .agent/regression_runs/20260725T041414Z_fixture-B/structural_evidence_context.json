@@ -1,0 +1,11 @@
+{
+  "schema_version": "0.1-phase2",
+  "capture_scope": "main section",
+  "fallback_used": false,
+  "completion_state": "success",
+  "capture_complete": true,
+  "report_capture_error": null,
+  "report_char_count": 10448,
+  "expected_sections_captured": true,
+  "source": "report-regression-local"
+}

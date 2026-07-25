@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.1-phase1",
+  "verdict": "red",
+  "blocking_mode": "telemetry_only",
+  "report_path": "/var/folders/xx/ypnl5f2n0y7b48w_pgxyhqt80000gn/T/acr-regression-runs/20260725T041414Z_fixture-B/report.md",
+  "checker_commit": "structural-evidence-check.mjs@0.1-phase1",
+  "generated_at": "2026-07-25T04:15:26.258Z",
+  "duration_ms": 0,
+  "fixture": null,
+  "source_run_id": null,
+  "required_gap_count": 5,
+  "observed_gap_count": 0,
+  "recognized_citation_line_count": 0,
+  "unique_cited_jd_count": 0,
+  "per_gap": [],
+  "covered_gap_count": 0,
+  "uncovered_gap_numbers": [],
+  "appendix": {
+    "present": false,
+    "heading_exact": false,
+    "row_count": 0,
+    "unique_jd_count": 0,
+    "jd_ids": [],
+    "malformed_rows": [],
+    "duplicate_rows": [],
+    "conflicting_rows": []
+  },
+  "body_appendix": {
+    "missing_from_appendix": [],
+    "appendix_not_cited": []
+  },
+  "parser_ambiguities": [],
+  "red_reasons": [
+    "gap_section_missing_or_unrecognized",
+    "citation_line_count=0_lt_5",
+    "evidence_appendix_missing"
+  ],
+  "amber_reasons": [],
+  "not_evaluable_reasons": [],
+  "tool_errors": [],
+  "source_rewritten": false,
+  "network_used": false,
+  "llm_used": false,
+  "capture_context": {
+    "schema_version": "0.1-phase2",
+    "capture_scope": "main section",
+    "fallback_used": false,
+    "completion_state": "success",
+    "capture_complete": true,
+    "report_capture_error_present": false,
+    "report_char_count": 10448,
+    "expected_sections_captured": true,
+    "source": "report-regression-local"
+  }
+}
