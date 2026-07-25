@@ -1,0 +1,359 @@
+{
+  "schema_version": "0.1-diagnostics-design",
+  "loop": "AgentOps-5e-followup-phase3-QI-amber-case-insensitive-diagnostics-design",
+  "generated_at_date": "2026-07-25",
+  "based_on_task": ".agent/tasks/2026-07-25_run_05_TASK.md",
+  "authorizing_decision": ".agent/decisions/2026-07-25_run_02_DECISION.md",
+  "context": {
+    "phase_3_status": "complete_and_pushed",
+    "path_a_status": "complete_and_pushed",
+    "fixture_b_run_id": "20260725T041414Z_fixture-B",
+    "qi_verdict": "amber",
+    "qi_blocking_mode": "telemetry_only",
+    "qi_affected_legacy_verdict": false,
+    "qi_affected_process_exit": false,
+    "amber_reasons": ["case-insensitive-only match for jd_000173"],
+    "counts": {
+      "quote_candidates": 20,
+      "evidence_entries": 4,
+      "evidence_quotes_with_citation": 5,
+      "verbatim_matches": 4,
+      "normalized_matches": 0,
+      "case_insensitive_matches": 1,
+      "ellipsis_fragment_matches": 0,
+      "terminal_punctuation_only_matches": 0,
+      "missing_source_id": 0,
+      "unresolved_source_id": 0,
+      "wrong_company": 0,
+      "wrong_role": 0,
+      "fabricated_or_unmatched_quotes": 0,
+      "duplicates": 0,
+      "appendix_entries_not_cited": 0
+    }
+  },
+  "intended_contract": {
+    "authority_hierarchy": [
+      "src/lib/prompts.ts::reportSystemPrompt",
+      ".agent/decisions/2026-07-21_run_01_DECISION.md (AgentOps-5a-QI design)",
+      ".agent/decisions/2026-07-22_run_01_DECISION.md (AgentOps-5d-R2 terminal-punctuation)",
+      ".agent/decisions/2026-07-24_run_03_DECISION.md (mandatory evidence structure)",
+      "scripts/quote-integrity-check.mjs implementation",
+      "scripts/test-quote-integrity-check.mjs (if present)"
+    ],
+    "verbatim_definition_in_prompt": {
+      "verbatim_line": "Text inside quotation marks MUST be copied verbatim from ONE contiguous span of the cited JD body.",
+      "character_for_character_line": "Exactness: every quoted string appears character-for-character in the supplied body text for its cited jd_id",
+      "explicit_prohibitions": [
+        "paraphrase",
+        "repair grammar",
+        "change tense",
+        "change plurality",
+        "add or remove articles or conjunctions",
+        "add or remove any word inside quotation marks",
+        "combine separated source fragments",
+        "use ellipsis inside a quote to bridge them"
+      ],
+      "capitalization_specifically_mentioned": false,
+      "interpretation": "byte-identical, case-sensitive, contiguous. Capitalization is not called out separately but is implicitly covered by 'character-for-character'."
+    },
+    "verbatim_definition_in_checker": {
+      "tier_1_verbatim": "bodyRaw.includes(quote) — raw byte substring, case-sensitive",
+      "tier_2_normalized": "normalize whitespace + curly quotes + en/em dash + ellipsis + pipe-newline, then substring — case-preserving",
+      "tier_3_case_insensitive": "normalize then lowercase both sides then substring — AMBER (not RED)",
+      "tier_4_ellipsis_fragment": "R1 stitched-fragment tier — AMBER",
+      "tier_5_terminal_punctuation": "R2 terminal-punctuation-only tier — AMBER",
+      "verdict_precedence_for_amber_tiers": "any Tier ≥ 2 → AMBER unless RED conditions dominate"
+    },
+    "explicit_disagreement": "The prompt says 'character-for-character' with no explicit tolerance. The checker implements graded tiers: verbatim / normalized / case-insensitive / R1 stitched / R2 terminal-punctuation. Tiers 2-5 emit AMBER, not RED — signalling 'close but not exactly verbatim'. This is intentional (AgentOps-5a/5c/5d DECISIONs) to keep telemetry informative without blocking the run."
+  },
+  "checker_contract": {
+    "source_file": "scripts/quote-integrity-check.mjs",
+    "schema_version": "0.3-r2-terminal-punctuation",
+    "blocking_mode": "telemetry_only (not blocking; integration-prototype status)",
+    "normalize_function": "collapses curly quotes to straight, en/em dash to hyphen, unicode ellipsis to '...', pipe-newline to newline, all whitespace to single space, trim",
+    "normalizeCI_function": "normalize() then .toLowerCase()",
+    "match_tier_order": [
+      "Tier 1: bodyRaw.includes(quote)",
+      "Tier 2: bodyNorm.includes(quoteNorm)",
+      "Tier 3: bodyCI.includes(quoteCI)",
+      "R1 ellipsis-fragment (sub-tiered)",
+      "R2 terminal-punctuation-only (strict 8-condition gate)"
+    ],
+    "amber_emission": "case-insensitive tier emits amber_reason `case-insensitive-only match for <jd_id>`",
+    "does_not_use": [
+      "fuzzy matching",
+      "edit distance",
+      "semantic similarity",
+      "LLM judge"
+    ]
+  },
+  "checker_tests": {
+    "existing_suite": "scripts/test-quote-integrity-check.mjs (if present)",
+    "known_coverage_from_prior_decisions": [
+      "AgentOps-5a: R1/R2 basic patterns",
+      "AgentOps-5b: quote-integrity checker prototype",
+      "AgentOps-5c: R2 terminal-punctuation tier",
+      "AgentOps-5d: quote integrity stability regression"
+    ],
+    "coverage_gaps_noted_for_this_diagnosis": "no explicit unit test for `case-insensitive tier fires on sentence-start capitalization variation only` was audited (out-of-scope for read-only diagnosis)"
+  },
+  "matched_quote": {
+    "cited_jd_id": "jd_000173",
+    "cited_company": "Microsoft",
+    "corpus_title": "Principal Software Engineer - Full Stack AI",
+    "corpus_archetype": "applied_ai",
+    "quote_char_length": 105,
+    "quote_snippet_60_bytes_retained_in_artifact": "Build AI-infused applications, Agentic Solutions and Copilot",
+    "quote_snippet_source": ".agent/regression_runs/20260725T041414Z_fixture-B/quote_integrity_summary.json (governance-safe artifact, retained)",
+    "match_status": "case_insensitive",
+    "company_check": "pass",
+    "role_check": "pass"
+  },
+  "source_evidence": {
+    "corpus_file": "src/data/web_bundle.json",
+    "record_id": "jd_000173",
+    "corpus_company": "Microsoft",
+    "corpus_title": "Principal Software Engineer - Full Stack AI",
+    "body_length": 2205,
+    "case_sensitive_find_of_60_byte_snippet": -1,
+    "case_insensitive_find_of_60_byte_snippet_at_index": 1175,
+    "source_excerpt_around_match_bounded_to_120_chars": "build AI-infused applications, Agentic Solutions and Copilots, enhancing user experience and productivity, fostering cre",
+    "extraction_bounded_to": "120 chars, redacted context; sufficient to show first-character capitalization difference"
+  },
+  "difference_analysis": {
+    "visible_span_bytes_available": "chars 0..59 (60 bytes) of the 105-byte generated quote",
+    "unavailable_bytes": "chars 60..104 of the generated quote (not retained beyond 60-byte snippet)",
+    "char_by_char_diff_visible_span": [
+      {
+        "position": 0,
+        "generated": "B",
+        "source": "b",
+        "code_point_generated": "U+0042",
+        "code_point_source": "U+0062",
+        "category": "capitalization_only"
+      }
+    ],
+    "char_by_char_diff_positions_1_through_59": "identical — capitalization preserved (AI-infused, Agentic Solutions, Copilot) matches source exactly",
+    "inferred_char_by_char_diff_positions_60_through_104": "not directly observable; QI Tier-3 match semantics only guarantee that after lowercase, the whole quote is a substring — the additional 45 chars may or may not contain further capitalization differences (or none)",
+    "equality_checks": {
+      "exact_equality_visible_span": false,
+      "lowercase_equality_visible_span": true,
+      "trimmed_equality_visible_span": false,
+      "whitespace_collapsed_equality_visible_span": false,
+      "punctuation_stripped_equality_visible_span": false,
+      "unicode_representation_equality": "n/a — both texts are ASCII within the visible span"
+    },
+    "unicode_and_whitespace_notes": {
+      "curly_quotes_involved": false,
+      "smart_quotes_involved": false,
+      "em_dash_involved": false,
+      "ellipsis_involved": false,
+      "pipe_newline_artifact_involved": false
+    }
+  },
+  "mismatch_classification": {
+    "class": "capitalization_only",
+    "specific_sub_class": "sentence_start_capitalization_only_at_position_0",
+    "supporting_evidence": "generated char[0]=B (U+0042); source char[0]=b (U+0062); all other visible chars match byte-for-byte; QI Tier 3 matched (Tier 1 + Tier 2 both failed, consistent with capitalization difference)",
+    "confidence": "high for visible span (chars 0..59); inferred for chars 60..104 (no additional bytes retained)"
+  },
+  "product_significance": {
+    "class": "benign_formatting_variance",
+    "user_would_call_faithful": true,
+    "auditor_would_call_verbatim": false,
+    "meaning_altered": false,
+    "citation_trust_impact": "very_low",
+    "ui_display_as_exact_quotation": "acceptable in practice; the AMBER telemetry is the correct signal that the byte-exact contract was not met",
+    "amber_should_remain": true,
+    "reasoning": "The model quoted a fragment that begins mid-sentence in the source. English convention when quoting a fragment as a standalone line is to capitalize the sentence-start character. This is not paraphrase, grammar-repair, tense/plurality/word-count change, or content substitution. The prompt's 'character-for-character' language technically forbids this, but the AMBER tier exists in the checker precisely to flag such convention-driven divergence without blocking the run."
+  },
+  "prompt_checker_comparison": {
+    "prompt_demands_exact_capitalization": true,
+    "prompt_shows_exact_copy_examples": true,
+    "checker_implements_prompt_strongest_interpretation": false,
+    "case_insensitive_fallback_intentional_by_design": true,
+    "amber_expected_for_case_only_differences": true,
+    "contradiction_summary": "Prompt requires char-for-char; checker implements a graded telemetry that AMBERs case-only differences. This is intentional and consistent with the checker's role (telemetry, not gate). Prior AgentOps-5a/5c DECISIONs approved the graded tier system."
+  },
+  "hypotheses": [
+    {
+      "id": "H1",
+      "text": "Model changed capitalization only at sentence-start of the quoted fragment.",
+      "supporting_evidence": "generated char[0]=B vs source char[0]=b; all other visible chars byte-identical; fragment starts mid-sentence in source body",
+      "contradicting_evidence": "none",
+      "confidence": "confirmed_high",
+      "future_confirmation_requires": "full retained generated text OR a rerun with `quote_snippet` extended to full length"
+    },
+    {
+      "id": "H2",
+      "text": "Renderer or capture changed capitalization.",
+      "supporting_evidence": "none",
+      "contradicting_evidence": "corpus source is authoritative and stored lowercase `b`; ReactMarkdown does not alter text content, only markup rendering; innerText preserves character content",
+      "confidence": "refuted"
+    },
+    {
+      "id": "H3",
+      "text": "Source parser normalized capitalization.",
+      "supporting_evidence": "none",
+      "contradicting_evidence": "QI's `normalize()` explicitly does NOT change case (only whitespace / curly quotes / dashes / ellipsis / pipe-newline)",
+      "confidence": "refuted"
+    },
+    {
+      "id": "H4",
+      "text": "Checker uses case-insensitive fallback exactly as designed.",
+      "supporting_evidence": "AgentOps-5a design memo + DECISION established graded tiers; Tier 3 (case-insensitive) emits AMBER not RED",
+      "contradicting_evidence": "none",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "H5",
+      "text": "Case-insensitive fallback is too permissive.",
+      "supporting_evidence": "prompt strictly says 'character-for-character'",
+      "contradicting_evidence": "AMBER is telemetry-only; the tier is designed to warn without blocking; treating single-char capitalization as RED would fail runs for benign convention",
+      "confidence": "not_supported — AMBER is functioning as designed"
+    },
+    {
+      "id": "H6",
+      "text": "Prompt insufficiently emphasizes exact capitalization.",
+      "supporting_evidence": "prompt says 'character-for-character' but does not explicitly call out capitalization as a distinct rule",
+      "contradicting_evidence": "prompt already has strong wording; adding more emphasis unlikely to prevent sentence-start capitalization convention in models",
+      "confidence": "possible but low-impact"
+    },
+    {
+      "id": "H7",
+      "text": "The quote is substantively different but happens to match after lowercase normalization.",
+      "supporting_evidence": "none",
+      "contradicting_evidence": "visible chars 1..59 are byte-identical to source; only char[0] differs, and the difference is a lowercase→uppercase of the same letter",
+      "confidence": "refuted for visible span"
+    },
+    {
+      "id": "H8",
+      "text": "Artifact retention is insufficient to fully determine the difference across the whole 105-char quote.",
+      "supporting_evidence": "quote_snippet_60 field retains only first 60 chars; chars 60..104 are not directly observable in the retained artifact",
+      "contradicting_evidence": "60-byte snippet + Tier-3-match semantics (Tier 1 + Tier 2 both failed) confirm the difference IS case-only; the pattern most likely holds across the remaining chars",
+      "confidence": "partial evidence limitation, but does not change the class classification"
+    }
+  ],
+  "diagnosis_confidence": {
+    "verdict": "most_likely_cause",
+    "primary_conclusion": "sentence_start_capitalization_only",
+    "additional_uncertainty": "whether char[60..104] contains further capitalization differences beyond the sentence-start position 0; this does not change the mismatch class"
+  },
+  "selected_next_path": {
+    "chosen_path": "Path A — no change",
+    "rationale": "AMBER is doing exactly what it was designed to do: signal that a quote is close but not exactly verbatim, without blocking the run. The prompt is already clear ('character-for-character'). The single-character sentence-start capitalization is a benign English convention that models perform when quoting mid-sentence fragments. Tightening the checker to RED for this would fail runs for benign variance. Adding fuzzy / edit-distance / semantic / LLM judge is explicitly forbidden by policy. Reinforcing the prompt is low-impact and increases prompt tokens. Retention change (retain full quote text instead of 60-char snippet) is a design decision that carries privacy trade-offs; not required to conclude this diagnosis.",
+    "candidate_paths_open_for_future_decision": [
+      {
+        "id": "A",
+        "name": "no change",
+        "description": "Keep AMBER as the correct telemetry signal for capitalization-only variance; do not change prompt, checker, tests, or artifact retention. Recommended.",
+        "risks": "none — status quo"
+      },
+      {
+        "id": "B",
+        "name": "prompt reinforcement",
+        "description": "Add an explicit 'do not change capitalization of any character including the first letter of a fragment' rule to the prompt.",
+        "risks": "increases prompt tokens for minor gain; may not eliminate sentence-start capitalization convention; would need to observe on future fixture runs to measure effect"
+      },
+      {
+        "id": "C",
+        "name": "checker clarification",
+        "description": "Split the current Tier 3 case-insensitive tier into (a) case-insensitive-first-char-only (benign AMBER) vs (b) case-insensitive-multiple-positions (stronger AMBER or new red_reason).",
+        "risks": "adds semantics complexity to a checker that is intentionally simple; requires more retained data than 60-char snippet"
+      },
+      {
+        "id": "D",
+        "name": "instrumentation",
+        "description": "Retain full quote text (or char-diff summary) in the QI artifact so future diagnoses have direct evidence without corpus lookup.",
+        "risks": "increases artifact size + potential proprietary content in governance-safe artifacts; must respect existing retention/privacy policy"
+      },
+      {
+        "id": "E",
+        "name": "deterministic tests first",
+        "description": "Add QI tests that codify the case-insensitive AMBER behavior explicitly to prevent silent drift.",
+        "risks": "none of substance; useful as a codification step, subsumed by any future implementation"
+      }
+    ],
+    "explicitly_rejected_paths": [
+      "F fuzzy / edit-distance / semantic / LLM judge / post-generation rewrite / provider retry / fixture rerun (out of scope · explicit policy prohibitions)"
+    ]
+  },
+  "policy_resolutions": {
+    "Q1_exact_quote_identified": "yes (source jd_000173 · 60-char snippet + inferred remainder)",
+    "Q2_exact_source_identified": "yes (src/data/web_bundle.json record jd_000173 body char 1175+)",
+    "Q3_difference_capitalization_only": "yes for visible span (char[0]); likely for full 105-char quote",
+    "Q4_whitespace_changed": "no (visible span identical after char[0])",
+    "Q5_punctuation_changed": "no",
+    "Q6_unicode_representation_changed": "no (all visible chars are ASCII)",
+    "Q7_word_sequence_identical": "yes for visible span",
+    "Q8_meaning_changed": "no",
+    "Q9_prompt_requires_case_sensitive_verbatim": "yes ('character-for-character' language)",
+    "Q10_checker_case_insensitive_fallback_intentional": "yes (AgentOps-5a/5c design)",
+    "Q11_current_amber_expected": "yes (Tier 3 correctly emits AMBER for capitalization variance)",
+    "Q12_checker_defect_confirmed": "no",
+    "Q13_prompt_defect_confirmed": "no — 'character-for-character' is already clear; prompt reinforcement is possible but not necessary",
+    "Q14_renderer_or_capture_defect_confirmed": "no",
+    "Q15_product_trust_impact_material": "no (very_low)",
+    "Q16_code_change_justified": "no",
+    "Q17_prompt_change_justified": "no (Path B open as alternative but not required)",
+    "Q18_paid_rerun_justified": "no",
+    "Q19_fixture_rerun_authorized": "no",
+    "Q20_qi_blocking_promotion_authorized": "no",
+    "Q21_baseline_mutation_authorized": "no",
+    "Q22_phase_4_5_6_or_5f_promote_authorized": "no"
+  },
+  "risks": [
+    {
+      "id": "R1",
+      "text": "Choosing Path A (no change) means AMBER will continue to fire on future runs for benign sentence-start capitalization convention. Telemetry noise remains at a low rate.",
+      "severity": "low",
+      "mitigation": "AMBER is telemetry-only; does not block runs or affect legacy verdict/process exit"
+    },
+    {
+      "id": "R2",
+      "text": "Retained artifact truncates the generated quote to 60 chars, so we cannot directly verify chars 60..104 without a rerun. If those chars contain additional non-capitalization differences, the classification would change from `capitalization_only` to something else.",
+      "severity": "low",
+      "mitigation": "Tier-3 semantics constrain the possible differences to case-only; Path D (retention change) would eliminate this uncertainty on future runs but is not necessary to conclude this diagnosis"
+    },
+    {
+      "id": "R3",
+      "text": "If a future implementation loop chooses Path B or C without a companion DECISION, it would violate the current promotion posture recorded in the Phase 3 completion DECISION.",
+      "severity": "high",
+      "mitigation": "any implementation loop must author its own DECISION and MUST NOT promote QI to blocking without separate design"
+    }
+  ],
+  "open_questions": [
+    "Do chars 60..104 of the generated quote contain any further capitalization differences beyond position 0? Retained artifact insufficient to answer without either (a) full-text retention change or (b) a paid rerun.",
+    "Is a formal QI test for `case-insensitive AMBER on sentence-start capitalization only` worth adding for regression protection? Path E is available but not selected.",
+    "Would prompt reinforcement (Path B) measurably reduce future AMBER rate, given models frequently apply sentence-start capitalization convention regardless of instructions? No a-priori evidence either way."
+  ],
+  "boundaries_respected": {
+    "no_source_change": true,
+    "no_prompt_change": true,
+    "no_checker_change": true,
+    "no_capture_change": true,
+    "no_harness_change": true,
+    "no_fixture_change": true,
+    "no_baseline_change": true,
+    "no_telemetry_change": true,
+    "no_test_change": true,
+    "no_package_change": true,
+    "no_workflow_change": true,
+    "no_env_change": true,
+    "no_vercel_change": true,
+    "no_pipeline_change": true,
+    "no_agent_scripts_change": true,
+    "no_regression_run_change": true,
+    "no_provider_call": true,
+    "no_fixture_rerun": true,
+    "no_dev_server_started": true,
+    "no_playwright_started": true,
+    "no_promotion": true,
+    "no_5f_promote_start": true,
+    "no_phase_4_5_6_start": true,
+    "no_push": true,
+    "no_decision_created": true,
+    "qi_remains_telemetry_only": true,
+    "cost_this_loop_usd": 0
+  }
+}
